@@ -10,8 +10,13 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-eas.json
 android/
+_dev
+
+# Firebase credentials (sensitive)
+google-services.json
+GoogleService-Info.plist
+firebase-service-account*.json
 
 # macOS
 .DS_Store
