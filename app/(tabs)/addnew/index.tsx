@@ -332,8 +332,8 @@ export default function AddNew() {
 
   return (
     <KeyboardView>
-      <View style={{backgroundColor: 'white', padding: 10, flex: 1}}>
-        <View style={{flex: 1, justifyContent: 'space-between'}}>
+      <View style={styles.container}>
+        <View style={styles.content}>
           <View>
             {!isSplit && (
               <TextInput
@@ -344,7 +344,7 @@ export default function AddNew() {
               />
             )}
 
-            <View style={[styles.input, {padding: 0, marginVertical: 24}]}>
+            <View style={styles.datePickerContainer}>
               <DatePicker
                 label="Wybierz Datę"
                 onChange={date => date && setForm({...form, date})}
@@ -392,13 +392,8 @@ export default function AddNew() {
             )}
 
             {(type === 'expense' || type === 'income') && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                }}
-              >
-                <View style={{width: '90%'}}>
+              <View style={styles.priceInputRow}>
+                <View style={styles.currencyInputContainer}>
                   <CurrencyPriceInput
                     value={form.price[1]}
                     currencies={currencies}
@@ -416,7 +411,7 @@ export default function AddNew() {
                     onPress={handleSplitToggle}
                     disabled={!form.price[0] && !isSplit}
                     size={20}
-                    style={{margin: 0, padding: 2, width: 50}}
+                    style={styles.splitToggleButton}
                   />
                 )}
               </View>
@@ -426,7 +421,7 @@ export default function AddNew() {
               <View style={styles.splitIconRow}>
                 {(type === 'expense' ||
                   (type === 'income' && newCustomIncome === null)) && (
-                  <View style={{flex: 1}}>
+                  <View style={styles.dropdownContainer}>
                     <ElementDropdown
                       items={itemsToSelect}
                       showDivider={type === 'expense'}
@@ -466,7 +461,7 @@ export default function AddNew() {
                 <Button
                   mode="text"
                   onPress={addSplitItem}
-                  style={{marginTop: 8}}
+                  style={styles.addSplitButton}
                   icon="plus"
                 >
                   Dodaj pozycję
@@ -500,9 +495,36 @@ export default function AddNew() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
+  container: {
     backgroundColor: 'white',
+    padding: sizes.sm,
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  datePickerContainer: {
+    padding: 0,
+    marginVertical: sizes.lg,
+  },
+  priceInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  currencyInputContainer: {
+    width: '90%',
+  },
+  splitToggleButton: {
+    margin: 0,
+    padding: sizes.xs,
+    width: 50,
+  },
+  dropdownContainer: {
+    flex: 1,
+  },
+  addSplitButton: {
+    marginTop: sizes.sm,
   },
   input: {
     marginVertical: sizes.lg,
@@ -511,7 +533,6 @@ const styles = StyleSheet.create({
   splitContainer: {
     marginVertical: sizes.lg,
     padding: sizes.md,
-    // backgroundColor: '#f5f5f5',
     borderRadius: sizes.lg,
   },
   splitIconRow: {
