@@ -120,9 +120,10 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
   };
 
   const swapCurrencies = () => {
-    const temp = selectedCurrency;
+    // NOTE use temp to change currency
+    // const temp = selectedCurrency;
     setSelectedCurrency(targetCurrency);
-    setTargetCurrency(temp);
+    setTargetCurrency(targetCurrency);
   };
 
   const handleConversionPress = () => {
