@@ -44,7 +44,7 @@ import SafeScrollContainer from '@/components/SafeScrollContainer';
 const initState = (date = new Date(), categories: any[] = []) => ({
   description: '',
   date,
-  price: '',
+  price: ['', ''],
   category: categories[0]?.name,
 });
 
@@ -175,7 +175,7 @@ export default function AddNew() {
     if (category.value === 'Dodaj nową kategorię') {
     } else {
       setForm({...form, category: category.value});
-      if (!form.price) return focusRef.current?.focus();
+      if (!form.price[0]) return focusRef.current?.focus();
       focusRef.current?.blur();
       buttonRef.current?.focus();
     }
@@ -189,8 +189,8 @@ export default function AddNew() {
   };
 
   const handleSplitToggle = () => {
-    if (!isSplit && form.price) {
-      const totalPrice = parseFloat(form.price);
+    if (!isSplit && form.price[0]) {
+      const totalPrice = parseFloat(form.price[0]);
       const halfPrice = (totalPrice / 2).toString();
       setSplitItems([
         {price: halfPrice, category: form.category},
@@ -231,12 +231,12 @@ export default function AddNew() {
         (sum, item) => sum + (+item.price || 0),
         0,
       );
-      const remainingAmount = (+form.price || 0) - totalSplitPrice;
+      const remainingAmount = (+form.price[0] || 0) - totalSplitPrice;
       return hasValidItems && remainingAmount === 0;
     }
 
     // For non-split items, price and category are required
-    if (!form.price || !form.category) {
+    if (!form.price[0] || !form.category) {
       return false;
     }
 
@@ -259,7 +259,7 @@ export default function AddNew() {
         > = {
           id: '',
           date: formatDate(form.date, 'yyyy-MM-dd'),
-          price: +item.price,
+          price: +item.price[0],
           categoryId:
             expenseCategories.find(cat => cat.name === item.category)?.id || 0,
         };
@@ -283,7 +283,7 @@ export default function AddNew() {
           id: id ? +id : '',
           description,
           date: formatDate(date, 'yyyy-MM-dd'),
-          price: +price,
+          price: +price[0],
           categoryId:
             expenseCategories.find(cat => cat.name === form.category)?.id || 0,
         };
@@ -293,7 +293,7 @@ export default function AddNew() {
         dataToSave = {
           id: id ? +id : '',
           date: formatDate(form.date, 'yyyy-MM-dd'),
-          price: +form.price,
+          price: +form.price[0],
           source: form.category,
           vat: 0,
         };
@@ -403,20 +403,21 @@ export default function AddNew() {
               >
                 <View style={{width: '90%'}}>
                   <CurrencyPriceInput
-                    value={form.price}
+                    value={form.price[1]}
                     currencies={currencies}
                     disabled={isSplit}
                     exchangeRates={exchangeRates}
-                    initialAmount={form.price}
                     initialCurrency={currencies[0]}
-                    onAmountChange={value => setForm({...form, price: value})}
+                    onAmountChange={(value, converted) =>
+                      setForm({...form, price: [converted, value]})
+                    }
                   />
                 </View>
                 {type === 'expense' && (
                   <IconButton
                     icon={isSplit ? 'call-merge' : 'call-split'}
                     onPress={handleSplitToggle}
-                    disabled={!form.price && !isSplit}
+                    disabled={!form.price[0] && !isSplit}
                     size={20}
                     style={{margin: 0, padding: 2, width: 50}}
                   />

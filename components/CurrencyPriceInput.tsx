@@ -1,6 +1,8 @@
 import React, {useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {View, StyleSheet, Pressable} from 'react-native';
 import {TextInput, Text, Menu, Surface} from 'react-native-paper';
+import {convertCurrency} from '../utils/currencyUtils';
 
 interface Currency {
   code: string;
@@ -15,13 +17,12 @@ interface CurrencyPriceInputProps {
   currencies: Currency[];
   exchangeRates: Record<string, number>;
   disabled?: boolean;
-  onAmountChange?: (amount: string) => void;
+  onAmountChange?: (value: string, converted: string) => void;
   onCurrencyChange?: (currency: Currency) => void;
 }
 
 const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
   value,
-  initialAmount = '',
   initialCurrency,
   currencies,
   exchangeRates,
@@ -29,46 +30,30 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
   onAmountChange,
   onCurrencyChange,
 }) => {
-  const [amount, setAmount] = useState(value ?? initialAmount);
+  const [baseAmount, setBaseAmount] = useState(value);
+
   const [selectedCurrency, setSelectedCurrency] = useState(
     initialCurrency ?? currencies[0],
   );
-  const [targetCurrency, setTargetCurrency] = useState(currencies[0]);
+  const [targetCurrency, setTargetCurrency] = useState(
+    initialCurrency ?? currencies[0],
+  );
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
   const [currencyPressed, setCurrencyPressed] = useState(false);
   const [conversionPressed, setConversionPressed] = useState(false);
+
+  // Calculator mode
   const [isCalculatorMode, setIsCalculatorMode] = useState(false);
   const [calculatorExpression, setCalculatorExpression] = useState('');
 
-  const currentAmount = value ?? amount;
+  const currentAmount = value ?? baseAmount;
 
-  const convertedAmount = React.useMemo(() => {
-    const numAmount = parseFloat(currentAmount);
-    if (isNaN(numAmount) || numAmount <= 0) return 0;
-
-    const rateKey = `${selectedCurrency.code}_${targetCurrency.code}`;
-    const rate =
-      selectedCurrency.code === targetCurrency.code
-        ? 1.0
-        : (exchangeRates[rateKey] ?? 1.0);
-    return numAmount * rate;
-  }, [currentAmount, selectedCurrency, targetCurrency, exchangeRates]);
-
-  const formattedConversion = React.useMemo(() => {
-    if (convertedAmount > 0) {
-      return `~${convertedAmount.toFixed(2)} ${targetCurrency.symbol}`;
-    }
-    return `~0.00 ${targetCurrency.symbol}`;
-  }, [convertedAmount, targetCurrency]);
-
-  const exchangeRateText = React.useMemo(() => {
-    const rateKey = `${selectedCurrency.code}_${targetCurrency.code}`;
-    const rate =
-      selectedCurrency.code === targetCurrency.code
-        ? 1.0
-        : (exchangeRates[rateKey] ?? 1.0);
-    return `1 ${selectedCurrency.code} = ${rate.toFixed(4)} ${targetCurrency.code}`;
-  }, [selectedCurrency, targetCurrency, exchangeRates]);
+  const {formattedConversion, exchangeRateText} = convertCurrency(
+    currentAmount,
+    selectedCurrency,
+    targetCurrency,
+    exchangeRates,
+  );
 
   const safeCalculate = (expression: string): number | null => {
     try {
@@ -108,15 +93,28 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
     const cleanValue = newValue.replace(/[^0-9.,]/g, '').replace(',', '.');
     const dotCount = (cleanValue.match(/\./g) || []).length;
     if (dotCount <= 1) {
-      if (!value) setAmount(cleanValue);
-      onAmountChange?.(cleanValue);
+      if (!value) setBaseAmount(cleanValue);
+      const converted = convertCurrency(
+        cleanValue,
+        selectedCurrency,
+        targetCurrency,
+        exchangeRates,
+      );
+      onAmountChange?.(cleanValue, converted.convertedString);
     }
   };
 
-  const handleCurrencyChange = (currency: Currency) => {
-    setSelectedCurrency(currency);
+  const handleCurrencyChange = (newCurrency: Currency) => {
+    setSelectedCurrency(newCurrency);
     setShowCurrencyMenu(false);
-    onCurrencyChange?.(currency);
+    onCurrencyChange?.(newCurrency);
+    const converted = convertCurrency(
+      value,
+      newCurrency,
+      newCurrency.code === 'PLN' ? newCurrency : selectedCurrency,
+      exchangeRates,
+    );
+    onAmountChange?.(value, converted.convertedString);
   };
 
   const swapCurrencies = () => {
@@ -124,6 +122,13 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
     // const temp = selectedCurrency;
     setSelectedCurrency(targetCurrency);
     setTargetCurrency(targetCurrency);
+    const converted = convertCurrency(
+      value,
+      selectedCurrency,
+      targetCurrency,
+      exchangeRates,
+    );
+    onAmountChange?.(converted.convertedString, converted.convertedString);
   };
 
   const handleConversionPress = () => {
@@ -143,12 +148,21 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
     const result = safeCalculate(calculatorExpression);
     if (result !== null) {
       const resultString = result.toString();
-      if (!value) setAmount(resultString);
-      onAmountChange?.(resultString);
+      if (!value) setBaseAmount(resultString);
+      onAmountChange?.(resultString, resultString);
     }
     setIsCalculatorMode(false);
     setCalculatorExpression('');
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setTargetCurrency(initialCurrency ?? currencies[0]);
+        setSelectedCurrency(initialCurrency ?? currencies[0]);
+      };
+    }, []),
+  );
 
   return (
     <Surface style={styles.container} elevation={1}>
