@@ -39,7 +39,6 @@ import {
 import {Expense} from '@/types';
 import ElementDropdown from '@/components/Dropdown';
 import KeyboardView from '@/components/KeyboardView';
-import SafeScrollContainer from '@/components/SafeScrollContainer';
 
 const initState = (date = new Date(), categories: any[] = []) => ({
   description: '',
@@ -333,9 +332,7 @@ export default function AddNew() {
 
   return (
     <KeyboardView>
-      <SafeScrollContainer
-        style={{backgroundColor: 'white', padding: 10, minHeight: '100%'}}
-      >
+      <View style={{backgroundColor: 'white', padding: 10, flex: 1}}>
         <View style={{flex: 1, justifyContent: 'space-between'}}>
           <View>
             {!isSplit && (
@@ -497,7 +494,7 @@ export default function AddNew() {
             </ButtonWithStatus>
           </View>
         </View>
-      </SafeScrollContainer>
+      </View>
     </KeyboardView>
   );
 }
