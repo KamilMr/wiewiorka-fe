@@ -9,7 +9,7 @@ import {
 } from 'expo-router';
 import {formatDate} from 'date-fns';
 import {View, StyleSheet, Alert} from 'react-native';
-import {Button, IconButton} from 'react-native-paper';
+import {Button, IconButton, Switch, Text} from 'react-native-paper';
 
 import {
   ButtonWithStatus,
@@ -334,7 +334,7 @@ export default function AddNew() {
     <KeyboardView>
       <View style={styles.container}>
         <View style={styles.content}>
-          <View>
+          <View style={styles.formContent}>
             {!isSplit && (
               <TextInput
                 style={styles.input}
@@ -352,15 +352,17 @@ export default function AddNew() {
               />
             </View>
 
-            <SelectRadioButtons
-              disabled={isPasRecord}
-              items={[
-                {label: 'Wydatek', value: 'expense'},
-                {label: 'Przychód', value: 'income'},
-              ]}
-              onSelect={handleSelectType}
-              selected={type}
-            />
+            <View style={styles.switchContainer}>
+              <Text variant="bodyLarge">Wydatek</Text>
+              <Switch
+                value={type === 'income'}
+                onValueChange={value =>
+                  handleSelectType(value ? 'income' : 'expense')
+                }
+                disabled={isPasRecord}
+              />
+              <Text variant="bodyLarge">Przychód</Text>
+            </View>
 
             {/* Add new category  selection */}
             {type === 'income' && (
@@ -497,7 +499,7 @@ export default function AddNew() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    padding: sizes.sm,
+    padding: sizes.lg,
     flex: 1,
   },
   content: {
@@ -506,11 +508,23 @@ const styles = StyleSheet.create({
   },
   datePickerContainer: {
     padding: 0,
-    marginVertical: sizes.lg,
+    marginVertical: sizes.xl,
+  },
+  formContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: sizes.md,
+    marginVertical: sizes.xl,
   },
   priceInputRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    marginVertical: sizes.lg,
   },
   currencyInputContainer: {
     width: '90%',
@@ -536,7 +550,7 @@ const styles = StyleSheet.create({
     borderRadius: sizes.lg,
   },
   splitIconRow: {
-    marginVertical: sizes.lg,
+    marginVertical: sizes.xl,
   },
   splitCancelSection: {
     marginVertical: sizes.lg,
