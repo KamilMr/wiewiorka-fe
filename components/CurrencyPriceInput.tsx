@@ -180,7 +180,6 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
             contentStyle={styles.amountInputContent}
             underlineStyle={{height: 0}}
             mode="flat"
-            dense
           />
 
           <Menu

@@ -8,7 +8,7 @@ import {
   useNavigation,
 } from 'expo-router';
 import {formatDate} from 'date-fns';
-import {View, StyleSheet, Alert} from 'react-native';
+import {View, StyleSheet, Alert, ScrollView} from 'react-native';
 import {Button, IconButton, Switch, Text} from 'react-native-paper';
 
 import {
@@ -38,7 +38,7 @@ import {
 } from '@/redux/main/selectors';
 import {Expense} from '@/types';
 import ElementDropdown from '@/components/Dropdown';
-import KeyboardView from '@/components/KeyboardView';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
 const initState = (date = new Date(), categories: any[] = []) => ({
   description: '',
@@ -137,13 +137,14 @@ export default function AddNew() {
   useFocusEffect(
     useCallback(() => {
       if (!record) return;
+      const priceString = record?.price.toString() || '';
       const tR = {
         description: record?.description || '',
         date:
           incomingType === 'income'
             ? new Date(record?.date)
             : new Date(record.date.split('/').reverse().join('-')),
-        price: record?.price.toString() || '',
+        price: [priceString, priceString],
         category: 'source' in record ? record.source : record.category || '',
       };
       setForm(tR);
@@ -192,8 +193,8 @@ export default function AddNew() {
       const totalPrice = parseFloat(form.price[0]);
       const halfPrice = (totalPrice / 2).toString();
       setSplitItems([
-        {price: halfPrice, category: form.category},
-        {price: halfPrice, category: ''},
+        {price: halfPrice, category: form.category, description: ''},
+        {price: halfPrice, category: '', description: ''},
       ]);
     }
     setIsSplit(!isSplit);
@@ -258,7 +259,7 @@ export default function AddNew() {
         > = {
           id: '',
           date: formatDate(form.date, 'yyyy-MM-dd'),
-          price: +item.price[0],
+          price: +item.price,
           categoryId:
             expenseCategories.find(cat => cat.name === item.category)?.id || 0,
         };
@@ -331,200 +332,204 @@ export default function AddNew() {
   };
 
   return (
-    <KeyboardView>
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <View style={styles.formContent}>
-            {!isSplit && (
-              <TextInput
-                style={styles.input}
-                label={'Opis'}
-                onChangeText={text => setForm({...form, description: text})}
-                value={form.description}
-              />
-            )}
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View>
+          {!isSplit && (
+            <TextInput
+              style={styles.input}
+              label={'Opis'}
+              multiline
+              onChangeText={text => setForm({...form, description: text})}
+              value={form.description}
+            />
+          )}
 
-            <View style={styles.datePickerContainer}>
-              <DatePicker
-                label="Wybierz Datę"
-                onChange={date => date && setForm({...form, date})}
-                value={form.date}
-              />
-            </View>
+          <View style={styles.datePickerContainer}>
+            <DatePicker
+              label="Wybierz Datę"
+              variant="text"
+              onChange={date => date && setForm({...form, date})}
+              value={form.date}
+            />
+          </View>
 
-            <View style={styles.switchContainer}>
-              <Text variant="bodyLarge">Wydatek</Text>
-              <Switch
-                value={type === 'income'}
-                onValueChange={value =>
-                  handleSelectType(value ? 'income' : 'expense')
+          <View style={styles.switchContainer}>
+            <Text variant="bodyLarge">Wydatek</Text>
+            <Switch
+              value={type === 'income'}
+              onValueChange={value =>
+                handleSelectType(value ? 'income' : 'expense')
+              }
+              disabled={isPasRecord}
+            />
+            <Text variant="bodyLarge">Przychód</Text>
+          </View>
+
+          {/* Add new category  selection */}
+          {type === 'income' && (
+            <SelectRadioButtons
+              items={[
+                {label: 'Dodaj nową kategorię', value: 'new'},
+                {label: 'Wybierz z listy', value: 'list'},
+              ]}
+              onSelect={value => {
+                if (value === 'new') {
+                  setNewCustomIncome('');
+                } else {
+                  setNewCustomIncome(null);
                 }
-                disabled={isPasRecord}
-              />
-              <Text variant="bodyLarge">Przychód</Text>
-            </View>
+                setForm({...form, category: ''});
+              }}
+              selected={newCustomIncome !== null ? 'new' : 'list'}
+            />
+          )}
 
-            {/* Add new category  selection */}
-            {type === 'income' && (
-              <SelectRadioButtons
-                items={[
-                  {label: 'Dodaj nową kategorię', value: 'new'},
-                  {label: 'Wybierz z listy', value: 'list'},
-                ]}
-                onSelect={value => {
-                  if (value === 'new') {
-                    setNewCustomIncome('');
-                  } else {
-                    setNewCustomIncome(null);
+          {/* Add new category  input */}
+          {newCustomIncome !== null && (
+            <TextInput
+              style={styles.input}
+              label="Nowy rodzaj wpływu"
+              onChangeText={text => setForm({...form, category: text})}
+              value={form.category}
+            />
+          )}
+
+          {(type === 'expense' || type === 'income') && (
+            <View style={styles.priceInputRow}>
+              <View style={styles.currencyInputContainer}>
+                <CurrencyPriceInput
+                  value={form.price[1]}
+                  currencies={currencies}
+                  disabled={isSplit}
+                  exchangeRates={exchangeRates}
+                  initialCurrency={currencies[0]}
+                  onAmountChange={(value, converted) =>
+                    setForm({...form, price: [converted, value]})
                   }
-                  setForm({...form, category: ''});
-                }}
-                selected={newCustomIncome !== null ? 'new' : 'list'}
-              />
-            )}
+                />
+              </View>
+              {type === 'expense' && (
+                <IconButton
+                  icon={isSplit ? 'call-merge' : 'call-split'}
+                  onPress={handleSplitToggle}
+                  disabled={!form.price[0] && !isSplit}
+                  size={20}
+                  style={styles.splitToggleButton}
+                />
+              )}
+            </View>
+          )}
 
-            {/* Add new category  input */}
-            {newCustomIncome !== null && (
-              <TextInput
-                style={styles.input}
-                label="Nowy rodzaj wpływu"
-                onChangeText={text => setForm({...form, category: text})}
-                value={form.category}
-              />
-            )}
-
-            {(type === 'expense' || type === 'income') && (
-              <View style={styles.priceInputRow}>
-                <View style={styles.currencyInputContainer}>
-                  <CurrencyPriceInput
-                    value={form.price[1]}
-                    currencies={currencies}
-                    disabled={isSplit}
-                    exchangeRates={exchangeRates}
-                    initialCurrency={currencies[0]}
-                    onAmountChange={(value, converted) =>
-                      setForm({...form, price: [converted, value]})
+          {!isSplit && (
+            <View style={styles.splitIconRow}>
+              {(type === 'expense' ||
+                (type === 'income' && newCustomIncome === null)) && (
+                <View style={styles.dropdownContainer}>
+                  <ElementDropdown
+                    items={itemsToSelect}
+                    showDivider={type === 'expense'}
+                    keyboardShouldPersistTaps="handled"
+                    dropdownPosition="top"
+                    onChange={handleSelectCategory}
+                    value={
+                      type === 'income'
+                        ? form.category
+                        : expenseCategories.find(
+                            cat => cat.name === form.category,
+                          )?.name
                     }
                   />
                 </View>
-                {type === 'expense' && (
-                  <IconButton
-                    icon={isSplit ? 'call-merge' : 'call-split'}
-                    onPress={handleSplitToggle}
-                    disabled={!form.price[0] && !isSplit}
-                    size={20}
-                    style={styles.splitToggleButton}
-                  />
-                )}
-              </View>
-            )}
+              )}
+            </View>
+          )}
 
-            {!isSplit && (
-              <View style={styles.splitIconRow}>
-                {(type === 'expense' ||
-                  (type === 'income' && newCustomIncome === null)) && (
-                  <View style={styles.dropdownContainer}>
-                    <ElementDropdown
-                      items={itemsToSelect}
-                      showDivider={type === 'expense'}
-                      keyboardShouldPersistTaps="handled"
-                      dropdownPosition="top"
-                      onChange={handleSelectCategory}
-                      value={
-                        type === 'income'
-                          ? form.category
-                          : expenseCategories.find(
-                              cat => cat.name === form.category,
-                            )?.name
-                      }
-                    />
-                  </View>
-                )}
-              </View>
-            )}
-
-            {isSplit && type === 'expense' && (
-              <View style={styles.splitContainer}>
-                <RemainingAmountDisplay
-                  totalPrice={form.price}
-                  splitItems={splitItems}
+          {isSplit && type === 'expense' && (
+            <View style={styles.splitContainer}>
+              <RemainingAmountDisplay
+                totalPrice={form.price}
+                splitItems={splitItems}
+              />
+              {splitItems.map((item, index) => (
+                <PriceAndCategory
+                  key={index}
+                  item={item}
+                  index={index}
+                  expenseCategories={expenseCategories}
+                  onUpdateItem={updateSplitItem}
+                  onRemoveItem={removeSplitItem}
+                  canRemove={splitItems.length > 2}
                 />
-                {splitItems.map((item, index) => (
-                  <PriceAndCategory
-                    key={index}
-                    item={item}
-                    index={index}
-                    expenseCategories={expenseCategories}
-                    onUpdateItem={updateSplitItem}
-                    onRemoveItem={removeSplitItem}
-                    canRemove={splitItems.length > 2}
-                  />
-                ))}
-                <Button
-                  mode="text"
-                  onPress={addSplitItem}
-                  style={styles.addSplitButton}
-                  icon="plus"
-                >
-                  Dodaj pozycję
-                </Button>
-              </View>
-            )}
-          </View>
-          <View>
-            {id ? (
-              <ButtonWithStatus textColor="red" onPress={handleDelete}>
-                Usuń
-              </ButtonWithStatus>
-            ) : null}
-            <ButtonWithStatus onPress={handleNavigateBack}>
-              Przerwij
-            </ButtonWithStatus>
-            <ButtonWithStatus
-              ref={buttonRef}
-              showLoading
-              mode="contained"
-              disabled={!validateForm() || isDataTheSame()}
-              onPress={handleSave}
-            >
-              {isPasRecord ? 'Zapisz zmiany' : 'Zapisz'}
-            </ButtonWithStatus>
-          </View>
+              ))}
+              <Button
+                mode="text"
+                onPress={addSplitItem}
+                style={styles.addSplitButton}
+                icon="plus"
+              >
+                Dodaj pozycję
+              </Button>
+            </View>
+          )}
         </View>
-      </View>
-    </KeyboardView>
+        <View>
+          {id ? (
+            <ButtonWithStatus textColor="red" onPress={handleDelete}>
+              Usuń
+            </ButtonWithStatus>
+          ) : null}
+          <ButtonWithStatus onPress={handleNavigateBack}>
+            Przerwij
+          </ButtonWithStatus>
+          <ButtonWithStatus
+            ref={buttonRef}
+            showLoading
+            mode="contained"
+            disabled={!validateForm() || isDataTheSame()}
+            onPress={handleSave}
+          >
+            {isPasRecord ? 'Zapisz zmiany' : 'Zapisz'}
+          </ButtonWithStatus>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    padding: sizes.lg,
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'space-between',
+    padding: sizes.lg,
   },
   datePickerContainer: {
     padding: 0,
-    marginVertical: sizes.xl,
-  },
-  formContent: {
-    flex: 1,
-    justifyContent: 'space-between',
+    marginVertical: sizes.lg,
+    minHeight: 80,
   },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     gap: sizes.md,
-    marginVertical: sizes.xl,
+    marginVertical: sizes.lg,
   },
   priceInputRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginVertical: sizes.lg,
   },
   currencyInputContainer: {
     width: '90%',
@@ -541,7 +546,7 @@ const styles = StyleSheet.create({
     marginTop: sizes.sm,
   },
   input: {
-    marginVertical: sizes.lg,
+    marginVertical: sizes.xxxl,
     padding: sizes.lg,
   },
   splitContainer: {
@@ -550,7 +555,7 @@ const styles = StyleSheet.create({
     borderRadius: sizes.lg,
   },
   splitIconRow: {
-    marginVertical: sizes.xl,
+    marginVertical: sizes.lg,
   },
   splitCancelSection: {
     marginVertical: sizes.lg,

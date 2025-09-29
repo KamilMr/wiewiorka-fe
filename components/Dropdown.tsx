@@ -1,7 +1,9 @@
-import {useState} from 'react';
+import {useState, useRef} from 'react';
 import {StyleSheet, Text, View, TextInput} from 'react-native';
 import {Dropdown} from 'react-native-element-dropdown';
-// import AntDesign from '@expo/vector-icons/AntDesign';
+import {DropdownProps} from 'react-native-element-dropdown/lib/typescript/components/Dropdown/model';
+import {useGradualAnimation} from '@/hooks';
+import {sizes, useAppTheme} from '@/constants/theme';
 
 export type Items = Array<{label: string; value: string}>;
 
@@ -10,20 +12,37 @@ interface Props {
   onChange: (item: {label: string; value: string}) => void;
   value?: string;
   label?: string;
+  offset: number;
 }
+
+type CombinedProps = Props & DropdownProps<any>;
 
 const DropdownComponent = ({
   items,
   onChange,
   value: propValue,
   label,
-}: Props) => {
+  keyboardAvoiding = false,
+  offset = 0,
+  ...rest
+}: CombinedProps) => {
+  const theme = useAppTheme();
+
+  // Standard dropdown state for focus styling
   const [isFocus, setIsFocus] = useState(false);
 
+  // Ref to measure dropdown container position
+  const droRef = useRef(null);
+
+  const [dropdownBottomY, setDropdownBottomY] = useState(0);
+
+  const {adjustedMargin} = useGradualAnimation(dropdownBottomY);
+
+  // Standard label rendering logic
   const renderLabel = () => {
     if (propValue || isFocus) {
       return (
-        <Text style={[styles.label, isFocus && {color: 'blue'}]}>
+        <Text style={[styles.label, isFocus && {color: theme.colors.primary}]}>
           {label ?? 'Wybierz'}
         </Text>
       );
@@ -31,101 +50,127 @@ const DropdownComponent = ({
     return null;
   };
 
+  // Standard focus handlers for dropdown styling
   const handleFocus = () => setIsFocus(true);
   const handleBlur = () => setIsFocus(false);
 
+  const measureWrapper = () => {
+    droRef?.current?.measure((x, y, width, height, pageX, pageY) => {
+      const bottomY = pageY + height;
+      setDropdownBottomY(bottomY);
+    });
+  };
+
   return (
-    <View style={styles.container}>
+    <View ref={droRef} style={[styles.container]} onLayout={measureWrapper}>
       {renderLabel()}
-      <Dropdown
-        style={[styles.dropdown, isFocus && {borderColor: 'blue'}]}
-        placeholderStyle={styles.placeholderStyle}
-        selectedTextStyle={styles.selectedTextStyle}
-        inputSearchStyle={styles.inputSearchStyle}
-        iconStyle={styles.iconStyle}
-        data={items}
-        search
-        keyboardShouldPersistTaps="handled"
-        renderInputSearch={onSearch => (
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search..."
-            onChangeText={onSearch}
-            autoFocus
-          />
-        )}
-        maxHeight={300}
-        labelField="label"
-        valueField="value"
-        placeholder={!isFocus ? 'Select item' : '...'}
-        searchPlaceholder="Search..."
-        value={propValue}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onChange={item => {
-          onChange(item);
-          setIsFocus(false);
-        }}
-        // renderLeftIcon={() => (
-        //   <AntDesign
-        //     style={styles.icon}
-        //     color={isFocus ? 'blue' : 'black'}
-        //     name="file-search"
-        //     size={20}
-        //   />
-        // )}
-      />
+      <View
+        style={[
+          styles.dropdownContainer,
+          {borderColor: theme.colors.outline},
+          isFocus && {borderColor: theme.colors.primary},
+        ]}
+      >
+        <Dropdown
+          style={styles.dropdown}
+          placeholderStyle={styles.placeholderStyle}
+          selectedTextStyle={styles.selectedTextStyle}
+          containerStyle={{
+            marginBottom: adjustedMargin > 0 ? adjustedMargin + offset : 0,
+          }}
+          inputSearchStyle={styles.inputSearchStyle}
+          dropdownPosition="top"
+          iconStyle={styles.iconStyle}
+          data={items}
+          search
+          renderInputSearch={onSearch => (
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search..."
+              onChangeText={onSearch}
+              autoFocus
+            />
+          )}
+          maxHeight={300}
+          labelField="label"
+          valueField="value"
+          placeholder={!isFocus ? 'Select item' : '...'}
+          searchPlaceholder="Search..."
+          value={propValue}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onChange={item => {
+            onChange(item);
+            setIsFocus(false);
+          }}
+          {...rest}
+          // renderLeftIcon={() => (
+          //   <AntDesign
+          //     style={styles.icon}
+          //     color={isFocus ? 'blue' : 'black'}
+          //     name="file-search"
+          //     size={20}
+          //   />
+          // )}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
-    padding: 16,
+    marginVertical: sizes.lg,
+  },
+  dropdownContainer: {
+    borderWidth: 0.8,
+    minHeight: 80,
+    borderRadius: sizes.sm,
+    backgroundColor: '#ffffff',
+    paddingVertical: sizes.sm,
+    paddingHorizontal: sizes.md,
+    justifyContent: 'center',
   },
   dropdown: {
-    height: 50,
-    borderColor: 'gray',
-    borderWidth: 0.5,
-    borderRadius: 8,
-    paddingHorizontal: 8,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    paddingHorizontal: 0,
   },
   icon: {
     marginRight: 5,
   },
   label: {
     position: 'absolute',
-    backgroundColor: 'white',
+    backgroundColor: '#ffffff',
     left: 22,
     top: 8,
     zIndex: 999,
-    paddingHorizontal: 8,
+    paddingHorizontal: sizes.sm,
     fontSize: 14,
   },
   placeholderStyle: {
-    fontSize: 16,
+    fontSize: 20,
   },
   selectedTextStyle: {
-    fontSize: 16,
+    fontSize: 20,
   },
   iconStyle: {
     width: 20,
     height: 20,
   },
   inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
+    minHeight: 56,
+    fontSize: 20,
   },
   searchInput: {
-    height: 40,
-    fontSize: 16,
+    minHeight: 56,
+    fontSize: 20,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    margin: 8,
-    backgroundColor: 'white',
+    borderRadius: sizes.sm,
+    paddingHorizontal: sizes.md,
+    margin: sizes.sm,
+    backgroundColor: '#ffffff',
   },
 });
 

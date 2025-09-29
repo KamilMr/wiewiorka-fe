@@ -99,11 +99,10 @@ const PriceAndCategory = ({
           flexDirection: 'row',
           alignItems: 'center',
           gap: 8,
-          height: 55,
         }}
       >
         <TextInput
-          style={{flex: 1, marginVertical: 0}}
+          style={{flex: 1, marginVertical: 0, minHeight: 80, borderRadius: 2}}
           // dense
           label="Cena"
           keyboardType="numeric"
