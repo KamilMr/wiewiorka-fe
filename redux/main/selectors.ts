@@ -302,3 +302,24 @@ export const selectBudgets = (
       return tR;
     },
   );
+
+/**
+ * Selector to get latest exchange rate for a currency code
+ * @param currencyCode - Three-letter currency code
+ * @returns Latest exchange rate for the currency or null if not found
+ */
+export const selectLatestExchangeRate = (currencyCode: string) =>
+  createSelector(
+    (state: RootState) => state.main.exchangeRates,
+    (exchangeRates = []) => {
+      const rates = exchangeRates.filter(
+        rate => rate.code.toLowerCase() === currencyCode.toLowerCase(),
+      );
+
+      if (rates.length === 0) return null;
+
+      return rates.reduce((latest, current) =>
+        new Date(current.date) > new Date(latest.date) ? current : latest,
+      );
+    },
+  );

@@ -5,6 +5,7 @@ import {getURL, makeNewIdArr, makeRandomId} from '@/common';
 import {Expense, Income} from '@/types';
 import {
   addBudgets as addBudgetsAction,
+  addExchangeRate as addExchangeRateAction,
   updateBudget as updateBudgetAction,
   addExpense as addExpenseAction,
   updateExpense as updateExpenseAction,
@@ -844,5 +845,60 @@ export const genericSync = createAsyncThunk<
 
       return {error: true, message: String(error)};
     }
+  },
+);
+
+/**
+ * Fetches exchange rate from NBP API with daily caching
+ * @param params - Currency code and optional date
+ */
+export const fetchExchangeRate = createAsyncThunk(
+  'main/fetchExchangeRate',
+  async (
+    {currencyCode, date}: {currencyCode: string; date?: string},
+    {dispatch, getState},
+  ) => {
+    const {formatDateForNBP} = await import('../../helpers/nbpApi');
+    const state = getState() as RootState;
+
+    const today = date || formatDateForNBP(new Date());
+    console.log(`[NBP] Fetching ${currencyCode} rate for ${today}`);
+
+    // Check if we already have today's rate
+    const existingRate = state.main.exchangeRates.find(
+      rate =>
+        rate.code.toLowerCase() === currencyCode.toLowerCase() &&
+        rate.date === today,
+    );
+
+    if (existingRate) {
+      console.log(
+        `[NBP] Using cached ${currencyCode} rate:`,
+        existingRate.rate,
+      );
+      return existingRate;
+    }
+
+    console.log(`[NBP] No cached rate found, fetching from API...`);
+
+    const {fetchExchangeRate: fetchFromNBP} = await import(
+      '../../helpers/nbpApi'
+    );
+
+    const exchangeRate = await fetchFromNBP(currencyCode, date);
+
+    if (exchangeRate) {
+      console.log(`[NBP] API response for ${currencyCode}:`, {
+        rate: exchangeRate.rate,
+        date: exchangeRate.date,
+        currency: exchangeRate.currency,
+      });
+      dispatch(addExchangeRateAction(exchangeRate));
+      console.log(`[NBP] Rate stored in Redux for ${currencyCode}`);
+      return exchangeRate;
+    }
+
+    console.error(`[NBP] Failed to fetch exchange rate for ${currencyCode}`);
+    throw new Error(`Failed to fetch exchange rate for ${currencyCode}`);
   },
 );

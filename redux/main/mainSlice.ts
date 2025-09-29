@@ -5,6 +5,7 @@ import {format} from 'date-fns';
 
 import aggregateDataByDay from '../../utils/aggregateData';
 import {MainSlice, Income, Expense} from '@/types';
+import {StoredExchangeRate} from '../../types/nbpTypes';
 
 const emptyState = (): MainSlice => ({
   status: 'idle',
@@ -13,6 +14,7 @@ const emptyState = (): MainSlice => ({
   incomes: [],
   categories: {},
   sources: {},
+  exchangeRates: [],
   _aggregated: {},
   devMode: false,
   snackbar: {
@@ -322,6 +324,36 @@ const mainSlice = createSlice({
         }
       }
     },
+    /**
+     * Stores exchange rate data in the state
+     * @param state - Current state
+     * @param action - Action containing exchange rate data
+     */
+    addExchangeRate: (state, action: {payload: StoredExchangeRate}) => {
+      const existingIndex = state.exchangeRates.findIndex(
+        rate =>
+          rate.code === action.payload.code &&
+          rate.date === action.payload.date,
+      );
+
+      if (existingIndex >= 0) {
+        console.log(
+          `[Redux] Updating existing ${action.payload.code} rate:`,
+          action.payload.rate,
+        );
+        state.exchangeRates[existingIndex] = action.payload;
+      } else {
+        console.log(
+          `[Redux] Adding new ${action.payload.code} rate:`,
+          action.payload.rate,
+        );
+        state.exchangeRates.push(action.payload);
+      }
+      console.log(
+        `[Redux] Total exchange rates in store:`,
+        state.exchangeRates.length,
+      );
+    },
   },
   extraReducers: builder => {
     builder
@@ -359,6 +391,7 @@ const mainSlice = createSlice({
 
 export const {
   addBudgets,
+  addExchangeRate,
   addExpense,
   addGroupCategoryAction,
   addIncome,

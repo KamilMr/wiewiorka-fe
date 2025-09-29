@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 
 import _ from 'lodash';
 import {
@@ -29,6 +29,7 @@ import {
   updateExpense,
   addNewIncome,
   updateIncome,
+  fetchExchangeRate,
 } from '@/redux/main/thunks';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {
@@ -36,6 +37,7 @@ import {
   selectExpense,
   selectIncome,
   selectSources,
+  selectLatestExchangeRate,
 } from '@/redux/main/selectors';
 import {Expense} from '@/types';
 import ElementDropdown from '@/components/Dropdown';
@@ -56,6 +58,7 @@ const initSplitItem = () => ({
 export default function AddNew() {
   const expenseCategories = useAppSelector(selectCategoriesByUsage);
   const incomeCategories = useAppSelector(selectSources) || [];
+  const eurRate = useAppSelector(selectLatestExchangeRate('EUR'));
   const {id, type: incomingType = ''} = useLocalSearchParams();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -66,10 +69,44 @@ export default function AddNew() {
   const [splitItems, setSplitItems] = useState<
     Array<{price: string; category: string; description: string}>
   >([initSplitItem(), initSplitItem()]);
-  const [exchangeRates, setExchangeRates] = useState({
-    PLN_EUR: 0.23,
-    EUR_PLN: 4.35,
-  });
+
+  // Manual exchange rates state (when user edits)
+  const [manualExchangeRates, setManualExchangeRates] = useState<Record<
+    string,
+    number
+  > | null>(null);
+
+  // Calculate exchange rates - prioritize manual edits over NBP data
+  const exchangeRates = useMemo(() => {
+    // If user has manually edited rates, use those
+    if (manualExchangeRates) {
+      console.log(
+        '[AddNew] Using manually edited exchange rates:',
+        manualExchangeRates,
+      );
+      return manualExchangeRates;
+    }
+
+    // Otherwise use NBP data or fallback
+    const rates = {
+      PLN_EUR: 0.23, // fallback
+      EUR_PLN: 4.35, // fallback
+    };
+
+    if (eurRate?.rate) {
+      rates.EUR_PLN = eurRate.rate;
+      rates.PLN_EUR = 1 / eurRate.rate;
+      console.log('[AddNew] Using NBP exchange rates:', {
+        EUR_PLN: rates.EUR_PLN,
+        PLN_EUR: rates.PLN_EUR.toFixed(4),
+        date: eurRate.date,
+      });
+    } else {
+      console.log('[AddNew] Using fallback exchange rates');
+    }
+
+    return rates;
+  }, [eurRate, manualExchangeRates]);
 
   // Currency data for CurrencyPriceInput
   const currencies = [
@@ -102,6 +139,7 @@ export default function AddNew() {
     setType('expense');
     setIsSplit(false);
     setSplitItems([initSplitItem(), initSplitItem()]);
+    setManualExchangeRates(null); // Reset to NBP rates
   };
 
   useFocusEffect(
@@ -113,6 +151,10 @@ export default function AddNew() {
           focusRef.current.focus();
         }, 200);
       }
+
+      // Fetch EUR exchange rate (with built-in daily caching)
+      console.log('[AddNew] Triggering EUR exchange rate fetch...');
+      dispatch(fetchExchangeRate({currencyCode: 'EUR'}));
 
       return () => {
         if (focusRef.current) {
@@ -410,7 +452,13 @@ export default function AddNew() {
                   onAmountChange={(value, converted) =>
                     setForm({...form, price: [converted, value]})
                   }
-                  onExchangeRateChange={setExchangeRates}
+                  onExchangeRateChange={newRates => {
+                    console.log(
+                      '[AddNew] Manual exchange rate change:',
+                      newRates,
+                    );
+                    setManualExchangeRates(newRates);
+                  }}
                 />
               </View>
               {type === 'expense' && (
