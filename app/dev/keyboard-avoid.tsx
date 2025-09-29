@@ -77,6 +77,7 @@ const KeyboardAvoidPage = () => {
       marginBottom: height.value > 0 ? 0 : PADDING,
     };
   });
+
   return (
     <>
       <KeyboardAwareScrollView>

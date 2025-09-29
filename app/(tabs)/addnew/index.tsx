@@ -8,8 +8,9 @@ import {
   useNavigation,
 } from 'expo-router';
 import {formatDate} from 'date-fns';
-import {View, StyleSheet, Alert, ScrollView} from 'react-native';
+import {View, StyleSheet, Alert} from 'react-native';
 import {Button, IconButton, Switch, Text} from 'react-native-paper';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
 import {
   ButtonWithStatus,
@@ -38,7 +39,6 @@ import {
 } from '@/redux/main/selectors';
 import {Expense} from '@/types';
 import ElementDropdown from '@/components/Dropdown';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
 const initState = (date = new Date(), categories: any[] = []) => ({
   description: '',
@@ -66,18 +66,16 @@ export default function AddNew() {
   const [splitItems, setSplitItems] = useState<
     Array<{price: string; category: string; description: string}>
   >([initSplitItem(), initSplitItem()]);
-  const [exchangeRate, setExchangeRate] = useState<number>(4.3);
+  const [exchangeRates, setExchangeRates] = useState({
+    PLN_EUR: 0.23,
+    EUR_PLN: 4.35,
+  });
 
   // Currency data for CurrencyPriceInput
   const currencies = [
     {code: 'PLN', symbol: 'zł', name: 'Polski Złoty'},
     {code: 'EUR', symbol: '€', name: 'Euro'},
   ];
-
-  const exchangeRates = {
-    PLN_EUR: 0.23,
-    EUR_PLN: 4.35,
-  };
 
   const focusRef = useRef<any>(null);
   const dirty = useRef({});
@@ -333,7 +331,7 @@ export default function AddNew() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -412,6 +410,7 @@ export default function AddNew() {
                   onAmountChange={(value, converted) =>
                     setForm({...form, price: [converted, value]})
                   }
+                  onExchangeRateChange={setExchangeRates}
                 />
               </View>
               {type === 'expense' && (
@@ -497,7 +496,7 @@ export default function AddNew() {
             {isPasRecord ? 'Zapisz zmiany' : 'Zapisz'}
           </ButtonWithStatus>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
