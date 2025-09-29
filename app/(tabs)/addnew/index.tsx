@@ -409,6 +409,15 @@ export default function AddNew() {
               disabled={isPasRecord}
             />
             <Text variant="bodyLarge">Przychód</Text>
+            {
+              <IconButton
+                icon={isSplit ? 'call-merge' : 'call-split'}
+                onPress={handleSplitToggle}
+                disabled={(!form.price[0] && !isSplit) || type !== 'expense'}
+                size={20}
+                style={styles.splitToggleButton}
+              />
+            }
           </View>
 
           {/* Add new category  selection */}
@@ -461,15 +470,6 @@ export default function AddNew() {
                   }}
                 />
               </View>
-              {type === 'expense' && (
-                <IconButton
-                  icon={isSplit ? 'call-merge' : 'call-split'}
-                  onPress={handleSplitToggle}
-                  disabled={!form.price[0] && !isSplit}
-                  size={20}
-                  style={styles.splitToggleButton}
-                />
-              )}
             </View>
           )}
 
@@ -579,10 +579,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   currencyInputContainer: {
-    width: '90%',
+    width: '100%',
   },
   splitToggleButton: {
     margin: 0,
+    marginLeft: sizes.xl,
     padding: sizes.xs,
     width: 50,
   },
