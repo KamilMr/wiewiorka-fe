@@ -13,6 +13,10 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}🚀 Starting local Android build process...${NC}"
 
+# Update EAS config with current IP
+echo -e "${YELLOW}📝 Updating EAS config with current IP...${NC}"
+node scripts/update-eas-local-ip.js
+
 # Set up Android environment
 # export ANDROID_HOME=~/Library/Android/sdk
 # export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools
