@@ -71,6 +71,7 @@ export interface MainSlice {
   categories: {[key: number]: Category};
   _aggregated: AggregatedData;
   sources: {[key: string]: string[]};
+  exchangeRates: Array<import('./types/nbpTypes').StoredExchangeRate>;
   devMode: boolean;
   snackbar: Snackbar;
 }

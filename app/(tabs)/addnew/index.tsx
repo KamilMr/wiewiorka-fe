@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 
 import _ from 'lodash';
 import {
@@ -9,7 +9,8 @@ import {
 } from 'expo-router';
 import {formatDate} from 'date-fns';
 import {View, StyleSheet, Alert} from 'react-native';
-import {Button, IconButton} from 'react-native-paper';
+import {Button, IconButton, Switch, Text} from 'react-native-paper';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
 import {
   ButtonWithStatus,
@@ -28,6 +29,7 @@ import {
   updateExpense,
   addNewIncome,
   updateIncome,
+  fetchExchangeRate,
 } from '@/redux/main/thunks';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {
@@ -35,16 +37,15 @@ import {
   selectExpense,
   selectIncome,
   selectSources,
+  selectLatestExchangeRate,
 } from '@/redux/main/selectors';
 import {Expense} from '@/types';
 import ElementDropdown from '@/components/Dropdown';
-import KeyboardView from '@/components/KeyboardView';
-import SafeScrollContainer from '@/components/SafeScrollContainer';
 
 const initState = (date = new Date(), categories: any[] = []) => ({
   description: '',
   date,
-  price: '',
+  price: ['', ''],
   category: categories[0]?.name,
 });
 
@@ -57,6 +58,7 @@ const initSplitItem = () => ({
 export default function AddNew() {
   const expenseCategories = useAppSelector(selectCategoriesByUsage);
   const incomeCategories = useAppSelector(selectSources) || [];
+  const eurRate = useAppSelector(selectLatestExchangeRate('EUR'));
   const {id, type: incomingType = ''} = useLocalSearchParams();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -67,18 +69,50 @@ export default function AddNew() {
   const [splitItems, setSplitItems] = useState<
     Array<{price: string; category: string; description: string}>
   >([initSplitItem(), initSplitItem()]);
-  const [exchangeRate, setExchangeRate] = useState<number>(4.3);
+
+  // Manual exchange rates state (when user edits)
+  const [manualExchangeRates, setManualExchangeRates] = useState<Record<
+    string,
+    number
+  > | null>(null);
+
+  // Calculate exchange rates - prioritize manual edits over NBP data
+  const exchangeRates = useMemo(() => {
+    // If user has manually edited rates, use those
+    if (manualExchangeRates) {
+      console.log(
+        '[AddNew] Using manually edited exchange rates:',
+        manualExchangeRates,
+      );
+      return manualExchangeRates;
+    }
+
+    // Otherwise use NBP data or fallback
+    const rates = {
+      PLN_EUR: 0.23, // fallback
+      EUR_PLN: 4.35, // fallback
+    };
+
+    if (eurRate?.rate) {
+      rates.EUR_PLN = eurRate.rate;
+      rates.PLN_EUR = 1 / eurRate.rate;
+      console.log('[AddNew] Using NBP exchange rates:', {
+        EUR_PLN: rates.EUR_PLN,
+        PLN_EUR: rates.PLN_EUR.toFixed(4),
+        date: eurRate.date,
+      });
+    } else {
+      console.log('[AddNew] Using fallback exchange rates');
+    }
+
+    return rates;
+  }, [eurRate, manualExchangeRates]);
 
   // Currency data for CurrencyPriceInput
   const currencies = [
     {code: 'PLN', symbol: 'zł', name: 'Polski Złoty'},
     {code: 'EUR', symbol: '€', name: 'Euro'},
   ];
-
-  const exchangeRates = {
-    PLN_EUR: 0.23,
-    EUR_PLN: 4.35,
-  };
 
   const focusRef = useRef<any>(null);
   const dirty = useRef({});
@@ -105,6 +139,7 @@ export default function AddNew() {
     setType('expense');
     setIsSplit(false);
     setSplitItems([initSplitItem(), initSplitItem()]);
+    setManualExchangeRates(null); // Reset to NBP rates
   };
 
   useFocusEffect(
@@ -116,6 +151,10 @@ export default function AddNew() {
           focusRef.current.focus();
         }, 200);
       }
+
+      // Fetch EUR exchange rate (with built-in daily caching)
+      console.log('[AddNew] Triggering EUR exchange rate fetch...');
+      dispatch(fetchExchangeRate({currencyCode: 'EUR'}));
 
       return () => {
         if (focusRef.current) {
@@ -138,13 +177,14 @@ export default function AddNew() {
   useFocusEffect(
     useCallback(() => {
       if (!record) return;
+      const priceString = record?.price.toString() || '';
       const tR = {
         description: record?.description || '',
         date:
           incomingType === 'income'
             ? new Date(record?.date)
             : new Date(record.date.split('/').reverse().join('-')),
-        price: record?.price.toString() || '',
+        price: [priceString, priceString],
         category: 'source' in record ? record.source : record.category || '',
       };
       setForm(tR);
@@ -175,7 +215,7 @@ export default function AddNew() {
     if (category.value === 'Dodaj nową kategorię') {
     } else {
       setForm({...form, category: category.value});
-      if (!form.price) return focusRef.current?.focus();
+      if (!form.price[0]) return focusRef.current?.focus();
       focusRef.current?.blur();
       buttonRef.current?.focus();
     }
@@ -189,12 +229,12 @@ export default function AddNew() {
   };
 
   const handleSplitToggle = () => {
-    if (!isSplit && form.price) {
-      const totalPrice = parseFloat(form.price);
+    if (!isSplit && form.price[0]) {
+      const totalPrice = parseFloat(form.price[0]);
       const halfPrice = (totalPrice / 2).toString();
       setSplitItems([
-        {price: halfPrice, category: form.category},
-        {price: halfPrice, category: ''},
+        {price: halfPrice, category: form.category, description: ''},
+        {price: halfPrice, category: '', description: ''},
       ]);
     }
     setIsSplit(!isSplit);
@@ -231,12 +271,12 @@ export default function AddNew() {
         (sum, item) => sum + (+item.price || 0),
         0,
       );
-      const remainingAmount = (+form.price || 0) - totalSplitPrice;
+      const remainingAmount = (+form.price[0] || 0) - totalSplitPrice;
       return hasValidItems && remainingAmount === 0;
     }
 
     // For non-split items, price and category are required
-    if (!form.price || !form.category) {
+    if (!form.price[0] || !form.category) {
       return false;
     }
 
@@ -283,7 +323,7 @@ export default function AddNew() {
           id: id ? +id : '',
           description,
           date: formatDate(date, 'yyyy-MM-dd'),
-          price: +price,
+          price: +price[0],
           categoryId:
             expenseCategories.find(cat => cat.name === form.category)?.id || 0,
         };
@@ -293,7 +333,7 @@ export default function AddNew() {
         dataToSave = {
           id: id ? +id : '',
           date: formatDate(form.date, 'yyyy-MM-dd'),
-          price: +form.price,
+          price: +form.price[0],
           source: form.category,
           vat: 0,
         };
@@ -332,35 +372,53 @@ export default function AddNew() {
   };
 
   return (
-    <KeyboardView>
-      <SafeScrollContainer style={{backgroundColor: 'white', padding: 10}}>
-        <View style={{flex: 1}}>
+    <View style={styles.container}>
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View>
           {!isSplit && (
             <TextInput
               style={styles.input}
               label={'Opis'}
+              multiline
               onChangeText={text => setForm({...form, description: text})}
               value={form.description}
             />
           )}
 
-          <View style={[styles.input, {padding: 0, marginVertical: 24}]}>
+          <View style={styles.datePickerContainer}>
             <DatePicker
               label="Wybierz Datę"
+              variant="text"
               onChange={date => date && setForm({...form, date})}
               value={form.date}
             />
           </View>
 
-          <SelectRadioButtons
-            disabled={isPasRecord}
-            items={[
-              {label: 'Wydatek', value: 'expense'},
-              {label: 'Przychód', value: 'income'},
-            ]}
-            onSelect={handleSelectType}
-            selected={type}
-          />
+          <View style={styles.switchContainer}>
+            <Text variant="bodyLarge">Wydatek</Text>
+            <Switch
+              value={type === 'income'}
+              onValueChange={value =>
+                handleSelectType(value ? 'income' : 'expense')
+              }
+              disabled={isPasRecord}
+            />
+            <Text variant="bodyLarge">Przychód</Text>
+            {
+              <IconButton
+                icon={isSplit ? 'call-merge' : 'call-split'}
+                onPress={handleSplitToggle}
+                disabled={(!form.price[0] && !isSplit) || type !== 'expense'}
+                size={20}
+                style={styles.splitToggleButton}
+              />
+            }
+          </View>
 
           {/* Add new category  selection */}
           {type === 'income' && (
@@ -392,32 +450,26 @@ export default function AddNew() {
           )}
 
           {(type === 'expense' || type === 'income') && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-              }}
-            >
-              <View style={{width: '90%'}}>
+            <View style={styles.priceInputRow}>
+              <View style={styles.currencyInputContainer}>
                 <CurrencyPriceInput
-                  value={form.price}
+                  value={form.price[1]}
                   currencies={currencies}
                   disabled={isSplit}
                   exchangeRates={exchangeRates}
-                  initialAmount={form.price}
                   initialCurrency={currencies[0]}
-                  onAmountChange={value => setForm({...form, price: value})}
+                  onAmountChange={(value, converted) =>
+                    setForm({...form, price: [converted, value]})
+                  }
+                  onExchangeRateChange={newRates => {
+                    console.log(
+                      '[AddNew] Manual exchange rate change:',
+                      newRates,
+                    );
+                    setManualExchangeRates(newRates);
+                  }}
                 />
               </View>
-              {type === 'expense' && (
-                <IconButton
-                  icon={isSplit ? 'call-merge' : 'call-split'}
-                  onPress={handleSplitToggle}
-                  disabled={!form.price && !isSplit}
-                  size={20}
-                  style={{margin: 0, padding: 2, width: 50}}
-                />
-              )}
             </View>
           )}
 
@@ -425,7 +477,7 @@ export default function AddNew() {
             <View style={styles.splitIconRow}>
               {(type === 'expense' ||
                 (type === 'income' && newCustomIncome === null)) && (
-                <View style={{flex: 1}}>
+                <View style={styles.dropdownContainer}>
                   <ElementDropdown
                     items={itemsToSelect}
                     showDivider={type === 'expense'}
@@ -465,7 +517,7 @@ export default function AddNew() {
               <Button
                 mode="text"
                 onPress={addSplitItem}
-                style={{marginTop: 8}}
+                style={styles.addSplitButton}
                 icon="plus"
               >
                 Dodaj pozycję
@@ -492,24 +544,62 @@ export default function AddNew() {
             {isPasRecord ? 'Zapisz zmiany' : 'Zapisz'}
           </ButtonWithStatus>
         </View>
-      </SafeScrollContainer>
-    </KeyboardView>
+      </KeyboardAwareScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
+  container: {
     backgroundColor: 'white',
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+    padding: sizes.lg,
+  },
+  datePickerContainer: {
+    padding: 0,
+    marginVertical: sizes.lg,
+    minHeight: 80,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: sizes.md,
+    marginVertical: sizes.lg,
+  },
+  priceInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  currencyInputContainer: {
+    width: '100%',
+  },
+  splitToggleButton: {
+    margin: 0,
+    marginLeft: sizes.xl,
+    padding: sizes.xs,
+    width: 50,
+  },
+  dropdownContainer: {
+    flex: 1,
+  },
+  addSplitButton: {
+    marginTop: sizes.sm,
   },
   input: {
-    marginVertical: sizes.lg,
+    marginVertical: sizes.xxxl,
     padding: sizes.lg,
   },
   splitContainer: {
     marginVertical: sizes.lg,
     padding: sizes.md,
-    // backgroundColor: '#f5f5f5',
     borderRadius: sizes.lg,
   },
   splitIconRow: {

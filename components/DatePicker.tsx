@@ -37,10 +37,8 @@ const CustomDatePicker = ({
     <DatePickerInput
       inputMode="start"
       mode="outlined"
-      theme={{
-        colors: {},
-      }}
       editable={editable}
+      iconSize={32}
       disabled={disabled}
       readOnly={readOnly}
       keyboardType="numeric"
@@ -51,6 +49,8 @@ const CustomDatePicker = ({
       style={[
         {
           underlineColorAndroid: 'transparent',
+          backgroundColor: 'transparent',
+          justifyContent: 'flex-end',
         },
         style,
       ]}

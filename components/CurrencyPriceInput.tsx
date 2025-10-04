@@ -1,6 +1,16 @@
 import React, {useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {View, StyleSheet, Pressable} from 'react-native';
-import {TextInput, Text, Menu, Surface} from 'react-native-paper';
+import {
+  TextInput,
+  Text,
+  Menu,
+  Surface,
+  Dialog,
+  Button,
+  Portal,
+} from 'react-native-paper';
+import {convertCurrency} from '../utils/currencyUtils';
 
 interface Currency {
   code: string;
@@ -15,60 +25,47 @@ interface CurrencyPriceInputProps {
   currencies: Currency[];
   exchangeRates: Record<string, number>;
   disabled?: boolean;
-  onAmountChange?: (amount: string) => void;
+  onAmountChange?: (value: string, converted: string) => void;
   onCurrencyChange?: (currency: Currency) => void;
+  onExchangeRateChange?: (newRates: Record<string, number>) => void;
 }
 
 const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
   value,
-  initialAmount = '',
   initialCurrency,
   currencies,
   exchangeRates,
   disabled = false,
   onAmountChange,
   onCurrencyChange,
+  onExchangeRateChange,
 }) => {
-  const [amount, setAmount] = useState(value ?? initialAmount);
+  const [baseAmount, setBaseAmount] = useState(value);
+
   const [selectedCurrency, setSelectedCurrency] = useState(
     initialCurrency ?? currencies[0],
   );
-  const [targetCurrency, setTargetCurrency] = useState(currencies[0]);
+  const [targetCurrency, setTargetCurrency] = useState(
+    initialCurrency ?? currencies[0],
+  );
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
   const [currencyPressed, setCurrencyPressed] = useState(false);
   const [conversionPressed, setConversionPressed] = useState(false);
+  const [isEditingRate, setIsEditingRate] = useState(false);
+  const [editRateValue, setEditRateValue] = useState('');
+
+  // Calculator mode
   const [isCalculatorMode, setIsCalculatorMode] = useState(false);
   const [calculatorExpression, setCalculatorExpression] = useState('');
 
-  const currentAmount = value ?? amount;
+  const currentAmount = value ?? baseAmount;
 
-  const convertedAmount = React.useMemo(() => {
-    const numAmount = parseFloat(currentAmount);
-    if (isNaN(numAmount) || numAmount <= 0) return 0;
-
-    const rateKey = `${selectedCurrency.code}_${targetCurrency.code}`;
-    const rate =
-      selectedCurrency.code === targetCurrency.code
-        ? 1.0
-        : (exchangeRates[rateKey] ?? 1.0);
-    return numAmount * rate;
-  }, [currentAmount, selectedCurrency, targetCurrency, exchangeRates]);
-
-  const formattedConversion = React.useMemo(() => {
-    if (convertedAmount > 0) {
-      return `~${convertedAmount.toFixed(2)} ${targetCurrency.symbol}`;
-    }
-    return `~0.00 ${targetCurrency.symbol}`;
-  }, [convertedAmount, targetCurrency]);
-
-  const exchangeRateText = React.useMemo(() => {
-    const rateKey = `${selectedCurrency.code}_${targetCurrency.code}`;
-    const rate =
-      selectedCurrency.code === targetCurrency.code
-        ? 1.0
-        : (exchangeRates[rateKey] ?? 1.0);
-    return `1 ${selectedCurrency.code} = ${rate.toFixed(4)} ${targetCurrency.code}`;
-  }, [selectedCurrency, targetCurrency, exchangeRates]);
+  const {formattedConversion, exchangeRateText} = convertCurrency(
+    currentAmount,
+    selectedCurrency,
+    targetCurrency,
+    exchangeRates,
+  );
 
   const safeCalculate = (expression: string): number | null => {
     try {
@@ -108,21 +105,42 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
     const cleanValue = newValue.replace(/[^0-9.,]/g, '').replace(',', '.');
     const dotCount = (cleanValue.match(/\./g) || []).length;
     if (dotCount <= 1) {
-      if (!value) setAmount(cleanValue);
-      onAmountChange?.(cleanValue);
+      if (!value) setBaseAmount(cleanValue);
+      const converted = convertCurrency(
+        cleanValue,
+        selectedCurrency,
+        targetCurrency,
+        exchangeRates,
+      );
+      onAmountChange?.(cleanValue, converted.convertedString);
     }
   };
 
-  const handleCurrencyChange = (currency: Currency) => {
-    setSelectedCurrency(currency);
+  const handleCurrencyChange = (newCurrency: Currency) => {
+    setSelectedCurrency(newCurrency);
     setShowCurrencyMenu(false);
-    onCurrencyChange?.(currency);
+    onCurrencyChange?.(newCurrency);
+    const converted = convertCurrency(
+      value,
+      newCurrency,
+      newCurrency.code === 'PLN' ? newCurrency : selectedCurrency,
+      exchangeRates,
+    );
+    onAmountChange?.(value, converted.convertedString);
   };
 
   const swapCurrencies = () => {
-    const temp = selectedCurrency;
+    // NOTE use temp to change currency
+    // const temp = selectedCurrency;
     setSelectedCurrency(targetCurrency);
-    setTargetCurrency(temp);
+    setTargetCurrency(targetCurrency);
+    const converted = convertCurrency(
+      value,
+      selectedCurrency,
+      targetCurrency,
+      exchangeRates,
+    );
+    onAmountChange?.(converted.convertedString, converted.convertedString);
   };
 
   const handleConversionPress = () => {
@@ -142,96 +160,187 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
     const result = safeCalculate(calculatorExpression);
     if (result !== null) {
       const resultString = result.toString();
-      if (!value) setAmount(resultString);
-      onAmountChange?.(resultString);
+      if (!value) setBaseAmount(resultString);
+      onAmountChange?.(resultString, resultString);
     }
     setIsCalculatorMode(false);
     setCalculatorExpression('');
   };
 
-  return (
-    <Surface style={styles.container} elevation={1}>
-      <View style={styles.mainSection}>
-        {/* Pole kwoty i selektor waluty */}
-        <View style={styles.inputRow}>
-          <TextInput
-            value={isCalculatorMode ? calculatorExpression : currentAmount}
-            onChangeText={handleAmountChange}
-            onSubmitEditing={handleCalculationConfirm}
-            disabled={disabled}
-            placeholder="0"
-            keyboardType="phone-pad"
-            style={styles.amountInput}
-            contentStyle={styles.amountInputContent}
-            underlineStyle={{height: 0}}
-            mode="flat"
-            dense
-          />
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setTargetCurrency(initialCurrency ?? currencies[0]);
+        setSelectedCurrency(initialCurrency ?? currencies[0]);
+        setIsEditingRate(false);
+        setEditRateValue('');
+      };
+    }, []),
+  );
 
-          <Menu
-            visible={showCurrencyMenu}
-            onDismiss={handleDismissCurrencyMenu}
-            anchor={
-              <Pressable
-                onPress={handleShowCurrencyMenu}
-                onPressIn={handleCurrencyPressIn}
-                disabled={disabled}
-                onPressOut={handleCurrencyPressOut}
-                style={[
-                  styles.currencySelector,
-                  currencyPressed && styles.currencySelectorPressed,
-                ]}
-              >
-                <Text
+  return (
+    <>
+      <Surface style={styles.container} elevation={1}>
+        <View style={styles.mainSection}>
+          {/* Pole kwoty i selektor waluty */}
+          <View style={styles.inputRow}>
+            <TextInput
+              value={isCalculatorMode ? calculatorExpression : currentAmount}
+              onChangeText={handleAmountChange}
+              onSubmitEditing={handleCalculationConfirm}
+              disabled={disabled}
+              placeholder="0"
+              keyboardType="phone-pad"
+              style={styles.amountInput}
+              contentStyle={styles.amountInputContent}
+              underlineStyle={{height: 0}}
+              mode="flat"
+            />
+
+            <Menu
+              visible={showCurrencyMenu}
+              onDismiss={handleDismissCurrencyMenu}
+              anchor={
+                <Pressable
+                  onPress={handleShowCurrencyMenu}
+                  onPressIn={handleCurrencyPressIn}
+                  disabled={disabled}
+                  onPressOut={handleCurrencyPressOut}
                   style={[
-                    styles.currencySymbol,
-                    disabled && styles.disabledText,
+                    styles.currencySelector,
+                    currencyPressed && styles.currencySelectorPressed,
                   ]}
                 >
-                  {selectedCurrency.symbol}
-                </Text>
-                <Text
-                  style={[styles.dropdownIcon, disabled && styles.disabledText]}
-                >
-                  ▼
-                </Text>
-              </Pressable>
-            }
-          >
-            {currencies.map(currency => (
-              <Menu.Item
-                key={currency.code}
-                onPress={() => handleCurrencyChange(currency)}
-                title={`${currency.symbol} ${currency.code}`}
-                leadingIcon={
-                  selectedCurrency.code === currency.code ? 'check' : undefined
-                }
-              />
-            ))}
-          </Menu>
-        </View>
-
-        {/* Conversion section */}
-        {selectedCurrency.code === targetCurrency.code ? null : (
-          <View style={styles.conversionSection}>
-            <Pressable
-              onPress={handleConversionPress}
-              onPressIn={handleConversionPressIn}
-              disabled={disabled}
-              onPressOut={handleConversionPressOut}
-              style={[
-                styles.conversionButton,
-                conversionPressed && styles.conversionButtonPressed,
-              ]}
+                  <Text
+                    style={[
+                      styles.currencySymbol,
+                      disabled && styles.disabledText,
+                    ]}
+                  >
+                    {selectedCurrency.symbol}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.dropdownIcon,
+                      disabled && styles.disabledText,
+                    ]}
+                  >
+                    ▼
+                  </Text>
+                </Pressable>
+              }
             >
-              <Text style={styles.conversionText}>{formattedConversion}</Text>
-            </Pressable>
-
-            <Text style={styles.exchangeRate}>{exchangeRateText}</Text>
+              {currencies.map(currency => (
+                <Menu.Item
+                  key={currency.code}
+                  onPress={() => handleCurrencyChange(currency)}
+                  title={`${currency.symbol} ${currency.code}`}
+                  leadingIcon={
+                    selectedCurrency.code === currency.code
+                      ? 'check'
+                      : undefined
+                  }
+                />
+              ))}
+            </Menu>
           </View>
-        )}
-      </View>
-    </Surface>
+
+          {/* Conversion section */}
+          {selectedCurrency.code === targetCurrency.code ? null : (
+            <View style={styles.conversionSection}>
+              <Pressable
+                onPress={handleConversionPress}
+                onPressIn={handleConversionPressIn}
+                disabled={disabled}
+                onPressOut={handleConversionPressOut}
+                style={[
+                  styles.conversionButton,
+                  conversionPressed && styles.conversionButtonPressed,
+                ]}
+              >
+                <Text style={styles.conversionText}>{formattedConversion}</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  if (disabled) return;
+                  const rateKey = `${selectedCurrency.code}_${targetCurrency.code}`;
+                  const currentRate = exchangeRates[rateKey] || 1.0;
+                  setEditRateValue(currentRate.toString());
+                  setIsEditingRate(true);
+                }}
+                style={styles.exchangeRateButton}
+              >
+                <Text>{exchangeRateText}</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </Surface>
+
+      <Portal>
+        <Dialog
+          visible={isEditingRate}
+          onDismiss={() => {
+            setIsEditingRate(false);
+            setEditRateValue('');
+          }}
+          dismissable={true}
+        >
+          <Dialog.Title>Edit Exchange Rate</Dialog.Title>
+          <Dialog.Content>
+            <Text style={styles.dialogText}>
+              1 {selectedCurrency.code} = ? {targetCurrency.code}
+            </Text>
+            <TextInput
+              value={editRateValue}
+              onChangeText={setEditRateValue}
+              keyboardType="numeric"
+              placeholder="Enter exchange rate"
+              style={styles.rateInput}
+              autoFocus
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => {
+                setIsEditingRate(false);
+                setEditRateValue('');
+              }}
+            >
+              Anuluj
+            </Button>
+            <Button
+              mode="contained"
+              onPress={() => {
+                const newRate = parseFloat(editRateValue);
+                if (!isNaN(newRate) && newRate > 0) {
+                  const rateKey = `${selectedCurrency.code}_${targetCurrency.code}`;
+                  const reverseRateKey = `${targetCurrency.code}_${selectedCurrency.code}`;
+                  const newRates = {
+                    ...exchangeRates,
+                    [rateKey]: newRate,
+                    [reverseRateKey]: 1 / newRate,
+                  };
+                  onExchangeRateChange?.(newRates);
+                  const converted = convertCurrency(
+                    value,
+                    selectedCurrency,
+                    targetCurrency,
+                    newRates,
+                  );
+                  onAmountChange?.(value, converted.convertedString);
+                }
+                setIsEditingRate(false);
+                setEditRateValue('');
+              }}
+            >
+              Potwierdź
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 };
 
@@ -296,9 +405,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#757575',
   },
-  exchangeRate: {
-    fontSize: 12,
-    color: '#BDBDBD',
+  exchangeRateButton: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 2,
+  },
+  dialogText: {
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  rateInput: {
+    marginTop: 8,
   },
   disabledText: {
     color: '#BDBDBD',

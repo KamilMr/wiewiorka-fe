@@ -17,6 +17,17 @@
         "EXPO_PUBLIC_APP_VARIANT": "development"
       }
     },
+    "local": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_VARIANT": "development",
+        "EXPO_PUBLIC_API_URL": "http://192.168.0.190:7555"
+      }
+    },
     "preview": {
       "distribution": "internal",
       "autoIncrement": true,

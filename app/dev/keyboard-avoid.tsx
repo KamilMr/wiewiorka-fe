@@ -1,18 +1,25 @@
-import {StyleSheet, View, Text, TextInput} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  Keyboard,
+  ScrollView,
+} from 'react-native';
 import {useAppTheme} from '@/constants/theme';
-import SafeScrollContainer from '@/components/SafeScrollContainer';
+import {
+  KeyboardAwareScrollView,
+  useKeyboardHandler,
+} from 'react-native-keyboard-controller';
+import {useAnimatedStyle, useSharedValue} from 'react-native-reanimated';
+import CustomSelect from '@/components/CustomSelect';
 
-const KeyboardAvoidPage = () => {
+const TextF = ({num = 2}) => {
   const t = useAppTheme();
-
   return (
-    <SafeScrollContainer>
-      <View style={styles.content}>
-        <Text style={[styles.title, {color: t.colors.primary}]}>
-          Keyboard Avoidance Test
-        </Text>
-
-        <View style={styles.inputContainer}>
+    <>
+      {[...Array(num).keys()].map((el, idx) => (
+        <View style={styles.inputContainer} key={idx}>
           <Text style={[styles.label, {color: t.colors.text}]}>Name</Text>
           <TextInput
             style={[
@@ -23,51 +30,89 @@ const KeyboardAvoidPage = () => {
             placeholderTextColor={t.colors.text + '80'}
           />
         </View>
+      ))}
+    </>
+  );
+};
 
-        <View style={styles.inputContainer}>
-          <Text style={[styles.label, {color: t.colors.text}]}>Email</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {borderColor: t.colors.border, color: t.colors.text},
-            ]}
-            placeholder="Enter your email"
-            placeholderTextColor={t.colors.text + '80'}
-            keyboardType="email-address"
-          />
-        </View>
+const mockCategories = [
+  {label: 'Żywność', value: 'food'},
+  {label: 'Transport', value: 'transport'},
+  {label: 'Rozrywka', value: 'entertainment'},
+  {label: 'Ubrania', value: 'clothes'},
+  {label: 'Zdrowie', value: 'health'},
+  {label: 'Dom i ogród', value: 'home'},
+  {label: 'Edukacja', value: 'education'},
+  {label: 'Sport', value: 'sport'},
+];
 
-        <View style={styles.inputContainer}>
-          <Text style={[styles.label, {color: t.colors.text}]}>Message</Text>
-          <TextInput
-            style={[
-              styles.textArea,
-              {borderColor: t.colors.border, color: t.colors.text},
-            ]}
-            placeholder="Enter your message"
-            placeholderTextColor={t.colors.text + '80'}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
+const KeyboardAvoidPage = () => {
+  const PADDING = 20;
+  const useGradualAnimation = () => {
+    // SharedValue for smooth animations on UI thread
+    const height = useSharedValue(PADDING);
+
+    // Hook into keyboard events for frame-by-frame tracking
+    useKeyboardHandler({
+      onStart: e => {
+        'worklet'; // Runs on UI thread
+        height.value = e.height; // Update SharedValue for potential animations
+      },
+      onMove: e => {
+        'worklet'; // Runs on UI thread - called every frame during keyboard animation
+        height.value = e.height; // Smooth SharedValue updates
+      },
+      onEnd: e => {
+        'worklet'; // Runs on UI thread
+        height.value = e.height; // Final position
+      },
+    });
+
+    return {height};
+  };
+  const {height} = useGradualAnimation();
+  const keyboardPadding = useAnimatedStyle(() => {
+    return {
+      height: Math.abs(height.value),
+      marginBottom: height.value > 0 ? 0 : PADDING,
+    };
+  });
+
+  return (
+    <>
+      <KeyboardAwareScrollView>
+        <View style={{flex: 1}}>
+          <TextF num={5} />
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Category</Text>
+            <CustomSelect
+              items={mockCategories}
+              onChange={item => console.log('Selected:', item)}
+              placeholder="Select category"
+              showDivider={true}
+            />
+          </View>
+
+          <TextF num={2} />
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Another Category</Text>
+            <CustomSelect
+              items={mockCategories}
+              onChange={item => console.log('Selected:', item)}
+              placeholder="Select another category"
+              showDivider={false}
+            />
+          </View>
+
+          <TextF num={2} />
         </View>
-      </View>
-    </SafeScrollContainer>
+      </KeyboardAwareScrollView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: 'white',
-    padding: 20,
-  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
