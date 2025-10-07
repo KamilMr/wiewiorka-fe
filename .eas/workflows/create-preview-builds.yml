@@ -5,9 +5,9 @@ on:
     branches: ["dev"]
 
 jobs:
-  android_development_build:
+  android_preview_build:
     name: Build Android
     type: build
     params:
       platform: android
-      profile: preview 
+      profile: preview

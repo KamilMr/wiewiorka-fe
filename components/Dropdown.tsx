@@ -22,7 +22,6 @@ const DropdownComponent = ({
   onChange,
   value: propValue,
   label,
-  keyboardAvoiding = false,
   offset = 0,
   ...rest
 }: CombinedProps) => {
@@ -104,14 +103,6 @@ const DropdownComponent = ({
             setIsFocus(false);
           }}
           {...rest}
-          // renderLeftIcon={() => (
-          //   <AntDesign
-          //     style={styles.icon}
-          //     color={isFocus ? 'blue' : 'black'}
-          //     name="file-search"
-          //     size={20}
-          //   />
-          // )}
         />
       </View>
     </View>

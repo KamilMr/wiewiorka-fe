@@ -26,8 +26,8 @@ node scripts/update-eas-local-ip.js
 echo -e "${YELLOW}📦 Building APK...${NC}"
 npx eas build --profile local --local
 
-# Find the latest APK file
-APK_FILE=$(find . -name "*.apk" -type f -exec ls -t {} + | head -n1)
+# Find the latest APK file (excluding node_modules)
+APK_FILE=$(find . -path "*/node_modules" -prune -o -name "*.apk" -type f -print | head -n1)
 
 if [ -z "$APK_FILE" ]; then
     echo -e "${RED}❌ No APK file found!${NC}"
@@ -68,7 +68,10 @@ fi
 
 # Install APK
 echo -e "${YELLOW}📲 Installing APK on emulator...${NC}"
-adb install -r "$APK_FILE"
+if ! adb install -r "$APK_FILE"; then
+  echo -e "${RED}❌ Failed to install APK!${NC}"
+  exit 1
+fi
 
 echo -e "${GREEN}🎉 Success! App installed on emulator${NC}"
 

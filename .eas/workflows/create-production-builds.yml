@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 jobs:
-  android_development_build:
+  android_production_build:
     name: Build Android
     type: build
     params:
