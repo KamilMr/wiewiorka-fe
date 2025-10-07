@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: "Wiewiorka",
     slug: "wiewiorka",
-    version: require('./package.json').version,
+    version: "1.0.3",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "myapp",
