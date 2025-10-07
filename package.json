@@ -18,6 +18,7 @@
     "build:local": "./scripts/build-local.sh",
     "lint": "expo lint",
     "format:watch": "onchange '**/*.{js,jsx,ts,tsx,json}' -- prettier --write {{changed}}",
+    "eas-build-on-success": "firebase appdistribution:distribute $EAS_BUILD_PATH --app $FIREBASE_APP_ID --groups testers --release-notes 'EAS Build'",
     "format": "prettier --write ."
   },
   "jest": {
@@ -76,6 +77,7 @@
     "@types/uuid": "^10.0.0",
     "eslint": "^9.33.0",
     "eslint-config-expo": "~9.2.0",
+    "firebase-tools": "^14.17.0",
     "jest": "^29.7.0",
     "jest-expo": "~53.0.10",
     "onchange": "^7.1.0",
