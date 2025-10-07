@@ -337,22 +337,10 @@ const mainSlice = createSlice({
       );
 
       if (existingIndex >= 0) {
-        console.log(
-          `[Redux] Updating existing ${action.payload.code} rate:`,
-          action.payload.rate,
-        );
         state.exchangeRates[existingIndex] = action.payload;
       } else {
-        console.log(
-          `[Redux] Adding new ${action.payload.code} rate:`,
-          action.payload.rate,
-        );
         state.exchangeRates.push(action.payload);
       }
-      console.log(
-        `[Redux] Total exchange rates in store:`,
-        state.exchangeRates.length,
-      );
     },
   },
   extraReducers: builder => {

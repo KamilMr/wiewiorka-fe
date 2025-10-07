@@ -7,7 +7,7 @@ import {
 } from 'react-redux';
 import type {AppStore, RootState, AppDispatch} from '@/redux/store';
 import {selectOperations} from '@/redux/sync/syncSlice';
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import * as mainThunks from '@/redux/main/thunks';
 import {useNetInfo} from '@react-native-community/netinfo';
 import {printJsonIndent} from '@/common';
@@ -129,45 +129,48 @@ const useGradualAnimation = (bottomY: number, isDev = false) => {
    * Pure function that calculates the exact overlap between dropdown and keyboard
    * @param kbHeight - Current keyboard height from keyboard handler
    */
-  const calculateOffset = (kbHeight: number) => {
-    // Early return if no keyboard or dropdown position not measured yet
-    if (kbHeight === 0 || bottomY === 0) {
-      setAdjustedMargin(0);
-      return;
-    }
+  const calculateOffset = useCallback(
+    (kbHeight: number) => {
+      // Early return if no keyboard or dropdown position not measured yet
+      if (kbHeight === 0 || bottomY === 0) {
+        setAdjustedMargin(0);
+        return;
+      }
 
-    // FIXED: Calculate actual available screen height
-    const windowHeight = Dimensions.get('window').height;
-    const screenHeight = Dimensions.get('screen').height;
+      // FIXED: Calculate actual available screen height
+      const windowHeight = Dimensions.get('window').height;
+      const screenHeight = Dimensions.get('screen').height;
 
-    // Account for status bar, navigation headers, and tab bars
-    const availableHeight = windowHeight - insets.top - insets.bottom;
+      // Account for status bar, navigation headers, and tab bars
+      const availableHeight = windowHeight - insets.top - insets.bottom;
 
-    // Calculate where keyboard top edge appears in available space
-    // Using available height instead of full screen height
-    const keyboardTopY = availableHeight - kbHeight + insets.top;
+      // Calculate where keyboard top edge appears in available space
+      // Using available height instead of full screen height
+      const keyboardTopY = availableHeight - kbHeight + insets.top;
 
-    // Calculate overlap: how much dropdown extends below keyboard top
-    // Example: dropdownBottom=550px, keyboardTop=500px → overlap=50px
-    // If no overlap (dropdown above keyboard), Math.max returns 0
-    const overlap = Math.max(0, bottomY - keyboardTopY);
+      // Calculate overlap: how much dropdown extends below keyboard top
+      // Example: dropdownBottom=550px, keyboardTop=500px → overlap=50px
+      // If no overlap (dropdown above keyboard), Math.max returns 0
+      const overlap = Math.max(0, bottomY - keyboardTopY);
 
-    // Store the calculated margin that will push dropdown up
-    setAdjustedMargin(overlap);
+      // Store the calculated margin that will push dropdown up
+      setAdjustedMargin(overlap);
 
-    if (isDev) {
-      console.log('=== KEYBOARD CALCULATION DEBUG ===');
-      console.log('Window height:', windowHeight);
-      console.log('Screen height:', screenHeight);
-      console.log('Available height:', availableHeight);
-      console.log('Insets top:', insets.top, 'bottom:', insets.bottom);
-      console.log('Keyboard height:', kbHeight);
-      console.log('Keyboard top Y:', keyboardTopY);
-      console.log('Dropdown bottom Y:', bottomY);
-      console.log('Calculated overlap:', overlap);
-      console.log('================================');
-    }
-  };
+      if (isDev) {
+        console.log('=== KEYBOARD CALCULATION DEBUG ===');
+        console.log('Window height:', windowHeight);
+        console.log('Screen height:', screenHeight);
+        console.log('Available height:', availableHeight);
+        console.log('Insets top:', insets.top, 'bottom:', insets.bottom);
+        console.log('Keyboard height:', kbHeight);
+        console.log('Keyboard top Y:', keyboardTopY);
+        console.log('Dropdown bottom Y:', bottomY);
+        console.log('Calculated overlap:', overlap);
+        console.log('================================');
+      }
+    },
+    [bottomY, insets.bottom, insets.top, isDev],
+  );
 
   /**
    * Bridge function that updates state and triggers calculation
@@ -177,6 +180,11 @@ const useGradualAnimation = (bottomY: number, isDev = false) => {
     setKeyboardHeight(newHeight); // Update React state
     calculateOffset(newHeight); // Recalculate margin with new keyboard height
   };
+
+  // Recalculate when layout or insets change while keyboard is open
+  useEffect(() => {
+    calculateOffset(keyboardHeight);
+  }, [keyboardHeight, calculateOffset]);
 
   // Hook into keyboard events for frame-by-frame tracking
   useKeyboardHandler({

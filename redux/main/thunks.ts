@@ -864,16 +864,25 @@ export const fetchExchangeRate = createAsyncThunk(
     const today = date || formatDateForNBP(new Date());
     console.log(`[NBP] Fetching ${currencyCode} rate for ${today}`);
 
-    // Check if we already have today's rate
-    const existingRate = state.main.exchangeRates.find(
-      rate =>
-        rate.code.toLowerCase() === currencyCode.toLowerCase() &&
-        rate.date === today,
-    );
+    // Check if we already have a recent rate (within last 7 days)
+    // NBP API returns the last business day rate for weekends/holidays,
+    // so we check for any recent cached rate instead of exact date match
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgoStr = formatDateForNBP(sevenDaysAgo);
+
+    const existingRate = state.main.exchangeRates
+      .filter(
+        rate =>
+          rate.code.toLowerCase() === currencyCode.toLowerCase() &&
+          rate.date >= sevenDaysAgoStr &&
+          rate.date <= today,
+      )
+      .sort((a, b) => b.date.localeCompare(a.date))[0]; // Get most recent
 
     if (existingRate) {
       console.log(
-        `[NBP] Using cached ${currencyCode} rate:`,
+        `[NBP] Using cached ${currencyCode} rate from ${existingRate.date}:`,
         existingRate.rate,
       );
       return existingRate;
