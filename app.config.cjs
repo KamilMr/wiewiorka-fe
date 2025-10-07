@@ -1,8 +1,8 @@
-export default {
+module.exports = {
   expo: {
     name: "Wiewiorka",
     slug: "wiewiorka",
-    version: "1.0.2",
+    version: require('./package.json').version,
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "myapp",
