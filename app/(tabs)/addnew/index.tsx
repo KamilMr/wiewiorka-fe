@@ -303,7 +303,7 @@ export default function AddNew() {
           price: +item.price,
           categoryId:
             expenseCategories.find(cat => cat.name === item.category)?.id || 0,
-          tags: hasVacationTag ? ['urlop'] : [],
+          tags: hasVacationTag ? [{id: 'urlop', name: 'urlop'}] : [],
         };
         if (item.description) dataToSave.description = item.description;
         return dispatch(addNewExpense(dataToSave));
@@ -328,7 +328,7 @@ export default function AddNew() {
           price: +price[0],
           categoryId:
             expenseCategories.find(cat => cat.name === form.category)?.id || 0,
-          tags: hasVacationTag ? ['urlop'] : [],
+          tags: hasVacationTag ? [{id: 'urlop', name: 'urlop'}] : [],
         };
 
         dataToSave = _.omitBy(dataToSave, v => typeof v === 'string' && !v);
