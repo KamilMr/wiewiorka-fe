@@ -44,7 +44,9 @@ export const selectRecords = (number: number, search: Search) =>
         dates.length === 2 &&
         dates.every((d: string) => typeof d === 'string' && Boolean(d));
       let tR = expenses
-        .map((exp: Expense): Expense & {exp: true} => ({...exp, exp: true}))
+        .map((exp: Expense): Expense & {exp: true} => {
+          return {...exp, exp: true};
+        })
         .concat(incomes)
         .filter((item: Expense | Income) => {
           if (!isValidArr || !dates) return true;
@@ -59,12 +61,13 @@ export const selectRecords = (number: number, search: Search) =>
             ? categories.find(({id}) => id === obj.categoryId)
             : null;
 
-          return {
+          const result = {
             ...obj,
             description: obj.description || '',
             category: catObj?.name ?? '',
             color: catObj?.color ?? '',
           };
+          return result;
         });
 
       tR = tR.filter(record => {

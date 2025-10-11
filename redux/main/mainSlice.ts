@@ -141,7 +141,7 @@ const mainSlice = createSlice({
     replaceExpense: (state, action) => {
       const {frontendId, resp} = action.payload;
       const expenseIndex = state.expenses.findIndex(
-        exp => exp.id === frontendId,
+        exp => exp.id.toString() === frontendId.toString(),
       );
       if (expenseIndex !== -1) {
         state.expenses[expenseIndex] = {
@@ -152,7 +152,9 @@ const mainSlice = createSlice({
     },
     replaceIncome: (state, action) => {
       const {frontendId, resp} = action.payload;
-      const incomeIndex = state.incomes.findIndex(inc => inc.id === frontendId);
+      const incomeIndex = state.incomes.findIndex(
+        inc => inc.id.toString() === frontendId.toString(),
+      );
       if (incomeIndex !== -1) {
         state.incomes[incomeIndex] = {...state.incomes[incomeIndex], ...resp};
       }
@@ -186,7 +188,6 @@ const mainSlice = createSlice({
             ...state.budgets[budgetIndex],
             ...transformedBudget,
           };
-          console.log('Replaced single budget at index:', budgetIndex);
         }
       }
     },

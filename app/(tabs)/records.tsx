@@ -17,6 +17,7 @@ import {useAppSelector} from '@/hooks';
 import DynamicRecordList from '@/components/DynamicList';
 import {sizes, useAppTheme} from '@/constants/theme';
 import {NoData} from '@/components';
+import { recognizePrefixSuffix } from 'react-native-reanimated/lib/typescript/animation/util';
 
 const Records = () => {
   const t = useAppTheme();
