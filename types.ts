@@ -37,6 +37,7 @@ export interface Expense {
   image: string;
   houseId: string;
   owner: string;
+  tags?: Array<{id: string; name: string}>;
 }
 
 export interface ExpenseMore {

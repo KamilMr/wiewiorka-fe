@@ -8,7 +8,7 @@ import {
   useNavigation,
 } from 'expo-router';
 import {formatDate} from 'date-fns';
-import {View, StyleSheet, Alert} from 'react-native';
+import {View, StyleSheet, Alert, TouchableOpacity} from 'react-native';
 import {Button, IconButton, Switch, Text} from 'react-native-paper';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
@@ -69,6 +69,7 @@ export default function AddNew() {
   const [splitItems, setSplitItems] = useState<
     Array<{price: string; category: string; description: string}>
   >([initSplitItem(), initSplitItem()]);
+  const [hasVacationTag, setHasVacationTag] = useState<boolean>(false);
 
   // Manual exchange rates state (when user edits)
   const [manualExchangeRates, setManualExchangeRates] = useState<Record<
@@ -116,6 +117,7 @@ export default function AddNew() {
 
   const focusRef = useRef<any>(null);
   const dirty = useRef({});
+  const dirtyTag = useRef<boolean>(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const isPasRecord = isNaN(+id) ? false : true;
@@ -129,17 +131,21 @@ export default function AddNew() {
   const [form, setForm] = useState(initState(new Date(), expenseCategories));
 
   const isDataTheSame = () => {
-    return _.isEqual(dirty.current, form);
+    const formSame = _.isEqual(dirty.current, form);
+    const tagSame = hasVacationTag === dirtyTag.current;
+    return formSame && tagSame;
   };
 
   const cleanState = () => {
     setForm(initState(new Date(), expenseCategories));
     dirty.current = {};
+    dirtyTag.current = false;
     setNewCustomIncome(null);
     setType('expense');
     setIsSplit(false);
     setSplitItems([initSplitItem(), initSplitItem()]);
     setManualExchangeRates(null); // Reset to NBP rates
+    setHasVacationTag(false);
   };
 
   useFocusEffect(
@@ -189,6 +195,13 @@ export default function AddNew() {
       };
       setForm(tR);
       dirty.current = tR;
+
+      // Set vacation tag checkbox if editing expense with vacation tag
+      if (incomingType === 'expense' && 'tags' in record) {
+        const hasVacation = record.tags?.some(tag => tag.name === 'urlop') || false;
+        setHasVacationTag(hasVacation);
+        dirtyTag.current = hasVacation;
+      }
     }, [id]),
   );
 
@@ -295,13 +308,14 @@ export default function AddNew() {
       const savePromises = splitItems.map(item => {
         const dataToSave: Pick<
           Expense,
-          'id' | 'date' | 'price' | 'categoryId' | 'description'
+          'id' | 'date' | 'price' | 'categoryId' | 'description' | 'tags'
         > = {
           id: '',
           date: formatDate(form.date, 'yyyy-MM-dd'),
           price: +item.price,
           categoryId:
             expenseCategories.find(cat => cat.name === item.category)?.id || 0,
+          tags: hasVacationTag ? ['urlop'] : [],
         };
         if (item.description) dataToSave.description = item.description;
         return dispatch(addNewExpense(dataToSave));
@@ -326,6 +340,7 @@ export default function AddNew() {
           price: +price[0],
           categoryId:
             expenseCategories.find(cat => cat.name === form.category)?.id || 0,
+          tags: hasVacationTag ? ['urlop'] : [],
         };
 
         dataToSave = _.omitBy(dataToSave, v => typeof v === 'string' && !v);
@@ -409,15 +424,28 @@ export default function AddNew() {
               disabled={isPasRecord}
             />
             <Text variant="bodyLarge">Przychód</Text>
-            {
-              <IconButton
-                icon={isSplit ? 'call-merge' : 'call-split'}
-                onPress={handleSplitToggle}
-                disabled={(!form.price[0] && !isSplit) || type !== 'expense'}
-                size={20}
-                style={styles.splitToggleButton}
-              />
-            }
+            <IconButton
+              icon={isSplit ? 'call-merge' : 'call-split'}
+              onPress={handleSplitToggle}
+              disabled={(!form.price[0] && !isSplit) || type !== 'expense'}
+              size={20}
+              style={styles.splitToggleButton}
+            />
+            {type === 'expense' && !isSplit && (
+              <TouchableOpacity
+                onPress={() => setHasVacationTag(!hasVacationTag)}
+                style={styles.vacationToggleButton}
+              >
+                <Text
+                  style={[
+                    styles.vacationEmoji,
+                    {opacity: hasVacationTag ? 1 : 0.3},
+                  ]}
+                >
+                  🏖️
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Add new category  selection */}
@@ -608,5 +636,16 @@ const styles = StyleSheet.create({
   splitCancelSection: {
     marginVertical: sizes.lg,
     alignItems: 'center',
+  },
+  vacationToggleButton: {
+    margin: 0,
+    marginLeft: sizes.sm,
+    padding: sizes.xs,
+    width: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vacationEmoji: {
+    fontSize: 24,
   },
 });

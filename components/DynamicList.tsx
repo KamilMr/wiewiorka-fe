@@ -10,6 +10,7 @@ import _ from 'lodash';
 
 import {CircleIcon} from './Icons';
 import {IconButton, Text} from '@/components';
+import {Chip} from 'react-native-paper';
 import {format as formatDate} from 'date-fns';
 import {sizes, useAppTheme} from '@/constants/theme';
 
@@ -24,6 +25,7 @@ interface SelExpense {
   source: string;
   date: string;
   image: string;
+  tags?: Array<{id: string; name: string}>;
 }
 
 interface Props {
@@ -78,7 +80,7 @@ export default function DynamicRecordList({
               <View style={{flex: 1, marginLeft: sizes.lg}}>
                 <Text variant="bodyMedium">{exp.description}</Text>
                 <Text variant="bodySmall" style={{color: t.colors.secondary}}>
-                  {`${exp.category || exp.source || 'Nieznana'}`}
+                  {`${exp.category || exp.source || 'Nieznana'}${exp.tags?.some(tag => tag.name === 'urlop') && ' 🏖️'}`}
                 </Text>
               </View>
 
@@ -138,5 +140,13 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: sizes.xl,
+  },
+  vacationChip: {
+    marginTop: sizes.xs,
+    alignSelf: 'flex-start',
+    backgroundColor: 'transparent',
+  },
+  vacationChipText: {
+    fontSize: 11,
   },
 });
