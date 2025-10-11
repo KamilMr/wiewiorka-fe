@@ -81,10 +81,6 @@ export default function AddNew() {
   const exchangeRates = useMemo(() => {
     // If user has manually edited rates, use those
     if (manualExchangeRates) {
-      console.log(
-        '[AddNew] Using manually edited exchange rates:',
-        manualExchangeRates,
-      );
       return manualExchangeRates;
     }
 
@@ -97,13 +93,6 @@ export default function AddNew() {
     if (eurRate?.rate) {
       rates.EUR_PLN = eurRate.rate;
       rates.PLN_EUR = 1 / eurRate.rate;
-      console.log('[AddNew] Using NBP exchange rates:', {
-        EUR_PLN: rates.EUR_PLN,
-        PLN_EUR: rates.PLN_EUR.toFixed(4),
-        date: eurRate.date,
-      });
-    } else {
-      console.log('[AddNew] Using fallback exchange rates');
     }
 
     return rates;
@@ -159,7 +148,6 @@ export default function AddNew() {
       }
 
       // Fetch EUR exchange rate (with built-in daily caching)
-      console.log('[AddNew] Triggering EUR exchange rate fetch...');
       dispatch(fetchExchangeRate({currencyCode: 'EUR'}));
 
       return () => {
@@ -461,10 +449,6 @@ export default function AddNew() {
                     setForm({...form, price: [converted, value]})
                   }
                   onExchangeRateChange={newRates => {
-                    console.log(
-                      '[AddNew] Manual exchange rate change:',
-                      newRates,
-                    );
                     setManualExchangeRates(newRates);
                   }}
                 />

@@ -27,7 +27,6 @@ export const buildBarChart = (
       isCat ? iterCat.id === decCatId : iterCat.groupId === decGrId,
     );
     if (!foundedCat) {
-      console.warn('Category not found in buildPieChart', valueArr);
       return undefined;
     }
 
@@ -81,7 +80,6 @@ export const buildPieChart = (
       );
 
       if (!foundedCat) {
-        console.warn('Category not found in buildBarChart', valueArr);
         return undefined;
       }
       if (

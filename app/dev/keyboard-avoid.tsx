@@ -87,7 +87,7 @@ const KeyboardAvoidPage = () => {
             <Text style={styles.label}>Category</Text>
             <CustomSelect
               items={mockCategories}
-              onChange={item => console.log('Selected:', item)}
+              onChange={item => {}}
               placeholder="Select category"
               showDivider={true}
             />
@@ -99,7 +99,7 @@ const KeyboardAvoidPage = () => {
             <Text style={styles.label}>Another Category</Text>
             <CustomSelect
               items={mockCategories}
-              onChange={item => console.log('Selected:', item)}
+              onChange={item => {}}
               placeholder="Select another category"
               showDivider={false}
             />

@@ -155,19 +155,6 @@ const useGradualAnimation = (bottomY: number, isDev = false) => {
 
       // Store the calculated margin that will push dropdown up
       setAdjustedMargin(overlap);
-
-      if (isDev) {
-        console.log('=== KEYBOARD CALCULATION DEBUG ===');
-        console.log('Window height:', windowHeight);
-        console.log('Screen height:', screenHeight);
-        console.log('Available height:', availableHeight);
-        console.log('Insets top:', insets.top, 'bottom:', insets.bottom);
-        console.log('Keyboard height:', kbHeight);
-        console.log('Keyboard top Y:', keyboardTopY);
-        console.log('Dropdown bottom Y:', bottomY);
-        console.log('Calculated overlap:', overlap);
-        console.log('================================');
-      }
     },
     [bottomY, insets.bottom, insets.top, isDev],
   );

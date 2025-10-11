@@ -827,13 +827,14 @@ export const genericSync = createAsyncThunk<
         if (callbackName === 'fetchIni')
           setTimeout(() => dispatch(fetchIni()), DIFFERED);
 
-        if (mainSliceReducers[cb])
+        if (mainSliceReducers[cb]) {
           dispatch(
             mainSliceReducers[cb]({
               frontendId,
               resp: result.d,
             }),
           );
+        }
       }
 
       dispatch(removeFromQueue(operationId));
@@ -864,7 +865,6 @@ export const fetchExchangeRate = createAsyncThunk(
     const state = getState() as RootState;
 
     const today = date || formatDateForNBP(new Date());
-    console.log(`[NBP] Fetching ${currencyCode} rate for ${today}`);
 
     // Check if we already have a recent rate (within last 7 days)
     // NBP API returns the last business day rate for weekends/holidays,
@@ -883,14 +883,9 @@ export const fetchExchangeRate = createAsyncThunk(
       .sort((a, b) => b.date.localeCompare(a.date))[0]; // Get most recent
 
     if (existingRate) {
-      console.log(
-        `[NBP] Using cached ${currencyCode} rate from ${existingRate.date}:`,
-        existingRate.rate,
-      );
       return existingRate;
     }
 
-    console.log(`[NBP] No cached rate found, fetching from API...`);
 
     const {fetchExchangeRate: fetchFromNBP} = await import(
       '../../helpers/nbpApi'
@@ -899,17 +894,10 @@ export const fetchExchangeRate = createAsyncThunk(
     const exchangeRate = await fetchFromNBP(currencyCode, date);
 
     if (exchangeRate) {
-      console.log(`[NBP] API response for ${currencyCode}:`, {
-        rate: exchangeRate.rate,
-        date: exchangeRate.date,
-        currency: exchangeRate.currency,
-      });
       dispatch(addExchangeRateAction(exchangeRate));
-      console.log(`[NBP] Rate stored in Redux for ${currencyCode}`);
       return exchangeRate;
     }
 
-    console.error(`[NBP] Failed to fetch exchange rate for ${currencyCode}`);
     throw new Error(`Failed to fetch exchange rate for ${currencyCode}`);
   },
 );
