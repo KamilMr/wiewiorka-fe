@@ -186,7 +186,18 @@ export default function AddNew() {
 
       // Set vacation tag checkbox if editing expense with vacation tag
       if (incomingType === 'expense' && 'tags' in record) {
-        const hasVacation = record.tags?.some(tag => tag.name === 'urlop') || false;
+        // Handle both string and object formats during transition
+        const hasVacation = record.tags?.some(tag => {
+          // If tag is a string, compare directly
+          if (typeof tag === 'string') {
+            return tag === 'urlop';
+          }
+          // If tag is an object, compare the name property
+          if (typeof tag === 'object' && tag !== null && 'name' in tag) {
+            return (tag as any).name === 'urlop';
+          }
+          return false;
+        }) || false;
         setHasVacationTag(hasVacation);
         dirtyTag.current = hasVacation;
       }
@@ -303,7 +314,7 @@ export default function AddNew() {
           price: +item.price,
           categoryId:
             expenseCategories.find(cat => cat.name === item.category)?.id || 0,
-          tags: hasVacationTag ? [{id: 'urlop', name: 'urlop'}] : [],
+          tags: hasVacationTag ? ['urlop'] : [],
         };
         if (item.description) dataToSave.description = item.description;
         return dispatch(addNewExpense(dataToSave));
@@ -328,7 +339,7 @@ export default function AddNew() {
           price: +price[0],
           categoryId:
             expenseCategories.find(cat => cat.name === form.category)?.id || 0,
-          tags: hasVacationTag ? [{id: 'urlop', name: 'urlop'}] : [],
+          tags: hasVacationTag ? ['urlop'] : [],
         };
 
         dataToSave = _.omitBy(dataToSave, v => typeof v === 'string' && !v);
