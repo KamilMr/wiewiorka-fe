@@ -448,6 +448,30 @@ export default function AddNew() {
             )}
           </View>
 
+          {(type === 'expense' || type === 'income') && (
+            <View style={styles.priceInputRow}>
+              <View style={styles.currencyInputContainer}>
+                <CurrencyPriceInput
+                  value={form.price[1]}
+                  currencies={currencies}
+                  disabled={isSplit}
+                  exchangeRates={exchangeRates}
+                  initialCurrency={currencies[0]}
+                  onAmountChange={(value, converted) =>
+                    setForm({...form, price: [converted, value]})
+                  }
+                  onExchangeRateChange={newRates => {
+                    console.log(
+                      '[AddNew] Manual exchange rate change:',
+                      newRates,
+                    );
+                    setManualExchangeRates(newRates);
+                  }}
+                />
+              </View>
+            </View>
+          )}
+
           {/* Add new category  selection */}
           {type === 'income' && (
             <SelectRadioButtons
@@ -475,30 +499,6 @@ export default function AddNew() {
               onChangeText={text => setForm({...form, category: text})}
               value={form.category}
             />
-          )}
-
-          {(type === 'expense' || type === 'income') && (
-            <View style={styles.priceInputRow}>
-              <View style={styles.currencyInputContainer}>
-                <CurrencyPriceInput
-                  value={form.price[1]}
-                  currencies={currencies}
-                  disabled={isSplit}
-                  exchangeRates={exchangeRates}
-                  initialCurrency={currencies[0]}
-                  onAmountChange={(value, converted) =>
-                    setForm({...form, price: [converted, value]})
-                  }
-                  onExchangeRateChange={newRates => {
-                    console.log(
-                      '[AddNew] Manual exchange rate change:',
-                      newRates,
-                    );
-                    setManualExchangeRates(newRates);
-                  }}
-                />
-              </View>
-            </View>
           )}
 
           {!isSplit && (

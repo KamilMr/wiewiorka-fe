@@ -310,6 +310,8 @@ export const updateExpense = createAsyncThunk<any, Expense, {state: RootState}>(
         method: 'PUT',
         handler: 'genericSync',
         data: expense,
+        cb: 'replaceExpense',
+        frontendId: expense.id.toString(),
       }),
     );
   },
