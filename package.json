@@ -19,7 +19,8 @@
     "lint": "expo lint",
     "format:watch": "onchange '**/*.{js,jsx,ts,tsx,json}' -- prettier --write {{changed}}",
     "eas-build-on-success": "firebase appdistribution:distribute $EAS_BUILD_PATH --app $FIREBASE_APP_ID --groups testers --release-notes 'EAS Build'",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "version:patch": "npm version patch -m 'Bump version to %s'"
   },
   "jest": {
     "preset": "jest-expo"

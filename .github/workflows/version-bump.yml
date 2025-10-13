@@ -1,0 +1,42 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check if version bump needed
+        id: check
+        run: |
+          if git log -1 --pretty=%B | grep -q "Bump version"; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump patch version
+        if: steps.check.outputs.skip == 'false'
+        run: npm version patch -m "Bump version to %s"
+
+      - name: Push changes
+        if: steps.check.outputs.skip == 'false'
+        run: git push --follow-tags
