@@ -5,6 +5,7 @@ import {getURL, makeNewIdArr, makeRandomId} from '@/common';
 import {Expense, Income} from '@/types';
 import {
   addBudgets as addBudgetsAction,
+  addExchangeRate as addExchangeRateAction,
   updateBudget as updateBudgetAction,
   addExpense as addExpenseAction,
   updateExpense as updateExpenseAction,
@@ -309,6 +310,8 @@ export const updateExpense = createAsyncThunk<any, Expense, {state: RootState}>(
         method: 'PUT',
         handler: 'genericSync',
         data: expense,
+        cb: 'replaceExpense',
+        frontendId: expense.id.toString(),
       }),
     );
   },
@@ -824,13 +827,14 @@ export const genericSync = createAsyncThunk<
         if (callbackName === 'fetchIni')
           setTimeout(() => dispatch(fetchIni()), DIFFERED);
 
-        if (mainSliceReducers[cb])
+        if (mainSliceReducers[cb]) {
           dispatch(
             mainSliceReducers[cb]({
               frontendId,
               resp: result.d,
             }),
           );
+        }
       }
 
       dispatch(removeFromQueue(operationId));
@@ -844,5 +848,56 @@ export const genericSync = createAsyncThunk<
 
       return {error: true, message: String(error)};
     }
+  },
+);
+
+/**
+ * Fetches exchange rate from NBP API with daily caching
+ * @param params - Currency code and optional date
+ */
+export const fetchExchangeRate = createAsyncThunk(
+  'main/fetchExchangeRate',
+  async (
+    {currencyCode, date}: {currencyCode: string; date?: string},
+    {dispatch, getState},
+  ) => {
+    const {formatDateForNBP} = await import('../../helpers/nbpApi');
+    const state = getState() as RootState;
+
+    const today = date || formatDateForNBP(new Date());
+
+    // Check if we already have a recent rate (within last 7 days)
+    // NBP API returns the last business day rate for weekends/holidays,
+    // so we check for any recent cached rate instead of exact date match
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgoStr = formatDateForNBP(sevenDaysAgo);
+
+    const existingRate = state.main.exchangeRates
+      .filter(
+        rate =>
+          rate.code.toLowerCase() === currencyCode.toLowerCase() &&
+          rate.date >= sevenDaysAgoStr &&
+          rate.date <= today,
+      )
+      .sort((a, b) => b.date.localeCompare(a.date))[0]; // Get most recent
+
+    if (existingRate) {
+      return existingRate;
+    }
+
+
+    const {fetchExchangeRate: fetchFromNBP} = await import(
+      '../../helpers/nbpApi'
+    );
+
+    const exchangeRate = await fetchFromNBP(currencyCode, date);
+
+    if (exchangeRate) {
+      dispatch(addExchangeRateAction(exchangeRate));
+      return exchangeRate;
+    }
+
+    throw new Error(`Failed to fetch exchange rate for ${currencyCode}`);
   },
 );

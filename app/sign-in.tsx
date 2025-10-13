@@ -31,7 +31,7 @@ const Login = () => {
           setRememberUser(true);
         }
       } catch (error) {
-        console.log('No saved credentials found');
+        // No saved credentials found
       }
     };
 
@@ -49,7 +49,7 @@ const Login = () => {
         await deleteValue('rememberedEmail');
         await deleteValue('rememberedPassword');
       } catch (error) {
-        console.log('Error clearing saved credentials');
+        // Error clearing saved credentials
       }
     }
   };
@@ -73,7 +73,7 @@ const Login = () => {
 
       router.replace('/');
     } catch (error: any) {
-      console.error('error', error?.message || 'Coś poszło nie tak');
+      // Handle login error
     }
   };
 

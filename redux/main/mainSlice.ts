@@ -5,6 +5,7 @@ import {format} from 'date-fns';
 
 import aggregateDataByDay from '../../utils/aggregateData';
 import {MainSlice, Income, Expense} from '@/types';
+import {StoredExchangeRate} from '../../types/nbpTypes';
 
 const emptyState = (): MainSlice => ({
   status: 'idle',
@@ -13,6 +14,7 @@ const emptyState = (): MainSlice => ({
   incomes: [],
   categories: {},
   sources: {},
+  exchangeRates: [],
   _aggregated: {},
   devMode: false,
   snackbar: {
@@ -139,7 +141,7 @@ const mainSlice = createSlice({
     replaceExpense: (state, action) => {
       const {frontendId, resp} = action.payload;
       const expenseIndex = state.expenses.findIndex(
-        exp => exp.id === frontendId,
+        exp => exp.id.toString() === frontendId.toString(),
       );
       if (expenseIndex !== -1) {
         state.expenses[expenseIndex] = {
@@ -150,7 +152,9 @@ const mainSlice = createSlice({
     },
     replaceIncome: (state, action) => {
       const {frontendId, resp} = action.payload;
-      const incomeIndex = state.incomes.findIndex(inc => inc.id === frontendId);
+      const incomeIndex = state.incomes.findIndex(
+        inc => inc.id.toString() === frontendId.toString(),
+      );
       if (incomeIndex !== -1) {
         state.incomes[incomeIndex] = {...state.incomes[incomeIndex], ...resp};
       }
@@ -184,7 +188,6 @@ const mainSlice = createSlice({
             ...state.budgets[budgetIndex],
             ...transformedBudget,
           };
-          console.log('Replaced single budget at index:', budgetIndex);
         }
       }
     },
@@ -322,6 +325,24 @@ const mainSlice = createSlice({
         }
       }
     },
+    /**
+     * Stores exchange rate data in the state
+     * @param state - Current state
+     * @param action - Action containing exchange rate data
+     */
+    addExchangeRate: (state, action: {payload: StoredExchangeRate}) => {
+      const existingIndex = state.exchangeRates.findIndex(
+        rate =>
+          rate.code === action.payload.code &&
+          rate.date === action.payload.date,
+      );
+
+      if (existingIndex >= 0) {
+        state.exchangeRates[existingIndex] = action.payload;
+      } else {
+        state.exchangeRates.push(action.payload);
+      }
+    },
   },
   extraReducers: builder => {
     builder
@@ -359,6 +380,7 @@ const mainSlice = createSlice({
 
 export const {
   addBudgets,
+  addExchangeRate,
   addExpense,
   addGroupCategoryAction,
   addIncome,

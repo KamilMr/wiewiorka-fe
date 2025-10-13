@@ -24,6 +24,7 @@ interface SelExpense {
   source: string;
   date: string;
   image: string;
+  tags?: Array<{id: string; name: string}>;
 }
 
 interface Props {
@@ -78,7 +79,7 @@ export default function DynamicRecordList({
               <View style={{flex: 1, marginLeft: sizes.lg}}>
                 <Text variant="bodyMedium">{exp.description}</Text>
                 <Text variant="bodySmall" style={{color: t.colors.secondary}}>
-                  {`${exp.category || exp.source || 'Nieznana'}`}
+                  {`${exp.category || exp.source || 'Nieznana'}${exp.tags?.some(tag => tag.name === 'urlop') ? ' 🏖️' : null}`}
                 </Text>
               </View>
 
@@ -138,5 +139,13 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: sizes.xl,
+  },
+  vacationChip: {
+    marginTop: sizes.xs,
+    alignSelf: 'flex-start',
+    backgroundColor: 'transparent',
+  },
+  vacationChipText: {
+    fontSize: 11,
   },
 });

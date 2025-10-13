@@ -37,6 +37,7 @@ export interface Expense {
   image: string;
   houseId: string;
   owner: string;
+  tags?: string[];
 }
 
 export interface ExpenseMore {
@@ -71,6 +72,7 @@ export interface MainSlice {
   categories: {[key: number]: Category};
   _aggregated: AggregatedData;
   sources: {[key: string]: string[]};
+  exchangeRates: Array<import('./types/nbpTypes').StoredExchangeRate>;
   devMode: boolean;
   snackbar: Snackbar;
 }

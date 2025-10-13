@@ -76,7 +76,7 @@ const GroupedItemsList = ({
         groupId: +groupId,
         color: '#FFFFFF',
       }),
-    ).then(res => console.log('ok'));
+    );
   };
 
   return (

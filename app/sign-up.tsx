@@ -37,7 +37,7 @@ const Signup = () => {
     dispatch(signup(data))
       .unwrap()
       .then(() => router.replace('/sign-in'))
-      .catch(err => console.log(err));
+      .catch(err => {});
   };
 
   return (

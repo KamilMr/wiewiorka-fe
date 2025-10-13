@@ -134,7 +134,6 @@ const CreateBudget = () => {
           },
           () => {
             // Fallback if measureLayout fails
-            console.log('Failed to measure layout for scroll');
           },
         );
       }, 100);
