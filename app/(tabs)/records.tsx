@@ -8,16 +8,14 @@ import {router} from 'expo-router';
 
 import {Searchbar} from 'react-native-paper';
 import {SafeAreaView} from 'react-native-safe-area-context';
-
 import _ from 'lodash';
 
+import DynamicRecordList from '@/components/DynamicList';
+import {NoData} from '@/components';
 import {isCloseToBottom} from '@/common';
 import {selectRecords} from '@/redux/main/selectors';
-import {useAppSelector} from '@/hooks';
-import DynamicRecordList from '@/components/DynamicList';
 import {sizes, useAppTheme} from '@/constants/theme';
-import {NoData} from '@/components';
-import { recognizePrefixSuffix } from 'react-native-reanimated/lib/typescript/animation/util';
+import {useAppSelector} from '@/hooks';
 
 const Records = () => {
   const t = useAppTheme();
