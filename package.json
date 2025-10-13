@@ -4,7 +4,7 @@
   "version": "1.0.3",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/setup-ip.js && expo start",
+    "dev": "node scripts/setup-ip.js && expo start --android",
     "reset-project": "node ./scripts/reset-project.js",
     "start-clean": "chmod +x ./scripts/clean-cache.sh && ./scripts/clean-cache.sh",
     "android": "expo run:android",
