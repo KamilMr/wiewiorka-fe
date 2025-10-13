@@ -12,14 +12,6 @@ module.exports = {
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
-    ios: {
-      supportsTablet: true,
-      bundleIdentifier: "com.mrek.wiewiorka",
-      googleServicesFile: process.env.GOOGLE_SERVICES_PLIST,
-      infoPlist: {
-        ITSAppUsesNonExemptEncryption: false
-      }
-    },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
