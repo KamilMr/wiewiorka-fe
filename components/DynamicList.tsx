@@ -10,7 +10,6 @@ import _ from 'lodash';
 
 import {CircleIcon} from './Icons';
 import {IconButton, Text} from '@/components';
-import {Chip} from 'react-native-paper';
 import {format as formatDate} from 'date-fns';
 import {sizes, useAppTheme} from '@/constants/theme';
 
@@ -80,7 +79,7 @@ export default function DynamicRecordList({
               <View style={{flex: 1, marginLeft: sizes.lg}}>
                 <Text variant="bodyMedium">{exp.description}</Text>
                 <Text variant="bodySmall" style={{color: t.colors.secondary}}>
-                  {`${exp.category || exp.source || 'Nieznana'}${exp.tags?.some(tag => tag.name === 'urlop') && ' 🏖️'}`}
+                  {`${exp.category || exp.source || 'Nieznana'}${exp.tags?.some(tag => tag.name === 'urlop') ? ' 🏖️' : null}`}
                 </Text>
               </View>
 
