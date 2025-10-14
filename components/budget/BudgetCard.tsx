@@ -1,7 +1,8 @@
 import {Card, ProgressBar, IconButton} from 'react-native-paper';
-import {StyleSheet, View, ScrollView} from 'react-native';
+import {StyleSheet, View, ScrollView, Pressable} from 'react-native';
 import {useState} from 'react';
 import {router} from 'expo-router';
+import {format, startOfMonth, endOfMonth} from 'date-fns';
 
 import Text from '../CustomText';
 import Menu from '../Menu';
@@ -40,6 +41,26 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
 
     const calculatedHeight = items.length * itemHeight + headerHeight;
     return Math.min(Math.max(calculatedHeight, minHeight), maxHeight);
+  };
+
+  const handleBudgetItemPress = (categoryName: string) => {
+    // Calculate date range for the month
+    const dateObj = new Date(date);
+    const startDate = startOfMonth(dateObj);
+    const endDate = endOfMonth(dateObj);
+
+    // Format dates as yyyy-MM-dd for the records screen
+    const formattedStart = format(startDate, 'yyyy-MM-dd');
+    const formattedEnd = format(endDate, 'yyyy-MM-dd');
+
+    router.push({
+      pathname: '/(tabs)/records',
+      params: {
+        category: categoryName,
+        dateStart: formattedStart,
+        dateEnd: formattedEnd,
+      },
+    });
   };
 
   return (
@@ -81,7 +102,14 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
           nestedScrollEnabled={true}
         >
           {items.map(item => (
-            <View key={item.id} style={styles.mainContentBox}>
+            <Pressable
+              key={item.id}
+              onPress={() => handleBudgetItemPress(item.budgetedName)}
+              style={({pressed}) => [
+                styles.mainContentBox,
+                pressed && styles.pressedItem,
+              ]}
+            >
               {/* Top box */}
               <View style={styles.mainInnerBox}>
                 {/* Left side */}
@@ -110,7 +138,7 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
                   )}
                 />
               </View>
-            </View>
+            </Pressable>
           ))}
         </ScrollView>
       </Card.Content>
@@ -130,6 +158,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginVertical: sizes.sm,
     paddingHorizontal: sizes.xs,
+    paddingVertical: sizes.xs,
+    borderRadius: sizes.xs,
+  },
+  pressedItem: {
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   mainInnerBox: {
     flexDirection: 'row',

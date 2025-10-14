@@ -1,10 +1,10 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
 } from 'react-native';
-import {router} from 'expo-router';
+import {router, useLocalSearchParams} from 'expo-router';
 
 import {Searchbar} from 'react-native-paper';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -19,12 +19,32 @@ import {useAppSelector} from '@/hooks';
 
 const Records = () => {
   const t = useAppTheme();
+  const params = useLocalSearchParams<{
+    category?: string;
+    dateStart?: string;
+    dateEnd?: string;
+  }>();
+
   const [number, setNumber] = useState(30);
-  // const [openFilter, setOpenFilter] = useState(false);
-  const [filter, setFilter] = useState([]); // [txt, categoryid]
+  const [filter, setFilter] = useState<string[]>([]); // category names
+  const [dateRange, setDateRange] = useState<[string, string] | undefined>(
+    undefined,
+  );
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Initialize filters from route params
+  useEffect(() => {
+    if (params.category) setFilter([params.category]);
+    if (params.dateStart && params.dateEnd)
+      setDateRange([params.dateStart, params.dateEnd]);
+  }, [params.category, params.dateStart, params.dateEnd]);
+
   const records = useAppSelector(
-    selectRecords(number, {txt: searchQuery, categories: filter}),
+    selectRecords(number, {
+      txt: searchQuery,
+      categories: filter,
+      dates: dateRange,
+    }),
   );
 
   // Load more items when the scroll reaches the bottom
