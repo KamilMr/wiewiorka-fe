@@ -30,8 +30,20 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
 
   const [yy, mm] = date.split('-');
 
+  // Calculate dynamic height based on number of items
+  // Each item takes roughly 60px, with some padding
+  const calculateCardHeight = () => {
+    const itemHeight = 60;
+    const headerHeight = 56;
+    const minHeight = 200;
+    const maxHeight = 400;
+
+    const calculatedHeight = items.length * itemHeight + headerHeight;
+    return Math.min(Math.max(calculatedHeight, minHeight), maxHeight);
+  };
+
   return (
-    <Card style={{maxHeight: 220}}>
+    <Card style={styles.card}>
       <Card.Title
         title={`Budżet ${mm}-${yy}`}
         right={props => (
@@ -64,7 +76,7 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
       />
       <Card.Content style={{paddingBottom: 0}}>
         <ScrollView
-          style={styles.scrollView}
+          style={[styles.scrollView, {maxHeight: calculateCardHeight() - 56}]}
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled={true}
         >
@@ -107,8 +119,11 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
 }
 
 const styles = StyleSheet.create({
+  card: {
+    marginBottom: sizes.md,
+  },
   scrollView: {
-    maxHeight: 160,
+    flexGrow: 1,
   },
   mainContentBox: {
     flexDirection: 'column',
