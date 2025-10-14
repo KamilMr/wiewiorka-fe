@@ -56,11 +56,16 @@ const Records = () => {
   }, [params.category, params.dateStart, params.dateEnd]);
 
   // Build date range for selector
+  // Support partial date filtering: only from, only to, or both
   const dateRange: [string, string] | undefined =
-    filters.dateFrom && filters.dateTo
+    filters.dateFrom || filters.dateTo
       ? [
-          format(filters.dateFrom, 'yyyy-MM-dd'),
-          format(filters.dateTo, 'yyyy-MM-dd'),
+          filters.dateFrom
+            ? format(filters.dateFrom, 'yyyy-MM-dd')
+            : '1900-01-01', // Far past if no start date
+          filters.dateTo
+            ? format(filters.dateTo, 'yyyy-MM-dd')
+            : '2100-12-31', // Far future if no end date
         ]
       : undefined;
 
@@ -107,7 +112,8 @@ const Records = () => {
   // Calculate active filter count for badge
   const activeFilterCount =
     filters.categories.length +
-    (filters.dateFrom && filters.dateTo ? 1 : 0) +
+    (filters.dateFrom ? 1 : 0) +
+    (filters.dateTo ? 1 : 0) +
     (filters.holidayTag ? 1 : 0);
 
   return (
