@@ -39,7 +39,7 @@ const FilterDrawer = ({
 
   const height = animatedHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 500], // Adjust max height as needed
+    outputRange: [0, 600], // Increased for better spacing
   });
 
   const opacity = animatedHeight.interpolate({
@@ -53,24 +53,23 @@ const FilterDrawer = ({
     <Animated.View style={[styles.container, {maxHeight: height, opacity}]}>
       <Surface elevation={1} style={styles.surface}>
         {/* Date Range Section */}
-        <View style={styles.section}>
-          <View style={styles.dateRow}>
-            <View style={styles.datePickerContainer}>
-              <CustomDatePicker
-                label="Od"
-                value={filters.dateFrom}
-                onChange={date => onFiltersChange({dateFrom: date || null})}
-                style={styles.datePicker}
-              />
-            </View>
-            <View style={styles.datePickerContainer}>
-              <CustomDatePicker
-                label="Do"
-                value={filters.dateTo}
-                onChange={date => onFiltersChange({dateTo: date || null})}
-                style={styles.datePicker}
-              />
-            </View>
+        <View style={[styles.section, {flexDirection: 'row'}]}>
+          <View style={{width: '50%', height: 80}}>
+          <CustomDatePicker
+            label="Od"
+            value={filters.dateFrom}
+            onChange={date => onFiltersChange({dateFrom: date || null})}
+            style={styles.datePicker}
+          />
+          </View>
+          <View style={styles.dateSpacing} />
+          <View style={{width: '50%', height: 80}}>
+          <CustomDatePicker
+            label="Do"
+            value={filters.dateTo}
+            onChange={date => onFiltersChange({dateTo: date || null})}
+            style={styles.datePicker}
+          />
           </View>
         </View>
 
@@ -125,27 +124,24 @@ export default FilterDrawer;
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    marginBottom: sizes.sm,
+    marginBottom: sizes.md,
   },
   surface: {
     padding: sizes.md,
     borderRadius: sizes.sm,
   },
   section: {
-    marginVertical: sizes.sm,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    gap: sizes.md,
-  },
-  datePickerContainer: {
-    flex: 1,
+    marginVertical: sizes.md,
   },
   datePicker: {
     backgroundColor: 'transparent',
+    width: '100%',
+  },
+  dateSpacing: {
+    height: sizes.md,
   },
   divider: {
-    marginVertical: sizes.sm,
+    marginVertical: sizes.md,
   },
   holidayChip: {
     alignSelf: 'flex-start',
