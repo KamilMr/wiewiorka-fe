@@ -1,0 +1,3 @@
+# Override .gitignore for EAS builds
+# Include google-services.json for local builds
+!google-services.json
