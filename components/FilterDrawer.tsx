@@ -1,0 +1,156 @@
+import {useEffect, useRef} from 'react';
+import {View, StyleSheet, Animated} from 'react-native';
+import {Surface, Divider, Chip, Button as PaperButton} from 'react-native-paper';
+import {sizes} from '@/constants/theme';
+import MultiSelectCategories, {Items} from './MultiSelectCategories';
+import CustomDatePicker from './DatePicker';
+
+export interface FilterState {
+  categories: string[];
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  holidayTag: boolean;
+}
+
+interface FilterDrawerProps {
+  visible: boolean;
+  filters: FilterState;
+  onFiltersChange: (filters: Partial<FilterState>) => void;
+  onClearAll: () => void;
+  categoryItems: Items;
+}
+
+const FilterDrawer = ({
+  visible,
+  filters,
+  onFiltersChange,
+  onClearAll,
+  categoryItems,
+}: FilterDrawerProps) => {
+  const animatedHeight = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(animatedHeight, {
+      toValue: visible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [visible]);
+
+  const height = animatedHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 500], // Adjust max height as needed
+  });
+
+  const opacity = animatedHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  if (!visible) return null;
+
+  return (
+    <Animated.View style={[styles.container, {maxHeight: height, opacity}]}>
+      <Surface elevation={1} style={styles.surface}>
+        {/* Date Range Section */}
+        <View style={styles.section}>
+          <View style={styles.dateRow}>
+            <View style={styles.datePickerContainer}>
+              <CustomDatePicker
+                label="Od"
+                value={filters.dateFrom}
+                onChange={date => onFiltersChange({dateFrom: date || null})}
+                style={styles.datePicker}
+              />
+            </View>
+            <View style={styles.datePickerContainer}>
+              <CustomDatePicker
+                label="Do"
+                value={filters.dateTo}
+                onChange={date => onFiltersChange({dateTo: date || null})}
+                style={styles.datePicker}
+              />
+            </View>
+          </View>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        {/* Categories Multi-Select Section */}
+        <View style={styles.section}>
+          <MultiSelectCategories
+            items={categoryItems}
+            value={filters.categories}
+            onChange={categories => onFiltersChange({categories})}
+            placeholder="Wybierz kategorie"
+            showDivider
+          />
+        </View>
+
+        <Divider style={styles.divider} />
+
+        {/* Holiday Tag Section */}
+        <View style={styles.section}>
+          <Chip
+            icon={filters.holidayTag ? 'calendar-check' : 'calendar'}
+            selected={filters.holidayTag}
+            onPress={() => onFiltersChange({holidayTag: !filters.holidayTag})}
+            mode={filters.holidayTag ? 'flat' : 'outlined'}
+            style={styles.holidayChip}
+          >
+            Urlop
+          </Chip>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        {/* Clear All Button */}
+        <View style={styles.section}>
+          <PaperButton
+            mode="outlined"
+            onPress={onClearAll}
+            icon="filter-remove"
+            style={styles.clearButton}
+          >
+            Wyczyść wszystkie filtry
+          </PaperButton>
+        </View>
+      </Surface>
+    </Animated.View>
+  );
+};
+
+export default FilterDrawer;
+
+const styles = StyleSheet.create({
+  container: {
+    overflow: 'hidden',
+    marginBottom: sizes.sm,
+  },
+  surface: {
+    padding: sizes.md,
+    borderRadius: sizes.sm,
+  },
+  section: {
+    marginVertical: sizes.sm,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    gap: sizes.md,
+  },
+  datePickerContainer: {
+    flex: 1,
+  },
+  datePicker: {
+    backgroundColor: 'transparent',
+  },
+  divider: {
+    marginVertical: sizes.sm,
+  },
+  holidayChip: {
+    alignSelf: 'flex-start',
+  },
+  clearButton: {
+    borderColor: '#d32f2f',
+  },
+});
