@@ -137,6 +137,7 @@ export default function AddNew() {
     setHasVacationTag(false);
   };
 
+  // test
   useFocusEffect(
     useCallback(() => {
       // set focus
