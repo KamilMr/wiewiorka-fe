@@ -17,6 +17,7 @@ interface FilterDrawerProps {
   filters: FilterState;
   onFiltersChange: (filters: Partial<FilterState>) => void;
   onClearAll: () => void;
+  onClose: () => void;
   categoryItems: Items;
 }
 
@@ -25,6 +26,7 @@ const FilterDrawer = ({
   filters,
   onFiltersChange,
   onClearAll,
+  onClose,
   categoryItems,
 }: FilterDrawerProps) => {
   const animatedHeight = useRef(new Animated.Value(0)).current;
@@ -103,15 +105,23 @@ const FilterDrawer = ({
 
         <Divider style={styles.divider} />
 
-        {/* Clear All Button */}
-        <View style={styles.section}>
+        {/* Action Buttons */}
+        <View style={styles.buttonRow}>
+          <PaperButton
+            mode="outlined"
+            onPress={onClose}
+            icon="close"
+            style={styles.closeButton}
+          >
+            Zamknij
+          </PaperButton>
           <PaperButton
             mode="outlined"
             onPress={onClearAll}
             icon="filter-remove"
             style={styles.clearButton}
           >
-            Wyczyść wszystkie filtry
+            Wyczyść filtry
           </PaperButton>
         </View>
       </Surface>
@@ -127,7 +137,7 @@ const styles = StyleSheet.create({
     marginBottom: sizes.md,
   },
   surface: {
-    padding: sizes.md,
+    padding: sizes.lg,
     borderRadius: sizes.sm,
   },
   section: {
@@ -146,7 +156,16 @@ const styles = StyleSheet.create({
   holidayChip: {
     alignSelf: 'flex-start',
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: sizes.sm,
+    marginTop: sizes.sm,
+  },
+  closeButton: {
+    flex: 1,
+  },
   clearButton: {
+    flex: 1,
     borderColor: '#d32f2f',
   },
 });

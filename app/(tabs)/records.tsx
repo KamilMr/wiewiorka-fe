@@ -118,7 +118,7 @@ const Records = () => {
 
   return (
     <SafeAreaView
-      style={{padding: sizes.xl, backgroundColor: t.colors.background}}
+      style={{padding: sizes.xl, backgroundColor: 'white', flex: 1}}
     >
       <View style={{position: 'relative'}}>
         <Searchbar
@@ -127,7 +127,7 @@ const Records = () => {
           value={searchQuery}
           style={{marginBottom: sizes.sm}}
         />
-        <View style={{position: 'absolute', right: 8, top: 8}}>
+        <View style={{position: 'absolute', right: 8, top: 5}}>
           <IconButton
             icon="filter-menu"
             size={24}
@@ -154,12 +154,17 @@ const Records = () => {
         filters={filters}
         onFiltersChange={handleFiltersChange}
         onClearAll={handleClearAll}
+        onClose={() => setDrawerVisible(false)}
         categoryItems={categoryItems}
       />
 
-      <ScrollView onScroll={handleScroll} style={{height: '100%'}}>
+      <ScrollView
+        onScroll={handleScroll}
+        style={{height: '100%', backgroundColor: 'white'}}
+        contentContainerStyle={{backgroundColor: 'white'}}
+      >
         {!_.keys(records).length ? (
-          <NoData />
+          <NoData text='Nie ma tranzakcji' />
         ) : (
           <DynamicRecordList
             records={records}

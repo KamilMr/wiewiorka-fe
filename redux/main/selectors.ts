@@ -37,8 +37,7 @@ const filterTxt = (exp: any, f: string) => {
 
 const filterHolidayTag = (item: Expense | Income, shouldFilter: boolean) => {
   if (!shouldFilter) return true;
-  // Check if item has tags array and includes 'holiday'
-  console.log(item.tags)
+  // Check if item has tags array and includes 'urlop'
   return item.tags?.map(o => o.name).includes('urlop') ?? false;
 };
 
