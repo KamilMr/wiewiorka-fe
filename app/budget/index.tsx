@@ -8,15 +8,23 @@ import {router} from 'expo-router';
 
 import {
   View,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import {
+  Card,
+  IconButton,
+  Dialog,
+  Portal,
+  Paragraph,
+  Caption,
+  Divider,
+  TextInput as PaperTextInput,
+  useTheme,
+  Surface,
+} from 'react-native-paper';
 import {useState} from 'react';
 import formatDateTz, {timeFormats} from '@/utils/formatTimeTz';
 import {parseInt} from 'lodash';
@@ -86,8 +94,11 @@ const SelectDate = ({
 
 const BasicList = ({date}: {date: string}) => {
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   const items = useAppSelector(selectBudgets(date));
   const [editingId, setEditingId] = useState('');
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState('');
   const [editedValues, setEditedValues] = useState<{
     [key: string]: {allocated: number};
   }>({});
@@ -99,23 +110,19 @@ const BasicList = ({date}: {date: string}) => {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert(
-      'Potwierdź usunięcie',
-      'Czy na pewno chcesz usunąć ten budżet?',
-      [
-        {
-          text: 'Anuluj',
-          style: 'cancel',
-        },
-        {
-          text: 'Usuń',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(deleteBudget({id}));
-          },
-        },
-      ],
-    );
+    setItemToDelete(id);
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDelete = () => {
+    dispatch(deleteBudget({id: itemToDelete}));
+    setDeleteDialogVisible(false);
+    setItemToDelete('');
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogVisible(false);
+    setItemToDelete('');
   };
 
   const handleSave = (id: string) => {
@@ -157,6 +164,19 @@ const BasicList = ({date}: {date: string}) => {
 
   return (
     <View style={{flex: 1}}>
+      <Portal>
+        <Dialog visible={deleteDialogVisible} onDismiss={cancelDelete}>
+          <Dialog.Title>Potwierdź usunięcie</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph>Czy na pewno chcesz usunąć ten budżet?</Paragraph>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={cancelDelete}>Anuluj</Button>
+            <Button onPress={confirmDelete}>Usuń</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
       {items.length ? (
         <>
           <View style={styles.updateButtonContainer}>
@@ -171,65 +191,67 @@ const BasicList = ({date}: {date: string}) => {
               Zmień budżet
             </Button>
           </View>
-          {items.map(item => (
-            <View key={item.id} style={styles.budgetItem}>
-              <View style={styles.budgetInfo}>
-                <Text style={styles.budgetName}>{item.budgetedName}</Text>
-                <View style={styles.budgetAmounts}>
-                  {editingId === item.id ? (
-                    <TextInput
-                      style={styles.editInput}
-                      value={
-                        editedValues[item.id]?.allocated.toString() ||
-                        item.allocated.toString()
-                      }
-                      onChangeText={value =>
-                        updateValue(item.id, 'allocated', value)
-                      }
-                      keyboardType="numeric"
-                    />
-                  ) : (
-                    <Text style={styles.allocatedText}>
-                      Ulokowano: {item.allocated} zł | Wydano:{' '}
-                      {Math.floor(item.amount)} zł
-                    </Text>
-                  )}
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={() =>
-                  editingId === item.id
-                    ? handleSave(item.id)
-                    : handleEdit(item.id)
-                }
-                style={styles.editButton}
-              >
-                <Ionicons
-                  name={editingId === item.id ? 'checkmark' : 'pencil'}
-                  size={22}
-                  color="black"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={
-                  editingId === item.id
-                    ? handleCancel
-                    : () => handleDelete(item.id)
-                }
-                style={styles.deleteCancelButton}
-              >
-                <Ionicons
-                  name={editingId === item.id ? 'close' : 'trash'}
-                  size={22}
-                  color="red"
-                />
-              </TouchableOpacity>
+          {items.map((item, index) => (
+            <View key={item.id}>
+              <Card style={styles.budgetCard} elevation={1}>
+                <Card.Content>
+                  <View style={styles.budgetCardContent}>
+                    <View style={styles.budgetInfo}>
+                      <Text style={styles.budgetName}>{item.budgetedName}</Text>
+                      {editingId === item.id ? (
+                        <PaperTextInput
+                          mode="outlined"
+                          dense
+                          style={styles.editInput}
+                          value={
+                            editedValues[item.id]?.allocated.toString() ||
+                            item.allocated.toString()
+                          }
+                          onChangeText={value =>
+                            updateValue(item.id, 'allocated', value)
+                          }
+                          keyboardType="numeric"
+                          label="Ulokowano"
+                        />
+                      ) : (
+                        <Caption style={styles.allocatedText}>
+                          Ulokowano: {item.allocated} zł | Wydano:{' '}
+                          {Math.floor(item.amount)} zł
+                        </Caption>
+                      )}
+                    </View>
+                    <View style={styles.actionButtons}>
+                      <IconButton
+                        icon={editingId === item.id ? 'check' : 'pencil'}
+                        size={20}
+                        onPress={() =>
+                          editingId === item.id
+                            ? handleSave(item.id)
+                            : handleEdit(item.id)
+                        }
+                      />
+                      <IconButton
+                        icon={editingId === item.id ? 'close' : 'delete'}
+                        size={20}
+                        iconColor={theme.colors.error}
+                        onPress={
+                          editingId === item.id
+                            ? handleCancel
+                            : () => handleDelete(item.id)
+                        }
+                      />
+                    </View>
+                  </View>
+                </Card.Content>
+              </Card>
+              {index < items.length - 1 && <Divider />}
             </View>
           ))}
         </>
       ) : (
-        <View style={styles.emptyContainer}>
+        <Surface style={styles.emptyContainer} elevation={0}>
           <Button
+            mode="contained"
             onPress={() =>
               router.push({
                 pathname: '/budget/create-budget',
@@ -239,7 +261,7 @@ const BasicList = ({date}: {date: string}) => {
           >
             Dodaj Budżet
           </Button>
-        </View>
+        </Surface>
       )}
     </View>
   );
@@ -284,77 +306,40 @@ export default function Page({}: BudgetProps) {
 }
 
 const styles = StyleSheet.create({
-  navigationContainer: {
+  dateSelector: {
+    paddingVertical: sizes.sm,
+  },
+  budgetCard: {
+    marginVertical: sizes.xs,
+    marginHorizontal: sizes.sm,
+  },
+  budgetCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  arrowButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  budgetContainer: {
-    flex: 1,
-    marginHorizontal: sizes.sm,
-  },
-  dateSelector: {
-    paddingVertical: sizes.sm,
-  },
-  budgetItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: sizes.sm,
-    paddingHorizontal: sizes.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    height: 80,
-  },
   budgetInfo: {
     flex: 1,
+    marginRight: sizes.sm,
   },
   budgetName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
-  },
-  budgetAmounts: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: sizes.xs,
   },
   allocatedText: {
-    fontSize: 12,
-    color: '#666',
+    marginTop: sizes.xs,
   },
   editInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    paddingHorizontal: sizes.sm,
-    paddingVertical: 4,
-    minWidth: 80,
-    fontSize: 14,
+    marginTop: sizes.xs,
   },
-  editButton: {
-    padding: sizes.sm,
-    marginLeft: sizes.xxl,
-    marginRight: sizes.xl,
-  },
-  cancelButton: {
-    padding: sizes.sm,
-    marginLeft: sizes.sm,
-    marginRight: sizes.lg,
-  },
-  deleteCancelButton: {
-    padding: sizes.sm,
-    marginLeft: sizes.xs,
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   budgetListContainer: {
     flex: 1,
     padding: sizes.md,
-  },
-  dateTitle: {
-    marginBottom: sizes.sm,
-    textAlign: 'center',
   },
   scrollContainer: {
     flex: 1,
@@ -364,6 +349,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   updateButtonContainer: {
     paddingVertical: sizes.sm,

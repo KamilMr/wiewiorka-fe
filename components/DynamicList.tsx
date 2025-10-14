@@ -79,7 +79,7 @@ export default function DynamicRecordList({
               <View style={{flex: 1, marginLeft: sizes.lg}}>
                 <Text variant="bodyMedium">{exp.description}</Text>
                 <Text variant="bodySmall" style={{color: t.colors.secondary}}>
-                  {`${exp.category || exp.source || 'Nieznana'}${exp.tags?.some(tag => tag.name === 'urlop') ? ' 🏖️' : null}`}
+                  {`${exp.category || exp.source || 'Nieznana'}${exp.tags?.some(tag => tag.name === 'urlop') ? ' 🏖️' : ''}`}
                 </Text>
               </View>
 

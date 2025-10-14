@@ -1,7 +1,8 @@
 import {Card, ProgressBar, IconButton} from 'react-native-paper';
-import {StyleSheet, View, ScrollView} from 'react-native';
+import {StyleSheet, View, ScrollView, Pressable} from 'react-native';
 import {useState} from 'react';
 import {router} from 'expo-router';
+import {format, startOfMonth, endOfMonth} from 'date-fns';
 
 import Text from '../CustomText';
 import Menu from '../Menu';
@@ -30,8 +31,40 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
 
   const [yy, mm] = date.split('-');
 
+  // Calculate dynamic height based on number of items
+  // Each item takes roughly 60px, with some padding
+  const calculateCardHeight = () => {
+    const itemHeight = 60;
+    const headerHeight = 56;
+    const minHeight = 200;
+    const maxHeight = 400;
+
+    const calculatedHeight = items.length * itemHeight + headerHeight;
+    return Math.min(Math.max(calculatedHeight, minHeight), maxHeight);
+  };
+
+  const handleBudgetItemPress = (categoryName: string) => {
+    // Calculate date range for the month
+    const dateObj = new Date(date);
+    const startDate = startOfMonth(dateObj);
+    const endDate = endOfMonth(dateObj);
+
+    // Format dates as yyyy-MM-dd for the records screen
+    const formattedStart = format(startDate, 'yyyy-MM-dd');
+    const formattedEnd = format(endDate, 'yyyy-MM-dd');
+
+    router.push({
+      pathname: '/(tabs)/records',
+      params: {
+        category: categoryName,
+        dateStart: formattedStart,
+        dateEnd: formattedEnd,
+      },
+    });
+  };
+
   return (
-    <Card style={{maxHeight: 220}}>
+    <Card style={styles.card}>
       <Card.Title
         title={`Budżet ${mm}-${yy}`}
         right={props => (
@@ -64,12 +97,19 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
       />
       <Card.Content style={{paddingBottom: 0}}>
         <ScrollView
-          style={styles.scrollView}
+          style={[styles.scrollView, {maxHeight: calculateCardHeight() - 56}]}
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled={true}
         >
           {items.map(item => (
-            <View key={item.id} style={styles.mainContentBox}>
+            <Pressable
+              key={item.id}
+              onPress={() => handleBudgetItemPress(item.budgetedName)}
+              style={({pressed}) => [
+                styles.mainContentBox,
+                pressed && styles.pressedItem,
+              ]}
+            >
               {/* Top box */}
               <View style={styles.mainInnerBox}>
                 {/* Left side */}
@@ -98,7 +138,7 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
                   )}
                 />
               </View>
-            </View>
+            </Pressable>
           ))}
         </ScrollView>
       </Card.Content>
@@ -107,14 +147,22 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
 }
 
 const styles = StyleSheet.create({
+  card: {
+    marginBottom: sizes.md,
+  },
   scrollView: {
-    maxHeight: 160,
+    flexGrow: 1,
   },
   mainContentBox: {
     flexDirection: 'column',
     justifyContent: 'space-between',
     marginVertical: sizes.sm,
     paddingHorizontal: sizes.xs,
+    paddingVertical: sizes.xs,
+    borderRadius: sizes.xs,
+  },
+  pressedItem: {
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   mainInnerBox: {
     flexDirection: 'row',

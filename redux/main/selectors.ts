@@ -12,6 +12,7 @@ export type Search = {
   txt: string;
   categories: Array<string>;
   dates?: [string, string];
+  holidayTag?: boolean;
 };
 
 export const selectSnackbar = (state: RootState) => state.main.snackbar;
@@ -34,11 +35,17 @@ const filterTxt = (exp: any, f: string) => {
   return normalize(string.toLowerCase()).includes(normalize(f.toLowerCase()));
 };
 
+const filterHolidayTag = (item: Expense | Income, shouldFilter: boolean) => {
+  if (!shouldFilter) return true;
+  // Check if item has tags array and includes 'urlop'
+  return item.tags?.map(o => o.name).includes('urlop') ?? false;
+};
+
 export const selectRecords = (number: number, search: Search) =>
   createSelector(
     [selectExpensesAll, selectCategories, selectIncomes],
     (expenses, categories, incomes) => {
-      const {txt: searchedTxt, categories: fc, dates} = search;
+      const {txt: searchedTxt, categories: fc, dates, holidayTag} = search;
       const isValidArr =
         Array.isArray(dates) &&
         dates.length === 2 &&
@@ -73,7 +80,8 @@ export const selectRecords = (number: number, search: Search) =>
       tR = tR.filter(record => {
         const passesTextFilter = filterTxt(record, searchedTxt);
         const passesCategoryFilter = filterCat(record, fc);
-        return passesTextFilter && passesCategoryFilter;
+        const passesHolidayFilter = filterHolidayTag(record, holidayTag ?? false);
+        return passesTextFilter && passesCategoryFilter && passesHolidayFilter;
       });
       return _.chain(tR)
         .sortBy(['date'])

@@ -1,7 +1,7 @@
 {
   "name": "wiewiorka",
   "main": "expo-router/entry",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "type": "module",
   "scripts": {
     "dev": "node scripts/setup-ip.js && expo start --android",
@@ -18,7 +18,7 @@
     "build:local": "./scripts/build-local.sh",
     "lint": "expo lint",
     "format:watch": "onchange '**/*.{js,jsx,ts,tsx,json}' -- prettier --write {{changed}}",
-    "eas-build-on-success": "firebase appdistribution:distribute $EAS_BUILD_PATH --app $FIREBASE_APP_ID --groups testers --release-notes 'EAS Build'",
+    "eas-build-on-success": "if [ \"$EAS_BUILD_PROFILE\" != \"local\" ]; then firebase appdistribution:distribute $EAS_BUILD_PATH --app $FIREBASE_APP_ID --groups testers --release-notes 'EAS Build'; else echo 'Skipping Firebase distribution for local builds'; fi",
     "format": "prettier --write .",
     "version:patch": "npm version patch -m 'Bump version to %s'"
   },

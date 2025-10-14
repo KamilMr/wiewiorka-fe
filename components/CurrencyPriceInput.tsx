@@ -1,6 +1,6 @@
-import React, {useState} from 'react';
+import React, {useState, useRef} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
-import {View, StyleSheet, Pressable} from 'react-native';
+import {View, StyleSheet, Pressable, TouchableOpacity} from 'react-native';
 import {
   TextInput,
   Text,
@@ -57,6 +57,8 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
   // Calculator mode
   const [isCalculatorMode, setIsCalculatorMode] = useState(false);
   const [calculatorExpression, setCalculatorExpression] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<any>(null);
 
   const currentAmount = value ?? baseAmount;
 
@@ -91,6 +93,7 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
       setCalculatorExpression(newValue);
       return;
     } else if (isCalculatorMode && !newValue.startsWith('#')) {
+      // User deleted the # - exit calculator mode
       setIsCalculatorMode(false);
       setCalculatorExpression('');
     }
@@ -167,6 +170,24 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
     setCalculatorExpression('');
   };
 
+  const insertOperator = (operator: string) => {
+    if (disabled) return;
+
+    if (!isCalculatorMode && currentAmount) {
+      // Start calculator mode with current value
+      setIsCalculatorMode(true);
+      setCalculatorExpression(`#${currentAmount}${operator}`);
+    } else if (isCalculatorMode) {
+      // Add operator to expression
+      setCalculatorExpression(prev => `${prev}${operator}`);
+    } else {
+      // Start calculator mode fresh
+      setIsCalculatorMode(true);
+      setCalculatorExpression(`#${operator}`);
+    }
+    inputRef.current?.focus();
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       return () => {
@@ -174,6 +195,9 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
         setSelectedCurrency(initialCurrency ?? currencies[0]);
         setIsEditingRate(false);
         setEditRateValue('');
+        setIsFocused(false);
+        setIsCalculatorMode(false);
+        setCalculatorExpression('');
       };
     }, []),
   );
@@ -185,9 +209,12 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
           {/* Pole kwoty i selektor waluty */}
           <View style={styles.inputRow}>
             <TextInput
+              ref={inputRef}
               value={isCalculatorMode ? calculatorExpression : currentAmount}
               onChangeText={handleAmountChange}
               onSubmitEditing={handleCalculationConfirm}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               disabled={disabled}
               placeholder="0"
               keyboardType="phone-pad"
@@ -276,6 +303,44 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
             </View>
           )}
         </View>
+
+        {/* Calculator Accessory Bar */}
+        {isFocused && !disabled && (
+          <View style={styles.calculatorBar}>
+            <TouchableOpacity
+              style={styles.calcButton}
+              onPress={() => insertOperator('+')}
+            >
+              <Text style={styles.calcButtonText}>+</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.calcButton}
+              onPress={() => insertOperator('-')}
+            >
+              <Text style={styles.calcButtonText}>-</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.calcButton}
+              onPress={() => insertOperator('*')}
+            >
+              <Text style={styles.calcButtonText}>×</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.calcButton}
+              onPress={() => insertOperator('/')}
+            >
+              <Text style={styles.calcButtonText}>÷</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.calcButton, styles.calcButtonEquals]}
+              onPress={handleCalculationConfirm}
+            >
+              <Text style={[styles.calcButtonText, styles.calcButtonEqualsText]}>
+                =
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </Surface>
 
       <Portal>
@@ -421,6 +486,37 @@ const styles = StyleSheet.create({
   disabledText: {
     color: '#BDBDBD',
     opacity: 0.6,
+  },
+  calculatorBar: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F8F8F8',
+    gap: 8,
+  },
+  calcButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  calcButtonEquals: {
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
+  },
+  calcButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#424242',
+  },
+  calcButtonEqualsText: {
+    color: '#FFFFFF',
   },
 });
 

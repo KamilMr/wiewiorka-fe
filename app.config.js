@@ -18,7 +18,7 @@ module.exports = {
         backgroundColor: "#ffffff"
       },
       package: "com.mrek.wiewiorka",
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     },
     web: {
       bundler: "metro",

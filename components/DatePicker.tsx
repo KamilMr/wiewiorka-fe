@@ -15,9 +15,8 @@ interface CustomDatePickerProps {
   onChange: (date: Date | undefined) => void;
   style?: object;
   value: Date | null;
+  placeholder?: string;
 }
-
-const defaultValue = new Date();
 
 const CustomDatePicker = ({
   label,
@@ -27,11 +26,14 @@ const CustomDatePicker = ({
   onChange = () => {},
   value,
   style,
+  placeholder = 'Wybierz datę',
 }: CustomDatePickerProps) => {
   const handleOnConfirm = (date: Date | undefined) => {
-    if (!date) return;
-    onChange(date);
+    onChange(date || undefined);
   };
+
+  // Show label with placeholder hint when no date selected
+  const displayLabel = value ? label : `${label} (${placeholder})`;
 
   return (
     <DatePickerInput
@@ -43,8 +45,8 @@ const CustomDatePicker = ({
       readOnly={readOnly}
       keyboardType="numeric"
       locale="pl"
-      label={label}
-      value={value || defaultValue}
+      label={displayLabel}
+      value={value || undefined}
       onChange={handleOnConfirm}
       style={[
         {
