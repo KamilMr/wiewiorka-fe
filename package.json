@@ -1,7 +1,7 @@
 {
   "name": "wiewiorka",
   "main": "expo-router/entry",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "scripts": {
     "dev": "node scripts/setup-ip.js && expo start --android",
