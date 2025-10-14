@@ -1,19 +1,21 @@
-name: Auto Version Bump
+name: PR Version Bump
 
-# Disabled - version bumping now happens in PR branches via pr-version-bump.yml
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize]
 
 jobs:
   version-bump:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
@@ -42,4 +44,4 @@ jobs:
 
       - name: Push changes
         if: steps.check.outputs.skip == 'false'
-        run: git push --follow-tags
+        run: git push origin ${{ github.head_ref }}
