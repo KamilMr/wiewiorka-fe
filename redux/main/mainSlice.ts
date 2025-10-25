@@ -5,7 +5,7 @@ import {format} from 'date-fns';
 
 import aggregateDataByDay from '../../utils/aggregateData';
 import {MainSlice, Income, Expense} from '@/types';
-import {StoredExchangeRate} from '../../types/nbpTypes';
+import {StoredExchangeRate, StoredBidAskExchangeRate} from '../../types/nbpTypes';
 
 const emptyState = (): MainSlice => ({
   status: 'idle',
@@ -15,6 +15,7 @@ const emptyState = (): MainSlice => ({
   categories: {},
   sources: {},
   exchangeRates: [],
+  bidAskExchangeRates: [],
   _aggregated: {},
   devMode: false,
   snackbar: {
@@ -341,6 +342,28 @@ const mainSlice = createSlice({
         state.exchangeRates[existingIndex] = action.payload;
       } else {
         state.exchangeRates.push(action.payload);
+      }
+    },
+    /**
+     * Adds or updates a bid/ask exchange rate in the store
+     * @param state - Current state
+     * @param action - Action containing bid/ask exchange rate data
+     */
+    addBidAskExchangeRate: (state, action: {payload: StoredBidAskExchangeRate}) => {
+      if (!state.bidAskExchangeRates) {
+        state.bidAskExchangeRates = [];
+      }
+      
+      const existingIndex = state.bidAskExchangeRates.findIndex(
+        rate =>
+          rate.code === action.payload.code &&
+          rate.date === action.payload.date,
+      );
+
+      if (existingIndex >= 0) {
+        state.bidAskExchangeRates[existingIndex] = action.payload;
+      } else {
+        state.bidAskExchangeRates.push(action.payload);
       }
     },
   },

@@ -1,3 +1,5 @@
+import {RateType} from '../types/nbpTypes';
+
 interface Currency {
   code: string;
   symbol: string;
@@ -9,6 +11,7 @@ export const convertCurrency = (
   fromCurrency: Currency,
   toCurrency: Currency,
   exchangeRates: Record<string, number>,
+  rateType: RateType = 'mid',
 ): {
   convertedAmount: number;
   convertedString: string;
@@ -18,7 +21,15 @@ export const convertCurrency = (
   let numAmount = parseFloat(amount);
   if (isNaN(numAmount) || numAmount <= 0) numAmount = 0;
 
-  const rateKey = `${fromCurrency.code}_${toCurrency.code}`;
+  let rateKey = `${fromCurrency.code}_${toCurrency.code}`;
+  
+  // For EUR/PLN conversions, use specific rate type if not 'mid'
+  if (rateType !== 'mid' && 
+      ((fromCurrency.code === 'EUR' && toCurrency.code === 'PLN') || 
+       (fromCurrency.code === 'PLN' && toCurrency.code === 'EUR'))) {
+    rateKey = `${fromCurrency.code}_${toCurrency.code}_${rateType}`;
+  }
+  
   const rate =
     fromCurrency.code === toCurrency.code
       ? 1.0
@@ -30,7 +41,8 @@ export const convertCurrency = (
     formattedConversion = `~${convertedAmount.toFixed(2)} ${toCurrency.symbol}`;
   else formattedConversion = `~0.00 ${toCurrency.symbol}`;
 
-  const exchangeRateText = `1 ${fromCurrency.code} = ${rate.toFixed(4)} ${toCurrency.code}`;
+  const rateTypeLabel = rateType === 'bid' ? ' (kupno)' : rateType === 'ask' ? ' (sprzedaż)' : '';
+  const exchangeRateText = `1 ${fromCurrency.code} = ${rate.toFixed(4)} ${toCurrency.code}${rateTypeLabel}`;
 
   return {
     convertedString: convertedAmount.toFixed(2),

@@ -73,6 +73,7 @@ export interface MainSlice {
   _aggregated: AggregatedData;
   sources: {[key: string]: string[]};
   exchangeRates: Array<import('./types/nbpTypes').StoredExchangeRate>;
+  bidAskExchangeRates?: Array<import('./types/nbpTypes').StoredBidAskExchangeRate>;
   devMode: boolean;
   snackbar: Snackbar;
 }

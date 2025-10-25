@@ -334,3 +334,24 @@ export const selectLatestExchangeRate = (currencyCode: string) =>
       );
     },
   );
+
+/**
+ * Selector to get latest bid/ask exchange rate for a currency code
+ * @param currencyCode - Three-letter currency code
+ * @returns Latest bid/ask exchange rate for the currency or null if not found
+ */
+export const selectLatestBidAskExchangeRate = (currencyCode: string) =>
+  createSelector(
+    (state: RootState) => state.main.bidAskExchangeRates,
+    (bidAskExchangeRates = []) => {
+      const rates = bidAskExchangeRates.filter(
+        rate => rate.code.toLowerCase() === currencyCode.toLowerCase(),
+      );
+
+      if (rates.length === 0) return null;
+
+      return rates.reduce((latest, current) =>
+        new Date(current.date) > new Date(latest.date) ? current : latest,
+      );
+    },
+  );

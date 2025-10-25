@@ -11,6 +11,7 @@ import {
   Portal,
 } from 'react-native-paper';
 import {convertCurrency} from '../utils/currencyUtils';
+import {RateType} from '../types/nbpTypes';
 
 interface Currency {
   code: string;
@@ -28,6 +29,10 @@ interface CurrencyPriceInputProps {
   onAmountChange?: (value: string, converted: string) => void;
   onCurrencyChange?: (currency: Currency) => void;
   onExchangeRateChange?: (newRates: Record<string, number>) => void;
+  // New props for rate type selection
+  rateType?: RateType;
+  onRateTypeChange?: (rateType: RateType) => void;
+  showRateTypeSelector?: boolean;
 }
 
 const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
@@ -39,6 +44,9 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
   onAmountChange,
   onCurrencyChange,
   onExchangeRateChange,
+  rateType = 'mid',
+  onRateTypeChange,
+  showRateTypeSelector = false,
 }) => {
   const [baseAmount, setBaseAmount] = useState(value);
 
@@ -53,6 +61,7 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
   const [conversionPressed, setConversionPressed] = useState(false);
   const [isEditingRate, setIsEditingRate] = useState(false);
   const [editRateValue, setEditRateValue] = useState('');
+  const [showRateTypeMenu, setShowRateTypeMenu] = useState(false);
 
   // Calculator mode
   const [isCalculatorMode, setIsCalculatorMode] = useState(false);
@@ -67,6 +76,7 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
     selectedCurrency,
     targetCurrency,
     exchangeRates,
+    rateType,
   );
 
   const safeCalculate = (expression: string): number | null => {
@@ -114,6 +124,7 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
         selectedCurrency,
         targetCurrency,
         exchangeRates,
+        rateType,
       );
       onAmountChange?.(cleanValue, converted.convertedString);
     }
@@ -128,6 +139,7 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
       newCurrency,
       newCurrency.code === 'PLN' ? newCurrency : selectedCurrency,
       exchangeRates,
+      rateType,
     );
     onAmountChange?.(value, converted.convertedString);
   };
@@ -142,6 +154,7 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
       selectedCurrency,
       targetCurrency,
       exchangeRates,
+      rateType,
     );
     onAmountChange?.(converted.convertedString, converted.convertedString);
   };
@@ -302,6 +315,55 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
               </Pressable>
             </View>
           )}
+
+          {/* Rate Type Selector - only show for EUR/PLN conversions */}
+          {showRateTypeSelector && 
+           (selectedCurrency.code === 'EUR' || targetCurrency.code === 'EUR') && (
+            <View style={styles.rateTypeSection}>
+              <Text style={styles.rateTypeLabel}>Typ kursu:</Text>
+              <Menu
+                visible={showRateTypeMenu}
+                onDismiss={() => setShowRateTypeMenu(false)}
+                anchor={
+                  <Pressable
+                    onPress={() => setShowRateTypeMenu(true)}
+                    disabled={disabled}
+                    style={styles.rateTypeSelector}
+                  >
+                    <Text style={styles.rateTypeText}>
+                      {rateType === 'bid' ? 'Kupno' : rateType === 'ask' ? 'Sprzedaż' : 'Średni'}
+                    </Text>
+                    <Text style={styles.dropdownIcon}>▼</Text>
+                  </Pressable>
+                }
+              >
+                <Menu.Item
+                  onPress={() => {
+                    onRateTypeChange?.('bid');
+                    setShowRateTypeMenu(false);
+                  }}
+                  title="Kupno"
+                  leadingIcon={rateType === 'bid' ? 'check' : undefined}
+                />
+                <Menu.Item
+                  onPress={() => {
+                    onRateTypeChange?.('ask');
+                    setShowRateTypeMenu(false);
+                  }}
+                  title="Sprzedaż"
+                  leadingIcon={rateType === 'ask' ? 'check' : undefined}
+                />
+                <Menu.Item
+                  onPress={() => {
+                    onRateTypeChange?.('mid');
+                    setShowRateTypeMenu(false);
+                  }}
+                  title="Średni"
+                  leadingIcon={rateType === 'mid' ? 'check' : undefined}
+                />
+              </Menu>
+            </View>
+          )}
         </View>
 
         {/* Calculator Accessory Bar */}
@@ -393,6 +455,7 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
                     selectedCurrency,
                     targetCurrency,
                     newRates,
+                    rateType,
                   );
                   onAmountChange?.(value, converted.convertedString);
                 }
@@ -517,6 +580,31 @@ const styles = StyleSheet.create({
   },
   calcButtonEqualsText: {
     color: '#FFFFFF',
+  },
+  rateTypeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  rateTypeLabel: {
+    fontSize: 14,
+    color: '#757575',
+  },
+  rateTypeSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: '#F5F5F5',
+  },
+  rateTypeText: {
+    fontSize: 14,
+    marginRight: 4,
   },
 });
 
