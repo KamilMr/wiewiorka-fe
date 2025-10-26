@@ -30,6 +30,7 @@ import {
   addNewIncome,
   updateIncome,
   fetchExchangeRate,
+  fetchBidAskExchangeRate,
 } from '@/redux/main/thunks';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {
@@ -38,8 +39,10 @@ import {
   selectIncome,
   selectSources,
   selectLatestExchangeRate,
+  selectLatestBidAskExchangeRate,
 } from '@/redux/main/selectors';
 import {Expense} from '@/types';
+import {RateType} from '@/types/nbpTypes';
 import ElementDropdown from '@/components/Dropdown';
 
 const initState = (date = new Date(), categories: any[] = []) => ({
@@ -59,6 +62,7 @@ export default function AddNew() {
   const expenseCategories = useAppSelector(selectCategoriesByUsage);
   const incomeCategories = useAppSelector(selectSources) || [];
   const eurRate = useAppSelector(selectLatestExchangeRate('EUR'));
+  const eurBidAskRate = useAppSelector(selectLatestBidAskExchangeRate('EUR'));
   const {id, type: incomingType = ''} = useLocalSearchParams();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -77,6 +81,9 @@ export default function AddNew() {
     number
   > | null>(null);
 
+  // Rate type selection state
+  const [rateType, setRateType] = useState<RateType>('bid');
+
   // Calculate exchange rates - prioritize manual edits over NBP data
   const exchangeRates = useMemo(() => {
     // If user has manually edited rates, use those
@@ -85,18 +92,30 @@ export default function AddNew() {
     }
 
     // Otherwise use NBP data or fallback
-    const rates = {
+    const rates: Record<string, number> = {
       PLN_EUR: 0.23, // fallback
       EUR_PLN: 4.35, // fallback
     };
 
+    // Add mid rates from table A
     if (eurRate?.rate) {
       rates.EUR_PLN = eurRate.rate;
       rates.PLN_EUR = 1 / eurRate.rate;
     }
 
+    // Add bid/ask rates from table C if available
+    if (eurBidAskRate) {
+      // For EUR to PLN: use ask rate (bank sells EUR)
+      rates.EUR_PLN_ask = eurBidAskRate.askRate;
+      rates.PLN_EUR_ask = 1 / eurBidAskRate.bidRate;
+      
+      // For EUR to PLN: use bid rate (bank buys EUR)
+      rates.EUR_PLN_bid = eurBidAskRate.bidRate;
+      rates.PLN_EUR_bid = 1 / eurBidAskRate.askRate;
+    }
+
     return rates;
-  }, [eurRate, manualExchangeRates]);
+  }, [eurRate, eurBidAskRate, manualExchangeRates]);
 
   // Currency data for CurrencyPriceInput
   const currencies = [
@@ -134,6 +153,7 @@ export default function AddNew() {
     setIsSplit(false);
     setSplitItems([initSplitItem(), initSplitItem()]);
     setManualExchangeRates(null); // Reset to NBP rates
+    setRateType('bid'); // Reset to buying rate
     setHasVacationTag(false);
   };
 
@@ -150,6 +170,8 @@ export default function AddNew() {
 
       // Fetch EUR exchange rate (with built-in daily caching)
       dispatch(fetchExchangeRate({currencyCode: 'EUR'}));
+      // Fetch EUR bid/ask rates for more precise conversion
+      dispatch(fetchBidAskExchangeRate({currencyCode: 'EUR'}));
 
       return () => {
         if (focusRef.current) {
@@ -457,12 +479,15 @@ export default function AddNew() {
                   disabled={isSplit}
                   exchangeRates={exchangeRates}
                   initialCurrency={currencies[0]}
+                  rateType={rateType}
+                  showRateTypeSelector={true}
                   onAmountChange={(value, converted) =>
                     setForm({...form, price: [converted, value]})
                   }
                   onExchangeRateChange={newRates => {
                     setManualExchangeRates(newRates);
                   }}
+                  onRateTypeChange={setRateType}
                 />
               </View>
             </View>
