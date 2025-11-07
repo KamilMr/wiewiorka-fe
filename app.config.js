@@ -1,8 +1,10 @@
+const packageJson = require('./package.json');
+
 module.exports = {
   expo: {
     name: "Wiewiorka",
     slug: "wiewiorka",
-    version: "1.0.3",
+    version: packageJson.version,
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "myapp",
