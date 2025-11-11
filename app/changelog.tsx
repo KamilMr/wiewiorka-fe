@@ -68,7 +68,7 @@ const Changelog = () => {
                 variant="labelSmall"
                 style={{color: t.colors.onAccent, fontWeight: '600'}}
               >
-                NADCHODZĄCE
+                OBECNE 
               </Text>
             </View>
           )}
