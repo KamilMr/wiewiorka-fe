@@ -61,6 +61,15 @@ const Settings = () => {
             Kategorie
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => router.navigate('/changelog')}
+        >
+          <TabBarIcon name="document-text" color={t.colors.primary} />
+          <Text style={[styles.tabText, {color: t.colors.primary}]}>
+            Zmiany
+          </Text>
+        </TouchableOpacity>
         {devMode && (
           <TouchableOpacity
             style={styles.tabItem}
