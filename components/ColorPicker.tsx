@@ -33,7 +33,7 @@ export default function CustomColorPicker({
       <Modal visible={visible} animationType="slide">
         <ColorPicker
           style={{width: '70%', margin: 'auto'}}
-          value={value}
+          value={value || '#FFFFFF'}
           onComplete={onSelectColor}
         >
           <Preview />

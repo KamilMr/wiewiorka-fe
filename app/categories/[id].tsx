@@ -186,7 +186,6 @@ export default function OneCategory() {
                 height: 50,
                 borderWidth: 1,
                 borderColor: t.colors.primary,
-                opacity: 0.4,
               }}
             />
           </TouchableRipple>
@@ -220,7 +219,7 @@ export default function OneCategory() {
         disableOk={!isDirty}
       />
       <ColorPicker
-        value={state.color}
+        value={state.color || '#FFFFFF'}
         visible={openPicker}
         onChange={handleColorChange}
         openModal={handleTogglePicker}
