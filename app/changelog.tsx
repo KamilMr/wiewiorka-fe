@@ -44,8 +44,7 @@ const Changelog = () => {
       style={[
         styles.versionCard,
         isCurrentVersion && {
-          backgroundColor: t.colors.primaryLight,
-          borderColor: t.colors.primary,
+          borderColor: t.colors.accent,
           borderWidth: 2,
         },
       ]}
@@ -54,10 +53,7 @@ const Changelog = () => {
         <View style={styles.versionHeader}>
           <Text
             variant="titleLarge"
-            style={[
-              styles.versionText,
-              {color: isCurrentVersion ? t.colors.white : t.colors.primary},
-            ]}
+            style={[styles.versionText, {color: t.colors.primary}]}
           >
             Wersja {entry.version}
           </Text>
@@ -72,42 +68,23 @@ const Changelog = () => {
                 variant="labelSmall"
                 style={{color: t.colors.onAccent, fontWeight: '600'}}
               >
-                OBECNA
+                NADCHODZĄCE
               </Text>
             </View>
           )}
         </View>
         <Text
           variant="bodySmall"
-          style={[
-            styles.dateText,
-            {color: isCurrentVersion ? t.colors.white : t.colors.textSecondary},
-          ]}
+          style={[styles.dateText, {color: t.colors.textSecondary}]}
         >
           {entry.date}
         </Text>
 
         <View style={styles.changesContainer}>
-          {renderChangeSection(
-            'Dodano',
-            entry.changes.added,
-            isCurrentVersion ? t.colors.white : t.colors.success,
-          )}
-          {renderChangeSection(
-            'Naprawiono',
-            entry.changes.fixed,
-            isCurrentVersion ? t.colors.white : t.colors.info,
-          )}
-          {renderChangeSection(
-            'Zmieniono',
-            entry.changes.changed,
-            isCurrentVersion ? t.colors.white : t.colors.warning,
-          )}
-          {renderChangeSection(
-            'Usunięto',
-            entry.changes.removed,
-            isCurrentVersion ? t.colors.white : t.colors.error,
-          )}
+          {renderChangeSection('Dodano', entry.changes.added, t.colors.success)}
+          {renderChangeSection('Naprawiono', entry.changes.fixed, t.colors.info)}
+          {renderChangeSection('Zmieniono', entry.changes.changed, t.colors.warning)}
+          {renderChangeSection('Usunięto', entry.changes.removed, t.colors.error)}
         </View>
       </Card.Content>
     </Card>
