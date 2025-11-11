@@ -1,5 +1,10 @@
 export const CHANGELOG = `# Dziennik zmian
 
+## [1.0.8] - 2025-01-11
+
+### Dodano
+- Historia zmian w ustawieniach
+
 ## [1.0.7] - 2025-01-10
 
 ### Dodano
