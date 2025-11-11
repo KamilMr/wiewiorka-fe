@@ -5,14 +5,14 @@ export const CHANGELOG = `# Dziennik zmian
 ### Dodano
 - Historia zmian w ustawieniach
 
+### Naprawiono
+- Nakładanie się paska wyszukiwania i przycisku filtra
+
 ## [1.0.7] - 2025-01-10
 
 ### Dodano
 - Wybór kursu EUR/PLN kupno/sprzedaż
 - Synchronizacja wersji aplikacji z package.json
-
-### Naprawiono
-- Nakładanie się paska wyszukiwania i przycisku filtra
 
 ## [1.0.6] - 2025-01-08
 
