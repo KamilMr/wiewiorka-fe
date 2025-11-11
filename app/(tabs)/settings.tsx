@@ -67,7 +67,7 @@ const Settings = () => {
         >
           <TabBarIcon name="document-text" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>
-            Zmiany
+            Historia Zmian
           </Text>
         </TouchableOpacity>
         {devMode && (
