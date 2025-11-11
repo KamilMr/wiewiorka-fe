@@ -7,6 +7,9 @@ export const CHANGELOG = `# Dziennik zmian
 
 ### Naprawiono
 - Nakładanie się paska wyszukiwania i przycisku filtra
+- Błąd worklet przy zmianie koloru kategorii
+- Problem z podwójnym # w kolorach kategorii
+- Wyświetlanie kolorów kategorii z nieprawidłową saturacją
 
 ## [1.0.7] - 2025-01-10
 
