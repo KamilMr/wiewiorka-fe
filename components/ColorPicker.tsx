@@ -6,6 +6,7 @@ import ColorPicker, {
   OpacitySlider,
   HueSlider,
 } from 'reanimated-color-picker';
+import {runOnJS} from 'react-native-reanimated';
 
 interface CustomColorPicker {
   value: string;
@@ -23,7 +24,8 @@ export default function CustomColorPicker({
   closeModal,
 }: CustomColorPicker) {
   const onSelectColor = ({hex}: {hex: string}) => {
-    onChange?.(hex);
+    'worklet';
+    runOnJS(onChange)(hex);
   };
 
   return (
