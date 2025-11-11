@@ -120,18 +120,20 @@ const Records = () => {
     <SafeAreaView
       style={{padding: sizes.xl, backgroundColor: 'white', flex: 1}}
     >
-      <View style={{position: 'relative'}}>
-        <Searchbar
-          placeholder="Szukaj"
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={{marginBottom: sizes.sm}}
-        />
-        <View style={{position: 'absolute', right: 8, top: 5}}>
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: sizes.sm}}>
+        <View style={{flex: 1}}>
+          <Searchbar
+            placeholder="Szukaj"
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+          />
+        </View>
+        <View style={{position: 'relative'}}>
           <IconButton
             icon="filter-menu"
             size={24}
             onPress={() => setDrawerVisible(!drawerVisible)}
+            style={{margin: 0}}
           />
           {activeFilterCount > 0 && (
             <Badge
