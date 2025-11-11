@@ -2,14 +2,14 @@ import {StyleSheet, View, ScrollView} from 'react-native';
 import {Text, Card} from 'react-native-paper';
 import {useAppTheme} from '@/constants/theme';
 import {parseChangelog, ChangelogEntry} from '@/utils/parseChangelog';
+import {CHANGELOG} from '@/constants/changelog';
 
 const packageJson = require('../package.json');
-const changelogContent = require('../CHANGELOG.md');
 
 const Changelog = () => {
   const t = useAppTheme();
   const currentVersion = packageJson.version;
-  const entries = parseChangelog(changelogContent);
+  const entries = parseChangelog(CHANGELOG);
 
   const renderChangeSection = (
     title: string,
