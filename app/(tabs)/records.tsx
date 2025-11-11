@@ -126,28 +126,31 @@ const Records = () => {
             placeholder="Szukaj"
             onChangeText={setSearchQuery}
             value={searchQuery}
+        right={() => (
+          <View style={{position: 'relative', flexDirection: 'row', alignItems: 'center'}}>
+            {searchQuery && <IconButton icon="close" onPress={() => setSearchQuery('')}/>}
+            <IconButton
+              icon="filter-menu"
+              size={24}
+              onPress={() => setDrawerVisible(!drawerVisible)}
+              style={{margin: 0}}
+            />
+            {activeFilterCount > 0 && (
+              <Badge
+                size={18}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  backgroundColor: t.colors.error,
+                }}
+              >
+                {activeFilterCount}
+              </Badge>
+            )}
+          </View>
+        )}
           />
-        </View>
-        <View style={{position: 'relative'}}>
-          <IconButton
-            icon="filter-menu"
-            size={24}
-            onPress={() => setDrawerVisible(!drawerVisible)}
-            style={{margin: 0}}
-          />
-          {activeFilterCount > 0 && (
-            <Badge
-              size={18}
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                backgroundColor: t.colors.error,
-              }}
-            >
-              {activeFilterCount}
-            </Badge>
-          )}
         </View>
       </View>
 
