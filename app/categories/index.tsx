@@ -16,10 +16,11 @@ import {useAppTheme} from '@/constants/theme';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectCategories, selectMainCategories} from '@/redux/main/selectors';
 import {
-  deleteSubcategoryLocal,
-  deleteGroupCategoryLocal,
-  addGroupCategoryLocal,
+  deleteSubcategorySync,
+  deleteGroupCategorySync,
+  addGroupCategorySync,
 } from '@/redux/main/thunks';
+import {setSnackbar} from '@/redux/main/mainSlice';
 import GroupedItemsList from '@/components/categories/GroupedItemsList';
 import {DeleteCategory} from '@/components/categories/types';
 
@@ -80,22 +81,41 @@ export default function MainView() {
   }, [navigation, edit]);
 
   const handleDelete = async ({id, kind}: DeleteCategory) => {
-    if (kind === 'category') {
-      dispatch(deleteSubcategoryLocal(id));
+    try {
+      if (kind === 'category') {
+        await dispatch(deleteSubcategorySync(id)).unwrap();
+      }
+      if (kind === 'group') {
+        await dispatch(deleteGroupCategorySync(id)).unwrap();
+      }
+      emptyModal();
+    } catch (error) {
+      dispatch(
+        setSnackbar({
+          open: true,
+          type: 'error',
+          msg: String(error) || 'Nie udało się usunąć',
+        }),
+      );
+      emptyModal();
     }
-    if (kind === 'group') {
-      dispatch(deleteGroupCategoryLocal(id));
-    }
-
-    emptyModal();
   };
 
-  const handleSave = () => {
-    dispatch(addGroupCategoryLocal({name: newGroup.name, color: '#FFFFFF'}))
-      .unwrap()
-      .then(() => {
-        setNewGroup({name: ''});
-      });
+  const handleSave = async () => {
+    try {
+      await dispatch(
+        addGroupCategorySync({name: newGroup.name, color: '#FFFFFF'}),
+      ).unwrap();
+      setNewGroup({name: ''});
+    } catch (error) {
+      dispatch(
+        setSnackbar({
+          open: true,
+          type: 'error',
+          msg: String(error) || 'Nie udało się zapisać',
+        }),
+      );
+    }
   };
 
   return (

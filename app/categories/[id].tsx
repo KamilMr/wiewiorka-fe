@@ -16,8 +16,8 @@ import {Subcategory} from '@/redux/main/mainSlice';
 import {sizes, useAppTheme} from '@/constants/theme';
 import {
   handleCategory,
-  addSubcategoryLocal,
-  updateSubcategoryLocal,
+  addSubcategorySync,
+  updateSubcategorySync,
 } from '@/redux/main/thunks';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {TwoButtons} from '@/components/categories/TwoButtons';
@@ -102,7 +102,7 @@ export default function OneCategory() {
       errmsg = 'Wypełnij wszystkie pola';
     }
 
-    if (!state.name || !state.color || !state.groupId) {
+    if (!state.name || !state.color || !state.groupId || errmsg) {
       dispatch(
         setSnackbar({
           open: true,
@@ -113,25 +113,35 @@ export default function OneCategory() {
       return;
     }
 
-    if (isEdit) {
+    try {
+      if (isEdit) {
+        await dispatch(
+          updateSubcategorySync({
+            id: state.id,
+            name: state.name,
+            color: state.color,
+            groupId: state.groupId,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          addSubcategorySync({
+            name: state.name,
+            color: state.color || '#FFFFFF',
+            groupId: state.groupId,
+          }),
+        ).unwrap();
+      }
+      router.navigate('..');
+    } catch (error) {
       dispatch(
-        updateSubcategoryLocal({
-          id: state.id,
-          name: state.name,
-          color: state.color,
-          groupId: state.groupId,
-        }),
-      );
-    } else {
-      dispatch(
-        addSubcategoryLocal({
-          name: state.name,
-          color: state.color || '#FFFFFF',
-          groupId: state.groupId,
+        setSnackbar({
+          open: true,
+          type: 'error',
+          msg: String(error) || 'Nie udało się zapisać',
         }),
       );
     }
-    router.navigate('..');
   };
 
   const handleColorChange = (color: string) => {

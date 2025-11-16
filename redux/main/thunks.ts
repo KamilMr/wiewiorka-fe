@@ -436,12 +436,61 @@ export const handleDeleteCategory = createAsyncThunk<
   return data.d;
 });
 
+export const addSubcategorySync = createAsyncThunk<
+  any,
+  {
+    name: string;
+    color: string;
+    groupId: number | string;
+  },
+  {state: RootState}
+>('subcategory/addSync', async (payload, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+
+  const auth = getState().auth;
+  const token = auth.token;
+  const {name, color, groupId} = payload;
+
+  const colorHex = color.split('#')[1] || 'ffffff';
+
+  try {
+    // Call API directly and wait for response
+    const response = await fetch(getURL('category'), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({name, color: colorHex, groupId}),
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    // Add to local state with real ID from backend
+    const subcategory = {
+      id: result.d.id,
+      name: result.d.name,
+      color: result.d.color,
+      groupId: result.d.groupId,
+      owner: auth.name,
+      ownerId: auth.houses[0],
+    };
+
+    dispatch(addSubcategoryAction(subcategory));
+
+    return subcategory;
+  } catch (error) {
+    throw String(error);
+  }
+});
+
 export const addSubcategoryLocal = createAsyncThunk<
   any,
   {
     name: string;
     color: string;
-    groupId: number;
+    groupId: number | string;
   },
   {state: RootState}
 >('subcategory/addLocal', async (payload, thunkAPI) => {
@@ -481,13 +530,60 @@ export const addSubcategoryLocal = createAsyncThunk<
   return tempSubcategory;
 });
 
+export const updateSubcategorySync = createAsyncThunk<
+  any,
+  {
+    id: number;
+    name: string;
+    color: string;
+    groupId: number | string;
+  },
+  {state: RootState}
+>('subcategory/updateSync', async (payload, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+
+  const token = getState().auth.token;
+  const {id, name, color, groupId} = payload;
+
+  const colorHex = color.split('#')[1] || 'ffffff';
+
+  try {
+    // Call API directly and wait for response
+    const response = await fetch(getURL(`category/${id}`), {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({name, color: colorHex, groupId}),
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    // Update local state with response
+    const subcategory = {
+      id: result.d.id,
+      name: result.d.name,
+      color: result.d.color,
+      groupId: result.d.groupId,
+    };
+
+    dispatch(updateSubcategoryAction(subcategory));
+
+    return subcategory;
+  } catch (error) {
+    throw String(error);
+  }
+});
+
 export const updateSubcategoryLocal = createAsyncThunk<
   any,
   {
     id: number;
     name: string;
     color: string;
-    groupId: number;
+    groupId: number | string;
   },
   {state: RootState}
 >('subcategory/updateLocal', async (payload, thunkAPI) => {
@@ -512,6 +608,37 @@ export const updateSubcategoryLocal = createAsyncThunk<
   return payload;
 });
 
+export const deleteSubcategorySync = createAsyncThunk<
+  any,
+  string | number,
+  {state: RootState}
+>('subcategory/deleteSync', async (id, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+
+  const token = getState().auth.token;
+
+  try {
+    // Call API directly and wait for response
+    const response = await fetch(getURL(`category/${id}`), {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    // Remove from local state after successful deletion
+    dispatch(deleteSubcategoryAction(id));
+
+    return id;
+  } catch (error) {
+    throw String(error);
+  }
+});
+
 export const deleteSubcategoryLocal = createAsyncThunk<
   any,
   string | number,
@@ -533,6 +660,53 @@ export const deleteSubcategoryLocal = createAsyncThunk<
   );
 
   return id;
+});
+
+export const addGroupCategorySync = createAsyncThunk<
+  any,
+  {
+    name: string;
+    color: string;
+  },
+  {state: RootState}
+>('groupCategory/addSync', async (payload, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+
+  const auth = getState().auth;
+  const token = auth.token;
+  const {name, color} = payload;
+
+  const colorHex = color.split('#')[1] || 'ffffff';
+
+  try {
+    // Call API directly and wait for response
+    const response = await fetch(getURL('category/group'), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({name, color: colorHex}),
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    // Add to local state with real ID from backend
+    const groupCategory = {
+      id: result.d.id,
+      name: result.d.name,
+      color: result.d.color,
+      owner: auth.name,
+      ownerId: auth.houses[0],
+    };
+
+    dispatch(addGroupCategoryAction(groupCategory));
+
+    return groupCategory;
+  } catch (error) {
+    throw String(error);
+  }
 });
 
 export const addGroupCategoryLocal = createAsyncThunk<
@@ -578,6 +752,51 @@ export const addGroupCategoryLocal = createAsyncThunk<
   return tempGroupCategory;
 });
 
+export const updateGroupCategorySync = createAsyncThunk<
+  any,
+  {
+    id: number | string;
+    name: string;
+    color: string;
+  },
+  {state: RootState}
+>('groupCategory/updateSync', async (payload, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+
+  const token = getState().auth.token;
+  const {id, name, color} = payload;
+
+  const colorHex = color.split('#')[1] || 'ffffff';
+
+  try {
+    // Call API directly and wait for response
+    const response = await fetch(getURL(`category/group/${id}`), {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({name, color: colorHex}),
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    // Update local state with response
+    const groupCategory = {
+      id: result.d.id,
+      name: result.d.name,
+      color: result.d.color,
+    };
+
+    dispatch(updateGroupCategoryAction(groupCategory));
+
+    return groupCategory;
+  } catch (error) {
+    throw String(error);
+  }
+});
+
 export const updateGroupCategoryLocal = createAsyncThunk<
   any,
   {
@@ -608,6 +827,50 @@ export const updateGroupCategoryLocal = createAsyncThunk<
   );
 
   return payload;
+});
+
+export const deleteGroupCategorySync = createAsyncThunk<
+  any,
+  string | number,
+  {state: RootState}
+>('groupCategory/deleteSync', async (id, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+  const state = getState();
+  const token = state.auth.token;
+
+  // Check if group has subcategories
+  const group = state.main.categories[id];
+  if (group && group.subcategories.length > 0) {
+    dispatch(
+      setSnackbar({
+        open: true,
+        type: 'error',
+        msg: 'Najpierw usuń wszystkie podkategorie',
+      }),
+    );
+    throw new Error('Cannot delete group with subcategories');
+  }
+
+  try {
+    // Call API directly and wait for response
+    const response = await fetch(getURL(`category/group/${id}`), {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    // Remove from local state after successful deletion
+    dispatch(deleteGroupCategoryAction(id));
+
+    return id;
+  } catch (error) {
+    throw String(error);
+  }
 });
 
 export const deleteGroupCategoryLocal = createAsyncThunk<
