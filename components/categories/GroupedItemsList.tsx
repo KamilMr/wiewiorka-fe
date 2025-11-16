@@ -23,13 +23,25 @@ const GroupedItem = ({
   emptyModal,
   handleDelete,
 }: ItemsProps & AddEmptyModal & HandleDelete) => {
+  const isNotSynced = typeof item.id === 'string' && item.id.startsWith('f');
+
   return (
     <View style={styles.itemContainer}>
       {/* Placeholder on the left */}
       <CircleIcon fillInner={item.color} />
 
       {/* Item Name */}
-      <Text style={styles.itemText}>{item.name}</Text>
+      <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
+        <Text style={styles.itemText}>{item.name}</Text>
+        {isNotSynced && (
+          <IconButton
+            icon="cloud-upload-outline"
+            size={16}
+            iconColor="#FFA500"
+            disabled
+          />
+        )}
+      </View>
 
       {/* Edit and Trash Icons */}
       {edit && (
@@ -68,6 +80,7 @@ const GroupedItemsList = ({
   const [expanded, setExpanded] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const dispatch = useAppDispatch();
+  const isGroupNotSynced = typeof groupId === 'string' && groupId.startsWith('f_g_');
 
   const handleSave = () => {
     dispatch(
@@ -101,9 +114,17 @@ const GroupedItemsList = ({
           ) : (
             <View style={{width: WIDTH_ICON_VIEW}} />
           )}
-          <Text
-            style={{width: '70%'}}
-          >{`${nameOfGroup} (${items.length})`}</Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', width: '70%'}}>
+            <Text>{`${nameOfGroup} (${items.length})`}</Text>
+            {isGroupNotSynced && (
+              <IconButton
+                icon="cloud-upload-outline"
+                size={16}
+                iconColor="#FFA500"
+                disabled
+              />
+            )}
+          </View>
           <IconButton icon={expanded ? 'chevron-down' : 'chevron-right'} />
         </View>
       </TouchableOpacity>
