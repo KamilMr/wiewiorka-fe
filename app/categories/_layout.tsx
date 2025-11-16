@@ -25,7 +25,6 @@ export default function Layout() {
           headerRightContainerStyle: {paddingRight: sizes.xxl},
           headerRight: () => (
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <IconButton icon={'pencil'} />
               <DevModeToggle>
                 <StatusIndicator />
               </DevModeToggle>

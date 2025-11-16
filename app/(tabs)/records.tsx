@@ -120,32 +120,37 @@ const Records = () => {
     <SafeAreaView
       style={{padding: sizes.xl, backgroundColor: 'white', flex: 1}}
     >
-      <View style={{position: 'relative'}}>
-        <Searchbar
-          placeholder="Szukaj"
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={{marginBottom: sizes.sm}}
-        />
-        <View style={{position: 'absolute', right: 8, top: 5}}>
-          <IconButton
-            icon="filter-menu"
-            size={24}
-            onPress={() => setDrawerVisible(!drawerVisible)}
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: sizes.sm}}>
+        <View style={{flex: 1}}>
+          <Searchbar
+            placeholder="Szukaj"
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+        right={() => (
+          <View style={{position: 'relative', flexDirection: 'row', alignItems: 'center'}}>
+            {searchQuery && <IconButton icon="close" onPress={() => setSearchQuery('')}/>}
+            <IconButton
+              icon="filter-menu"
+              size={24}
+              onPress={() => setDrawerVisible(!drawerVisible)}
+              style={{margin: 0}}
+            />
+            {activeFilterCount > 0 && (
+              <Badge
+                size={18}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  backgroundColor: t.colors.error,
+                }}
+              >
+                {activeFilterCount}
+              </Badge>
+            )}
+          </View>
+        )}
           />
-          {activeFilterCount > 0 && (
-            <Badge
-              size={18}
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                backgroundColor: t.colors.error,
-              }}
-            >
-              {activeFilterCount}
-            </Badge>
-          )}
         </View>
       </View>
 

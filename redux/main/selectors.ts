@@ -127,7 +127,7 @@ export const selectCategories = createSelector(
         obj => ({
           ...obj,
           groupName: cv.name,
-          color: `#${obj.color || '#FFFFFF'}`,
+          color: obj.color?.startsWith('#') ? obj.color : `#${obj.color || 'FFFFFF'}`,
         }),
       );
       if (Array.isArray(pv)) pv.push(...subcategories);

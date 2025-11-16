@@ -16,8 +16,8 @@ import {Subcategory} from '@/redux/main/mainSlice';
 import {sizes, useAppTheme} from '@/constants/theme';
 import {
   handleCategory,
-  addSubcategoryLocal,
-  updateSubcategoryLocal,
+  addSubcategorySync,
+  updateSubcategorySync,
 } from '@/redux/main/thunks';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {TwoButtons} from '@/components/categories/TwoButtons';
@@ -102,7 +102,7 @@ export default function OneCategory() {
       errmsg = 'Wypełnij wszystkie pola';
     }
 
-    if (!state.name || !state.color || !state.groupId) {
+    if (!state.name || !state.color || !state.groupId || errmsg) {
       dispatch(
         setSnackbar({
           open: true,
@@ -113,25 +113,36 @@ export default function OneCategory() {
       return;
     }
 
-    if (isEdit) {
+    try {
+      if (isEdit) {
+        await dispatch(
+          updateSubcategorySync({
+            id: state.id,
+            name: state.name,
+            color: state.color,
+            groupId: state.groupId,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          addSubcategorySync({
+            name: state.name,
+            color: state.color || '#FFFFFF',
+            groupId: state.groupId,
+          }),
+        ).unwrap();
+      }
+      router.navigate('..');
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       dispatch(
-        updateSubcategoryLocal({
-          id: state.id,
-          name: state.name,
-          color: state.color,
-          groupId: state.groupId,
-        }),
-      );
-    } else {
-      dispatch(
-        addSubcategoryLocal({
-          name: state.name,
-          color: state.color || '#FFFFFF',
-          groupId: state.groupId,
+        setSnackbar({
+          open: true,
+          type: 'error',
+          msg: errorMsg || 'Nie udało się zapisać',
         }),
       );
     }
-    router.navigate('..');
   };
 
   const handleColorChange = (color: string) => {
@@ -186,7 +197,6 @@ export default function OneCategory() {
                 height: 50,
                 borderWidth: 1,
                 borderColor: t.colors.primary,
-                opacity: 0.4,
               }}
             />
           </TouchableRipple>
@@ -220,7 +230,7 @@ export default function OneCategory() {
         disableOk={!isDirty}
       />
       <ColorPicker
-        value={state.color}
+        value={state.color || '#FFFFFF'}
         visible={openPicker}
         onChange={handleColorChange}
         openModal={handleTogglePicker}
