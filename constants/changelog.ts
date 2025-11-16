@@ -1,4 +1,4 @@
-export const CHANGELOG = `# Dziennik zmian
+export const CHANGELOG = `# Historia zmian
 
 ## [1.0.8] - 2025-01-11
 
@@ -10,6 +10,7 @@ export const CHANGELOG = `# Dziennik zmian
 - Błąd worklet przy zmianie koloru kategorii
 - Problem z podwójnym # w kolorach kategorii
 - Wyświetlanie kolorów kategorii z nieprawidłową saturacją
+- Synchronizacja kategorii z serwerem - naprawiono błąd dodawania podkategorii
 
 ## [1.0.7] - 2025-01-10
 

@@ -95,9 +95,6 @@ const Changelog = () => {
       style={[styles.container, {backgroundColor: t.colors.background}]}
     >
       <View style={styles.content}>
-        <Text variant="headlineMedium" style={[styles.title, {color: t.colors.primary}]}>
-          Historia zmian
-        </Text>
         {entries.map(entry => renderVersionCard(entry, entry.version === currentVersion))}
       </View>
     </ScrollView>

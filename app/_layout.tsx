@@ -60,6 +60,10 @@ const RootLayout = () => {
                   options={{headerShown: false}}
                 />
                 <Stack.Screen name="dev" options={{headerShown: false}} />
+                <Stack.Screen
+                  name="changelog"
+                  options={{title: 'Historia Zmian'}}
+                />
                 <Stack.Screen name="+not-found" />
               </Stack>
             </KeyboardProvider>
