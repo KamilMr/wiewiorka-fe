@@ -97,7 +97,7 @@ export default function MainView() {
         setSnackbar({
           open: true,
           type: 'error',
-          msg: String(error) || 'Nie udało się usunąć',
+          msg:  'Nie udało się usunąć',
         }),
       );
       emptyModal();
@@ -123,11 +123,12 @@ export default function MainView() {
       setNewGroup({name: ''});
       setAddDialogVisible(false);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       dispatch(
         setSnackbar({
           open: true,
           type: 'error',
-          msg: String(error) || 'Nie udało się zapisać',
+          msg: errorMsg || 'Nie udało się zapisać',
         }),
       );
     }

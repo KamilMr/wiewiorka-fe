@@ -134,11 +134,12 @@ export default function OneCategory() {
       }
       router.navigate('..');
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       dispatch(
         setSnackbar({
           open: true,
           type: 'error',
-          msg: String(error) || 'Nie udało się zapisać',
+          msg: errorMsg || 'Nie udało się zapisać',
         }),
       );
     }
