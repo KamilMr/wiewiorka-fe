@@ -1,5 +1,9 @@
 export const CHANGELOG = `# Historia zmian
 
+## [1.0.9] - 2025-11-23
+### Zmieniono
+- Historia zmian - żeby zobaczyć trzeba kliknąć na wersję
+
 ## [1.0.8] - 2025-11-16
 
 ### Dodano
