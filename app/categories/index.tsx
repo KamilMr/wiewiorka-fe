@@ -93,11 +93,16 @@ export default function MainView() {
       }
       emptyModal();
     } catch (error) {
+      const errorMessage = String(error);
+      const msg = errorMessage.includes('HAS_SUBCATEGORIES')
+        ? 'Najpierw usuń wszystkie podkategorie'
+        : 'Nie udało się usunąć';
+
       dispatch(
         setSnackbar({
           open: true,
           type: 'error',
-          msg:  'Nie udało się usunąć',
+          msg,
         }),
       );
       emptyModal();

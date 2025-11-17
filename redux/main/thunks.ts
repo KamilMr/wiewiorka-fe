@@ -841,14 +841,7 @@ export const deleteGroupCategorySync = createAsyncThunk<
   // Check if group has subcategories
   const group = state.main.categories[id];
   if (group && group.subcategories.length > 0) {
-    dispatch(
-      setSnackbar({
-        open: true,
-        type: 'error',
-        msg: 'Najpierw usuń wszystkie podkategorie',
-      }),
-    );
-    throw new Error('Cannot delete group with subcategories');
+    throw new Error('HAS_SUBCATEGORIES');
   }
 
   try {
@@ -884,14 +877,7 @@ export const deleteGroupCategoryLocal = createAsyncThunk<
   // Check if group has subcategories
   const group = state.main.categories[id];
   if (group && group.subcategories.length > 0) {
-    dispatch(
-      setSnackbar({
-        open: true,
-        type: 'error',
-        msg: 'Najpierw usuń wszystkie podkategorie',
-      }),
-    );
-    throw new Error('Cannot delete group with subcategories');
+    throw new Error('HAS_SUBCATEGORIES');
   }
 
   // Immediate local update - remove from state
