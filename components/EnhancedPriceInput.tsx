@@ -11,7 +11,7 @@ import {isNaN} from 'lodash';
 import CustomModal from '@/components/CustomModal';
 import CustomTextInput from '@/components/CustomTextInput';
 import {SelectRadioButtons} from '@/components/addnew/SelectRadioButtons';
-import {Text} from '@/components';
+import Text from '@/components/CustomText';
 import {printJsonIndent} from '@/common';
 import {sizes, useAppTheme} from '@/constants/theme';
 import {setSnackbar} from '@/redux/main/mainSlice';
