@@ -33,7 +33,8 @@ module.exports = {
       "expo-secure-store",
       "expo-web-browser",
       "@react-native-firebase/app",
-      "@react-native-firebase/app-distribution"
+      "@react-native-firebase/app-distribution",
+      "@react-native-firebase/crashlytics"
     ],
     experiments: {
       typedRoutes: true
