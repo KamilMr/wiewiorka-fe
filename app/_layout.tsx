@@ -1,5 +1,6 @@
 import {useEffect} from 'react';
-import {Stack} from 'expo-router';
+import {View} from 'react-native';
+import {Stack, type ErrorBoundaryProps} from 'expo-router';
 import {Provider} from 'react-redux';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {KeyboardProvider} from 'react-native-keyboard-controller';
@@ -12,8 +13,9 @@ import {Provider as PaperProvider} from 'react-native-paper';
 
 import {store, persistor} from '@/redux/store';
 import {paperTheme} from '@/constants/theme';
-import {SnackBar} from '@/components';
+import {SnackBar, Text, Button} from '@/components';
 import {useSync} from '@/hooks';
+import {logError, log, setAttribute} from '@/utils/crashlytics';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -24,15 +26,30 @@ const Sync = () => {
   return null;
 };
 
+export const ErrorBoundary = ({error, retry}: ErrorBoundaryProps) => {
+  logError(error, 'RootErrorBoundary');
+
+  return (
+    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <Text>Coś poszło nie tak</Text>
+      <Button onPress={retry}>Spróbuj ponownie</Button>
+    </View>
+  );
+}
+
+
 const RootLayout = () => {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    log('App started');
+    setAttribute('environment', __DEV__ ? 'development' : 'production');
+  }, []);
+
+  useEffect(() => {
+    if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
   if (!loaded) {
