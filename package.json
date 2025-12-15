@@ -12,7 +12,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "build": "eas build -p android --profile preview",
-    "build:dev": "eas build --profile development",
+    "build:dev": "eas build --profile development --local",
     "build:staging": "eas build --profile preview",
     "build:prod": "eas build --profile production",
     "build:local": "./scripts/build-local.sh",
