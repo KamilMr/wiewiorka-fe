@@ -1,8 +1,22 @@
 const packageJson = require('./package.json');
 
+const variant = process.env.EXPO_PUBLIC_APP_VARIANT;
+
+const getAppName = () => {
+  if (variant === 'production') return 'Wiewiorka';
+  if (variant) return `Wiewiorka (${variant})`;
+  return 'Wiewiorka';
+};
+
+const getPackageName = () => {
+  if (variant === 'production') return 'com.mrek.wiewiorka';
+  if (variant) return `com.mrek.wiewiorka.${variant}`;
+  return 'com.mrek.wiewiorka';
+};
+
 module.exports = {
   expo: {
-    name: "Wiewiorka",
+    name: getAppName(),
     slug: "wiewiorka",
     version: packageJson.version,
     orientation: "portrait",
@@ -19,7 +33,7 @@ module.exports = {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
-      package: "com.mrek.wiewiorka",
+      package: getPackageName(),
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     },
     web: {
