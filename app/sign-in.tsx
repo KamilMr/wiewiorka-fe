@@ -12,7 +12,10 @@ import {save, getValueFor, deleteValue} from '@/utils/secureStorage';
 
 const Login = () => {
   const dispatch = useAppDispatch();
-  const [data, setData] = useState({email: '', password: ''});
+  const [data, setData] = useState({
+    email: process.env.EXPO_PUBLIC_USER_EMAIL || '',
+    password: process.env.EXPO_PUBLIC_USER_PASSWORD || '',
+  });
   const [rememberUser, setRememberUser] = useState(false);
 
   const t = useAppTheme();
