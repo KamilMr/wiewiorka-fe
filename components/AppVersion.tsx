@@ -1,18 +1,17 @@
-import {Text} from 'react-native';
+import {Text, TouchableOpacity} from 'react-native';
+import {router} from 'expo-router';
 
 const packageJson = require('../package.json');
 
 export default function AppVersion() {
   return (
-    <Text
-      style={{
-        fontSize: 12,
-        color: '#666',
-        alignSelf: 'flex-start',
-        marginLeft: 4,
-      }}
+    <TouchableOpacity
+      onPress={() => router.navigate('/changelog')}
+      style={{alignSelf: 'flex-start', marginLeft: 16, marginTop: 16, padding: 8}}
     >
-      v{packageJson.version}
-    </Text>
+      <Text style={{fontSize: 12, color: '#666'}}>
+        v{packageJson.version}
+      </Text>
+    </TouchableOpacity>
   );
 }
