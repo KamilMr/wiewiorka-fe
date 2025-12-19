@@ -61,6 +61,13 @@ const Settings = () => {
             Kategorie
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => router.navigate('/debt')}
+        >
+          <TabBarIcon name="cash-outline" color={t.colors.primary} />
+          <Text style={[styles.tabText, {color: t.colors.primary}]}>Długi</Text>
+        </TouchableOpacity>
         {devMode && (
           <TouchableOpacity
             style={styles.tabItem}
