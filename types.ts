@@ -27,6 +27,27 @@ export interface Income {
   owner: string;
 }
 
+export interface DebtPayment {
+  id: string;
+  debtId: string;
+  amount: number;
+  date: string;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface Debt {
+  id: string;
+  personName: string;
+  totalAmount: number;
+  description: string | null;
+  ownerId: number;
+  houseId: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  payments: DebtPayment[];
+}
+
 export interface Expense {
   id: number | string;
   description: string | null;
@@ -69,6 +90,7 @@ export interface MainSlice {
   expenses: Array<Expense>;
   budgets: Array<MonthlyBudget>;
   incomes: Array<Income>;
+  debts: Array<Debt>;
   categories: {[key: number]: Category};
   _aggregated: AggregatedData;
   sources: {[key: string]: string[]};
