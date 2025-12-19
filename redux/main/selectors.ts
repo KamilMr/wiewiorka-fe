@@ -355,3 +355,33 @@ export const selectLatestBidAskExchangeRate = (currencyCode: string) =>
       );
     },
   );
+
+export const selectDebts = (state: RootState) => state.main.debts;
+
+export const selectDebtsWithSummary = createSelector([selectDebts], debts =>
+  debts.map(debt => {
+    const paidAmount = debt.payments.reduce((sum, p) => sum + p.amount, 0);
+    const remainingAmount = debt.totalAmount - paidAmount;
+    return {
+      ...debt,
+      paidAmount,
+      remainingAmount,
+      isPaid: remainingAmount <= 0,
+    };
+  }),
+);
+
+export const selectDebtById = (id: string) =>
+  createSelector([selectDebts], debts => {
+    const debt = debts.find(d => d.id === id);
+    if (!debt) return undefined;
+
+    const paidAmount = debt.payments.reduce((sum, p) => sum + p.amount, 0);
+    const remainingAmount = debt.totalAmount - paidAmount;
+    return {
+      ...debt,
+      paidAmount,
+      remainingAmount,
+      isPaid: remainingAmount <= 0,
+    };
+  });
