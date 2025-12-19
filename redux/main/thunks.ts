@@ -5,6 +5,8 @@ import {getURL, makeNewIdArr, makeRandomId} from '@/common';
 import {Expense, Income} from '@/types';
 import {
   addBudgets as addBudgetsAction,
+  addDebt as addDebtAction,
+  addDebtPayment as addDebtPaymentAction,
   addExchangeRate as addExchangeRateAction,
   addBidAskExchangeRate as addBidAskExchangeRateAction,
   updateBudget as updateBudgetAction,
@@ -24,6 +26,7 @@ import {
   addGroupCategoryAction,
   updateGroupCategoryAction,
   deleteGroupCategoryAction,
+  setDebts as setDebtsAction,
   setSnackbar,
 } from './mainSlice';
 import {
@@ -1199,3 +1202,81 @@ export const fetchBidAskExchangeRate = createAsyncThunk(
     throw new Error(`Failed to fetch bid/ask exchange rate for ${currencyCode}`);
   },
 );
+
+export const fetchDebts = createAsyncThunk<any, void, {state: RootState}>(
+  'debt/fetch',
+  async (_, thunkAPI) => {
+    const {dispatch, getState} = thunkAPI;
+    const token = getState().auth.token;
+
+    try {
+      const response = await fetch(getURL('debt'), {
+        headers: {Authorization: `Bearer ${token}`},
+      });
+
+      const result = await response.json();
+      if (result.err) throw result.err;
+
+      dispatch(setDebtsAction(result.d));
+      return result.d;
+    } catch (error) {
+      throw String(error);
+    }
+  },
+);
+
+export const addDebtThunk = createAsyncThunk<
+  any,
+  {personName: string; totalAmount: number; description?: string},
+  {state: RootState}
+>('debt/add', async (payload, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+  const token = getState().auth.token;
+
+  try {
+    const response = await fetch(getURL('debt'), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    dispatch(addDebtAction({...result.d, payments: []}));
+    return result.d;
+  } catch (error) {
+    throw String(error);
+  }
+});
+
+export const addDebtPaymentThunk = createAsyncThunk<
+  any,
+  {debtId: string; amount: number; date: string; note?: string},
+  {state: RootState}
+>('debt/addPayment', async ({debtId, ...paymentData}, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+  const token = getState().auth.token;
+
+  try {
+    const response = await fetch(getURL(`debt/${debtId}/payment`), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paymentData),
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    dispatch(addDebtPaymentAction({debtId, payment: result.d}));
+    return result.d;
+  } catch (error) {
+    throw String(error);
+  }
+});
