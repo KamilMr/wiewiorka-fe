@@ -8,7 +8,8 @@ import {Text, TextInput, DatePicker, SwipeToDelete} from '@/components';
 import {sizes, useAppTheme} from '@/constants/theme';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectDebtById} from '@/redux/main/selectors';
-import {addDebtPaymentThunk, deleteDebtPaymentThunk} from '@/redux/main/thunks';
+import {addDebtPaymentThunk, deleteDebtPaymentThunk, updateDebtPaymentThunk} from '@/redux/main/thunks';
+import {DebtPayment} from '@/types';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {formatGrosze, parseZlotyToGrosze} from '@/utils/currencyUtils';
 
@@ -20,8 +21,15 @@ export default function DebtDetailsScreen() {
   const debt = useAppSelector(selectDebtById(id));
 
   const [addPaymentVisible, setAddPaymentVisible] = useState(false);
+  const [editPaymentVisible, setEditPaymentVisible] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<DebtPayment | null>(null);
   const [loading, setLoading] = useState(false);
   const [newPayment, setNewPayment] = useState({
+    amount: '',
+    date: new Date(),
+    note: '',
+  });
+  const [editPayment, setEditPayment] = useState({
     amount: '',
     date: new Date(),
     note: '',
@@ -71,6 +79,51 @@ export default function DebtDetailsScreen() {
   const handleCancelPayment = () => {
     setNewPayment({amount: '', date: new Date(), note: ''});
     setAddPaymentVisible(false);
+  };
+
+  const handleOpenEditPayment = (payment: DebtPayment) => {
+    setEditingPayment(payment);
+    setEditPayment({
+      amount: (payment.amount / 100).toString(),
+      date: new Date(payment.date),
+      note: payment.note || '',
+    });
+    setEditPaymentVisible(true);
+  };
+
+  const handleCancelEditPayment = () => {
+    setEditingPayment(null);
+    setEditPayment({amount: '', date: new Date(), note: ''});
+    setEditPaymentVisible(false);
+  };
+
+  const handleSaveEditPayment = async () => {
+    if (!editingPayment) return;
+
+    const amountInGrosze = parseZlotyToGrosze(editPayment.amount);
+    if (amountInGrosze <= 0) {
+      dispatch(setSnackbar({msg: 'Podaj poprawną kwotę', type: 'error'}));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await dispatch(
+        updateDebtPaymentThunk({
+          debtId: id,
+          paymentId: editingPayment.id,
+          amount: amountInGrosze,
+          date: format(editPayment.date, 'yyyy-MM-dd'),
+          note: editPayment.note.trim() || undefined,
+        }),
+      ).unwrap();
+
+      handleCancelEditPayment();
+    } catch (error) {
+      dispatch(setSnackbar({msg: String(error), type: 'error'}));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sortedPayments = [...debt.payments].sort(
@@ -123,7 +176,7 @@ export default function DebtDetailsScreen() {
                 key={payment.id}
                 onDelete={() => dispatch(deleteDebtPaymentThunk({debtId: id, paymentId: payment.id}))}
               >
-                <Card style={styles.paymentCard}>
+                <Card style={styles.paymentCard} onPress={() => handleOpenEditPayment(payment)}>
                   <Card.Content>
                     <View style={styles.paymentRow}>
                       <Text>{format(new Date(payment.date), 'dd/MM/yyyy')}</Text>
@@ -176,6 +229,39 @@ export default function DebtDetailsScreen() {
               <Button onPress={handleCancelPayment}>Anuluj</Button>
               <Button onPress={handleAddPayment} loading={loading} disabled={loading}>
                 Dodaj
+              </Button>
+            </Dialog.Actions>
+          </Dialog>
+
+          <Dialog visible={editPaymentVisible} onDismiss={handleCancelEditPayment} style={styles.dialog}>
+            <Dialog.Title>Edytuj wpłatę</Dialog.Title>
+            <Dialog.Content>
+              <TextInput
+                label="Kwota (zł) *"
+                mode="outlined"
+                value={editPayment.amount}
+                onChangeText={text => setEditPayment(prev => ({...prev, amount: text}))}
+                keyboardType="numeric"
+              />
+              <View style={{marginTop: sizes.md}}>
+                <DatePicker
+                  value={editPayment.date}
+                  onChange={date => setEditPayment(prev => ({...prev, date: date || new Date()}))}
+                  label="Data"
+                />
+              </View>
+              <TextInput
+                label="Notatka (opcjonalnie)"
+                mode="outlined"
+                value={editPayment.note}
+                onChangeText={text => setEditPayment(prev => ({...prev, note: text}))}
+                style={{marginTop: sizes.md}}
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={handleCancelEditPayment}>Anuluj</Button>
+              <Button onPress={handleSaveEditPayment} loading={loading} disabled={loading}>
+                Zapisz
               </Button>
             </Dialog.Actions>
           </Dialog>
