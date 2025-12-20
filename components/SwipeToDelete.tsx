@@ -1,5 +1,5 @@
 import {useRef, useState, useCallback} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {StyleSheet, View, Pressable} from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, {
   SharedValue,
@@ -8,7 +8,7 @@ import Reanimated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
-import {IconButton} from 'react-native-paper';
+import {Icon} from 'react-native-paper';
 
 interface SwipeToDeleteProps {
   children: React.ReactNode;
@@ -45,11 +45,11 @@ const DeleteAction = ({
   });
 
   return (
-    <Reanimated.View style={[styles.rightAction, {width: halfWidth}]}>
+    <Pressable onPress={onDelete} style={[styles.rightAction, {width: halfWidth}]}>
       <Reanimated.View style={[styles.buttonContainer, animatedStyle]}>
-        <IconButton icon="trash-can" iconColor="white" size={28} onPress={onDelete} />
+        <Icon source="trash-can" color="white" size={28} />
       </Reanimated.View>
-    </Reanimated.View>
+    </Pressable>
   );
 };
 
