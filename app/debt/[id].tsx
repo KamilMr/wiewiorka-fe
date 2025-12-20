@@ -13,6 +13,52 @@ import {DebtPayment} from '@/types';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {formatGrosze, parseZlotyToGrosze} from '@/utils/currencyUtils';
 
+type PaymentDialogProps = {
+  visible: boolean;
+  onDismiss: () => void;
+  onSubmit: () => void;
+  loading: boolean;
+  payment: {amount: string; date: Date; note: string};
+  setPayment: React.Dispatch<React.SetStateAction<{amount: string; date: Date; note: string}>>;
+  mode: 'add' | 'edit';
+};
+
+const PaymentDialog = ({visible, onDismiss, onSubmit, loading, payment, setPayment, mode}: PaymentDialogProps) => (
+  <Dialog visible={visible} onDismiss={onDismiss} style={styles.dialog}>
+    <Dialog.Title>{mode === 'add' ? 'Nowa wpłata' : 'Edytuj wpłatę'}</Dialog.Title>
+    <Dialog.Content>
+      <TextInput
+        label="Kwota (zł) *"
+        mode="outlined"
+        value={payment.amount}
+        onChangeText={text => setPayment(prev => ({...prev, amount: text}))}
+        keyboardType="numeric"
+        autoFocus={mode === 'add'}
+      />
+      <View style={{marginTop: sizes.lg, minHeight: 80, backgroundColor: 'white'}}>
+        <DatePicker
+          value={payment.date}
+          onChange={date => setPayment(prev => ({...prev, date: date || new Date()}))}
+          label="Data"
+        />
+      </View>
+      <TextInput
+        label="Notatka (opcjonalnie)"
+        mode="outlined"
+        value={payment.note}
+        onChangeText={text => setPayment(prev => ({...prev, note: text}))}
+        style={{marginTop: sizes.md}}
+      />
+    </Dialog.Content>
+    <Dialog.Actions>
+      <Button onPress={onDismiss}>Anuluj</Button>
+      <Button onPress={onSubmit} loading={loading} disabled={loading}>
+        {mode === 'add' ? 'Dodaj' : 'Zapisz'}
+      </Button>
+    </Dialog.Actions>
+  </Dialog>
+);
+
 export default function DebtDetailsScreen() {
   const dispatch = useAppDispatch();
   const t = useAppTheme();
@@ -199,72 +245,24 @@ export default function DebtDetailsScreen() {
         />
 
         <Portal>
-          <Dialog visible={addPaymentVisible} onDismiss={handleCancelPayment} style={styles.dialog}>
-            <Dialog.Title>Nowa wpłata</Dialog.Title>
-            <Dialog.Content>
-              <TextInput
-                label="Kwota (zł) *"
-                mode="outlined"
-                value={newPayment.amount}
-                onChangeText={text => setNewPayment(prev => ({...prev, amount: text}))}
-                keyboardType="numeric"
-                autoFocus
-              />
-              <View style={{marginTop: sizes.lg, minHeight: 80}}>
-                <DatePicker
-                  value={newPayment.date}
-                  onChange={date => setNewPayment(prev => ({...prev, date: date || new Date()}))}
-                  label="Data"
-                />
-              </View>
-              <TextInput
-                label="Notatka (opcjonalnie)"
-                mode="outlined"
-                value={newPayment.note}
-                onChangeText={text => setNewPayment(prev => ({...prev, note: text}))}
-                style={{marginTop: sizes.md}}
-              />
-            </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={handleCancelPayment}>Anuluj</Button>
-              <Button onPress={handleAddPayment} loading={loading} disabled={loading}>
-                Dodaj
-              </Button>
-            </Dialog.Actions>
-          </Dialog>
-
-          <Dialog visible={editPaymentVisible} onDismiss={handleCancelEditPayment} style={styles.dialog}>
-            <Dialog.Title>Edytuj wpłatę</Dialog.Title>
-            <Dialog.Content>
-              <TextInput
-                label="Kwota (zł) *"
-                mode="outlined"
-                value={editPayment.amount}
-                onChangeText={text => setEditPayment(prev => ({...prev, amount: text}))}
-                keyboardType="numeric"
-              />
-              <View style={{marginTop: sizes.lg, minHeight: 80, backgroundColor: 'white'}}>
-                <DatePicker
-                  value={editPayment.date}
-                  onChange={date => setEditPayment(prev => ({...prev, date: date || new Date()}))}
-                  label="Data"
-                />
-              </View>
-              <TextInput
-                label="Notatka (opcjonalnie)"
-                mode="outlined"
-                value={editPayment.note}
-                onChangeText={text => setEditPayment(prev => ({...prev, note: text}))}
-                style={{marginTop: sizes.md}}
-              />
-            </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={handleCancelEditPayment}>Anuluj</Button>
-              <Button onPress={handleSaveEditPayment} loading={loading} disabled={loading}>
-                Zapisz
-              </Button>
-            </Dialog.Actions>
-          </Dialog>
+          <PaymentDialog
+            visible={addPaymentVisible}
+            onDismiss={handleCancelPayment}
+            onSubmit={handleAddPayment}
+            loading={loading}
+            payment={newPayment}
+            setPayment={setNewPayment}
+            mode="add"
+          />
+          <PaymentDialog
+            visible={editPaymentVisible}
+            onDismiss={handleCancelEditPayment}
+            onSubmit={handleSaveEditPayment}
+            loading={loading}
+            payment={editPayment}
+            setPayment={setEditPayment}
+            mode="edit"
+          />
         </Portal>
       </View>
     </KeyboardAvoidingView>
