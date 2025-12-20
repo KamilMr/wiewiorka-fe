@@ -91,9 +91,7 @@ export default function DebtDetailsScreen() {
     );
   }
 
-  const paidAmount = debt.payments.reduce((sum, p) => sum + p.amount, 0);
-  const remainingAmount = debt.totalAmount - paidAmount;
-  const isPaid = remainingAmount <= 0;
+  const {paidAmount, remainingAmount, isPaid} = debt;
 
   const handleAddPayment = async () => {
     const amountInGrosze = parseZlotyToGrosze(newPayment.amount);
