@@ -378,6 +378,15 @@ const mainSlice = createSlice({
       const debtIndex = state.debts.findIndex(d => d.id === debtId);
       if (debtIndex !== -1) state.debts[debtIndex].payments.push(payment);
     },
+    removeDebtPayment: (state, action: {payload: {debtId: string; paymentId: string}}) => {
+      const {debtId, paymentId} = action.payload;
+      const debtIndex = state.debts.findIndex(d => d.id === debtId);
+      if (debtIndex !== -1) {
+        state.debts[debtIndex].payments = state.debts[debtIndex].payments.filter(
+          p => p.id !== paymentId,
+        );
+      }
+    },
   },
   extraReducers: builder => {
     builder
@@ -428,6 +437,7 @@ export const {
   deleteSubcategoryAction,
   dropMain,
   initState,
+  removeDebtPayment,
   removeExpense,
   removeIncome,
   replaceBudget,

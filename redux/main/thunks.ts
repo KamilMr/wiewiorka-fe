@@ -7,6 +7,7 @@ import {
   addBudgets as addBudgetsAction,
   addDebt as addDebtAction,
   addDebtPayment as addDebtPaymentAction,
+  removeDebtPayment as removeDebtPaymentAction,
   addExchangeRate as addExchangeRateAction,
   addBidAskExchangeRate as addBidAskExchangeRateAction,
   updateBudget as updateBudgetAction,
@@ -1275,6 +1276,30 @@ export const addDebtPaymentThunk = createAsyncThunk<
     if (result.err) throw result.err;
 
     dispatch(addDebtPaymentAction({debtId, payment: result.d}));
+    return result.d;
+  } catch (error) {
+    throw String(error);
+  }
+});
+
+export const deleteDebtPaymentThunk = createAsyncThunk<
+  any,
+  {debtId: string; paymentId: string},
+  {state: RootState}
+>('debt/deletePayment', async ({debtId, paymentId}, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+  const token = getState().auth.token;
+
+  try {
+    const response = await fetch(getURL(`debt/${debtId}/payment/${paymentId}`), {
+      method: 'DELETE',
+      headers: {Authorization: `Bearer ${token}`},
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    dispatch(removeDebtPaymentAction({debtId, paymentId}));
     return result.d;
   } catch (error) {
     throw String(error);
