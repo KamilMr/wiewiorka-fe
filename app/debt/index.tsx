@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   debtCard: {
-    marginVertical: sizes.xs,
+    marginVertical: sizes.md,
   },
   cardHeader: {
     flexDirection: 'row',

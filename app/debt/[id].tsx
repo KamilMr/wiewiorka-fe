@@ -303,15 +303,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   description: {
-    marginBottom: sizes.sm,
+    marginBottom: sizes.lg,
   },
   divider: {
-    marginVertical: sizes.md,
+    marginVertical: sizes.lg,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: sizes.xs,
+    marginVertical: sizes.sm,
   },
   amount: {
     fontWeight: '600',
@@ -319,14 +319,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: sizes.sm,
+    marginTop: sizes.lg,
+    marginBottom: sizes.md,
   },
   noPayments: {
     textAlign: 'center',
     marginTop: sizes.lg,
   },
   paymentCard: {
-    marginVertical: sizes.xs,
+    marginVertical: sizes.md,
+    minHeight: 60,
   },
   paymentRow: {
     flexDirection: 'row',
