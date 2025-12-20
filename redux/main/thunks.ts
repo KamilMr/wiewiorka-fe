@@ -304,6 +304,11 @@ export const addNewExpense = createAsyncThunk<
     ]),
   );
 
+  // Log breadcrumb for sync tracking
+  log(`Expense queued for sync: ${frontendId}`);
+  setAttribute('lastExpenseCategory', expense.category || '');
+  setAttribute('lastExpenseAmount', String(expense.price || 0));
+
   dispatch(
     addToQueue({
       path: ['main', 'expenses'],
@@ -323,6 +328,9 @@ export const updateExpense = createAsyncThunk<any, Expense, {state: RootState}>(
 
     // Editing existing expense
     dispatch(updateExpenseAction(expense));
+
+    // Log breadcrumb for sync tracking
+    log(`Expense update queued for sync: ${expense.id}`);
 
     dispatch(
       addToQueue({
@@ -356,6 +364,11 @@ export const addNewIncome = createAsyncThunk<
   const frontendId = `f_${makeNewIdArr(1)[0]}`;
   dispatch(addIncomeAction([{...incomeWithAuth, id: frontendId}]));
 
+  // Log breadcrumb for sync tracking
+  log(`Income queued for sync: ${frontendId}`);
+  setAttribute('lastIncomeSource', income.source || '');
+  setAttribute('lastIncomeAmount', String(income.price || 0));
+
   dispatch(
     addToQueue({
       path: ['main', 'income'],
@@ -381,6 +394,9 @@ export const updateIncome = createAsyncThunk<any, Income, {state: RootState}>(
         owner: '',
       }),
     );
+
+    // Log breadcrumb for sync tracking
+    log(`Income update queued for sync: ${income.id}`);
 
     dispatch(
       addToQueue({
@@ -1024,6 +1040,9 @@ export const deleteIncome = createAsyncThunk<any, string, {state: RootState}>(
     // Always remove from local state first
     dispatch(removeIncomeAction(id));
 
+    // Log breadcrumb for sync tracking
+    log(`Income delete queued for sync: ${id}`);
+
     // Check if it's a synced item (needs backend deletion)
     // Schedule backend deletion for synced items
     dispatch(
@@ -1046,6 +1065,9 @@ export const deleteExpenseLocal = createAsyncThunk<
 
   // Always remove from local state first
   dispatch(removeExpenseAction(id));
+
+  // Log breadcrumb for sync tracking
+  log(`Expense delete queued for sync: ${id}`);
 
   // Schedule backend deletion for synced items
   dispatch(
@@ -1113,13 +1135,24 @@ export const genericSync = createAsyncThunk<
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorObj = error instanceof Error ? error : new Error(errorMessage);
 
+      // Determine operation type for better Crashlytics filtering
+      const pathStr = path.join('/').toLowerCase();
+      let operationType = 'unknown';
+      if (pathStr.includes('expenses')) operationType = 'expense';
+      else if (pathStr.includes('income')) operationType = 'income';
+      else if (pathStr.includes('budget')) operationType = 'budget';
+      else if (pathStr.includes('category')) operationType = 'category';
+      else if (pathStr.includes('debt')) operationType = 'debt';
+
       // Log to Crashlytics with context
-      log(`genericSync failed: ${method} ${path.join('/')}`);
+      log(`genericSync failed: ${operationType} ${method} ${path.join('/')}`);
+      setAttribute('syncOperationType', operationType);
       setAttribute('syncOperationId', operationId);
       setAttribute('syncPath', path.join('/'));
       setAttribute('syncMethod', method);
       if (frontendId) setAttribute('syncFrontendId', frontendId);
-      logError(errorObj, 'genericSync');
+      if (data) setAttribute('syncDataKeys', Object.keys(data).join(','));
+      logError(errorObj, `genericSync:${operationType}`);
 
       dispatch(
         incrementRetryCount({operationId, maxRetries: SYNC_CONFIG.MAX_RETRIES}),

@@ -3,6 +3,18 @@ import {SyncSlice, SyncOperation} from '@/types';
 import {makeRandomId} from '@/common';
 import {SYNC_CONFIG} from '@/constants/theme';
 import {RootState} from '../store';
+import {logError, log, setAttribute} from '@/utils/crashlytics';
+
+const getOperationType = (path: string[]): string => {
+  const pathStr = path.join('/').toLowerCase();
+  if (pathStr.includes('expenses')) return 'expense';
+  if (pathStr.includes('income')) return 'income';
+  if (pathStr.includes('budget')) return 'budget';
+  if (pathStr.includes('category/group')) return 'categoryGroup';
+  if (pathStr.includes('category')) return 'category';
+  if (pathStr.includes('debt')) return 'debt';
+  return 'unknown';
+};
 
 const emptyState = (): SyncSlice => ({
   pendingOperations: [],
@@ -96,6 +108,23 @@ const syncSlice = createSlice({
       if (operation.retryCount >= maxRetries) {
         operation.status = 'failed';
         operation.nextRetryAt = undefined;
+
+        // Log permanent sync failure to Crashlytics
+        const operationType = getOperationType(operation.path);
+        log(`Sync permanently failed: ${operationType} ${operation.method}`);
+        setAttribute('failedOperationId', operation.id);
+        setAttribute('failedOperationType', operationType);
+        setAttribute('failedOperationPath', operation.path.join('/'));
+        setAttribute('failedOperationMethod', operation.method);
+        setAttribute('failedRetryCount', String(operation.retryCount));
+        if (operation.frontendId)
+          setAttribute('failedFrontendId', operation.frontendId);
+        logError(
+          new Error(
+            `Sync failed after ${maxRetries} retries: ${operationType} ${operation.method} ${operation.path.join('/')}`,
+          ),
+          'syncSlice:maxRetriesExceeded',
+        );
       } else {
         operation.status = 'retrying';
         // Fixed 3-minute delay for all retries
