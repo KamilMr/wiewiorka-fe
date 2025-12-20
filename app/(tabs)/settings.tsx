@@ -63,12 +63,10 @@ const Settings = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => router.navigate('/changelog')}
+          onPress={() => router.navigate('/debt')}
         >
-          <TabBarIcon name="document-text" color={t.colors.primary} />
-          <Text style={[styles.tabText, {color: t.colors.primary}]}>
-            Historia Zmian
-          </Text>
+          <TabBarIcon name="cash-outline" color={t.colors.primary} />
+          <Text style={[styles.tabText, {color: t.colors.primary}]}>Długi</Text>
         </TouchableOpacity>
         {devMode && (
           <TouchableOpacity
@@ -127,16 +125,18 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     marginBottom: 40,
+    paddingHorizontal: 16,
   },
   tabItem: {
     alignItems: 'center',
     padding: 16,
     backgroundColor: 'rgba(0,0,0,0.05)',
     borderRadius: 12,
-    flex: 1,
-    marginHorizontal: 8,
+    width: '28%',
+    margin: 8,
   },
   tabText: {
     marginTop: 8,

@@ -25,6 +25,7 @@ import PriceAndCategory from './PriceAndCategory';
 import SummaryCard from './SummaryCard';
 import {EnhancedPriceInput} from './EnhancedPriceInput';
 import CurrencyPriceInput from './CurrencyPriceInput';
+import SwipeToDelete from './SwipeToDelete';
 
 export {
   BudgetCard,
@@ -53,4 +54,5 @@ export {
   PieChartBar,
   PriceAndCategory,
   SummaryCard,
+  SwipeToDelete,
 };

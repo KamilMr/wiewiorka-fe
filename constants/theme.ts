@@ -17,8 +17,8 @@ export const unifiedColors = {
   accentLight: '#FFD633', // Lighter amber
   accentDark: '#E6AC00', // Darker amber
 
-  // Background colors - Beige system
-  background: '#F5F5DC', // Main beige background
+  // Background colors
+  background: '#FFFFFF', // White background
   surface: '#FFFFFF', // White surfaces
   surfaceVariant: '#F8F9FA', // Light gray for sections
   warmBeige: '#FAF8F5', // Warm beige for highlights

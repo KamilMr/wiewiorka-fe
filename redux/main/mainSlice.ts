@@ -4,7 +4,7 @@ import _ from 'lodash';
 import {format} from 'date-fns';
 
 import aggregateDataByDay from '../../utils/aggregateData';
-import {MainSlice, Income, Expense} from '@/types';
+import {MainSlice, Income, Expense, Debt, DebtPayment} from '@/types';
 import {StoredExchangeRate, StoredBidAskExchangeRate} from '../../types/nbpTypes';
 
 const emptyState = (): MainSlice => ({
@@ -12,6 +12,7 @@ const emptyState = (): MainSlice => ({
   expenses: [],
   budgets: [],
   incomes: [],
+  debts: [],
   categories: {},
   sources: {},
   exchangeRates: [],
@@ -353,7 +354,7 @@ const mainSlice = createSlice({
       if (!state.bidAskExchangeRates) {
         state.bidAskExchangeRates = [];
       }
-      
+
       const existingIndex = state.bidAskExchangeRates.findIndex(
         rate =>
           rate.code === action.payload.code &&
@@ -364,6 +365,34 @@ const mainSlice = createSlice({
         state.bidAskExchangeRates[existingIndex] = action.payload;
       } else {
         state.bidAskExchangeRates.push(action.payload);
+      }
+    },
+    setDebts: (state, action: {payload: Debt[]}) => {
+      state.debts = action.payload;
+    },
+    addDebt: (state, action: {payload: Debt}) => {
+      state.debts.push(action.payload);
+    },
+    addDebtPayment: (state, action: {payload: {debtId: string; payment: DebtPayment}}) => {
+      const {debtId, payment} = action.payload;
+      const debtIndex = state.debts.findIndex(d => d.id === debtId);
+      if (debtIndex !== -1) state.debts[debtIndex].payments.push(payment);
+    },
+    removeDebtPayment: (state, action: {payload: {debtId: string; paymentId: string}}) => {
+      const {debtId, paymentId} = action.payload;
+      const debtIndex = state.debts.findIndex(d => d.id === debtId);
+      if (debtIndex !== -1) {
+        state.debts[debtIndex].payments = state.debts[debtIndex].payments.filter(
+          p => p.id !== paymentId,
+        );
+      }
+    },
+    updateDebtPayment: (state, action: {payload: {debtId: string; payment: DebtPayment}}) => {
+      const {debtId, payment} = action.payload;
+      const debtIndex = state.debts.findIndex(d => d.id === debtId);
+      if (debtIndex !== -1) {
+        const paymentIndex = state.debts[debtIndex].payments.findIndex(p => p.id === payment.id);
+        if (paymentIndex !== -1) state.debts[debtIndex].payments[paymentIndex] = payment;
       }
     },
   },
@@ -403,6 +432,8 @@ const mainSlice = createSlice({
 
 export const {
   addBudgets,
+  addDebt,
+  addDebtPayment,
   addExchangeRate,
   addExpense,
   addGroupCategoryAction,
@@ -414,6 +445,8 @@ export const {
   deleteSubcategoryAction,
   dropMain,
   initState,
+  removeDebtPayment,
+  updateDebtPayment,
   removeExpense,
   removeIncome,
   replaceBudget,
@@ -421,6 +454,7 @@ export const {
   replaceGroupCategoryAction,
   replaceIncome,
   replaceSubcategoryAction,
+  setDebts,
   setSnackbar,
   startLoading,
   stopLoading,

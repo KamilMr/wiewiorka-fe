@@ -1,112 +1,55 @@
-import {View, Text, StyleSheet} from 'react-native';
+import {useRef} from 'react';
+import {View, Text, StyleSheet, Dimensions} from 'react-native';
+import {useSharedValue} from 'react-native-reanimated';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import {useAppTheme} from '@/constants/theme';
+import {quotes} from '@/utils/quotes';
 
-const quotes = [
-  {
-    text: 'Pieniądze nie spadają z nieba, muszą być zarobione na ziemi.',
-    author: 'Margaret Thatcher',
-  },
-  {
-    text: 'Jak się nie ma miedzi, to się w domu siedzi.',
-    author: 'Autor nieznany',
-  },
-  {
-    text: 'Pieniądze szczęścia nie dają, ale lepiej płakać w Porsche niż w autobusie.',
-    author: 'Autor nieznany',
-  },
-  {
-    text: 'Kupujemy rzeczy, których nie potrzebujemy, za pieniądze, których nie mamy, żeby zaimponować ludziom, na których nam nie zależy.',
-    author: 'Will Smith',
-  },
-  {
-    text: 'Pieniądze nie są ważne. Są potrzebne.',
-    author: 'Aleksandra P. z bloga Marcina Iwucia',
-  },
-  {
-    text: 'Pieniądze nie są tak dobre, jak zły jest ich brak.',
-    author: 'Przysłowie żydowskie',
-  },
-  {
-    text: 'Pieniądze ułatwiają znoszenie ubóstwa.',
-    author: 'Alphonse Allais',
-  },
-  {
-    text: 'Pieniądze nie dają szczęścia, ale pozwalają łatwiej znosić nieszczęścia.',
-    author: 'Autor nieznany',
-  },
-  {
-    text: 'Pieniądze są jak powietrze – nieważne, jeśli masz ich dosyć, ale rozpaczliwie ważne, gdy ich brakuje.',
-    author: 'Terry Pratchett',
-  },
-  {
-    text: 'Pieniądze nie mają żadnego znaczenia, ale dopiero wtedy, kiedy je masz.',
-    author: 'Michał Wawrzyniak',
-  },
-  {
-    text: 'Pieniądze szczęścia nie dają? Być może! Lecz kufereczek stóweczek daj Boże!',
-    author: 'Danuta Rinn & Bogdan Czyżewski',
-  },
-  {
-    text: 'Pieniądze nie są celem. Pieniądze nie mają wartości. Wartość mają marzenia, które pieniądze pomogą zrealizować.',
-    author: 'Robert Kiyosaki',
-  },
-  {
-    text: 'Nie odkładaj marzeń, odkładaj na marzenia.',
-    author: 'Autor nieznany',
-  },
-  {
-    text: 'Pieniądze nie dają szczęścia, ale mogą zapewnić niesamowity komfort w czasach nieszczęścia.',
-    author: 'Clare B. Luce',
-  },
-  {
-    text: 'Pieniądze nie dają szczęścia tylko tym, co ich nie mają.',
-    author: 'Autor nieznany',
-  },
-  {
-    text: 'Pieniądze nie dają szczęścia – to tylko głupie tłumaczenie ludzi, którzy tych pieniędzy nie mają.',
-    author: 'Autor nieznany',
-  },
-  {
-    text: 'Pieniądze nie dają szczęścia, ale mogę za nie kupić każdy wieżowiec w Nowym Jorku.',
-    author: 'Andrew Carnegie',
-  },
-  {
-    text: 'Pieniądze są przede wszystkim środkiem dla zapewnienia przyszłości.',
-    author: 'M. Gallo',
-  },
-  {
-    text: 'Pieniądze nie czynią człowieka szczęśliwym, ale niezwykle uspokajają.',
-    author: 'Erich M. Remarque',
-  },
-  {
-    text: 'Pieniądze, które mamy, są narzędziem wolności. Pieniądze, za którymi się uganiamy – narzędziem niewoli.',
-    author: 'Jean-Jacques Rousseau',
-  },
-];
+const {width: screenWidth} = Dimensions.get('window');
+const CAROUSEL_WIDTH = screenWidth - 32;
 
 const FinancialQuote = () => {
   const t = useAppTheme();
+  const ref = useRef<ICarouselInstance>(null);
+  const progress = useSharedValue<number>(0);
   const today = new Date();
-  const dayIndex = today.getDate() % quotes.length;
+  const defaultIndex = today.getDate() % quotes.length;
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.quote, {color: t.colors.onBackground}]}>
-        {quotes[dayIndex].text}
-      </Text>
-      <Text style={[styles.author, {color: t.colors.onBackground}]}>
-        — {quotes[dayIndex].author}
-      </Text>
+    <View style={styles.wrapper}>
+      <Carousel
+        ref={ref}
+        width={CAROUSEL_WIDTH}
+        height={140}
+        data={quotes}
+        defaultIndex={defaultIndex}
+        onProgressChange={progress}
+        loop
+        renderItem={({item}) => (
+          <View style={styles.container}>
+            <Text style={[styles.quote, {color: t.colors.onBackground}]}>
+              {item.text}
+            </Text>
+            <Text style={[styles.author, {color: t.colors.onBackground}]}>
+              — {item.author}
+            </Text>
+          </View>
+        )}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
+  wrapper: {
     marginVertical: 8,
+  },
+  container: {
+    flex: 1,
+    padding: 16,
     borderRadius: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
   },
   quote: {
     fontSize: 16,
@@ -117,6 +60,20 @@ const styles = StyleSheet.create({
   author: {
     fontSize: 14,
     textAlign: 'right',
+  },
+  paginationContainer: {
+    gap: 6,
+    marginTop: 8,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  activeDot: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    overflow: 'hidden',
   },
 });
 

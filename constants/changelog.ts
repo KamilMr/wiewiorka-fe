@@ -1,6 +1,17 @@
 export const CHANGELOG = `# Historia zmian
 
-## [1.0.8] - 2025-01-11
+## [1.0.9] - 2025-12-20
+### Dodano
+- Zarządzanie długami (dodawanie, edytowanie, usuwanie długów i płatności)
+- Przycisk CTA na karcie budżetu gdy brak budżetu
+- Paginacja cytatów
+
+### Zmieniono
+- Historia zmian - żeby zobaczyć trzeba kliknąć na wersję
+- Zmieniono kolor tła na biały
+- Zaktualizowano pakiety
+
+## [1.0.8] - 2025-11-16
 
 ### Dodano
 - Historia zmian w ustawieniach
@@ -12,18 +23,18 @@ export const CHANGELOG = `# Historia zmian
 - Wyświetlanie kolorów kategorii z nieprawidłową saturacją
 - Synchronizacja kategorii z serwerem - naprawiono błąd dodawania podkategorii
 
-## [1.0.7] - 2025-01-10
+## [1.0.7] - 2025-10-26
 
 ### Dodano
 - Wybór kursu EUR/PLN kupno/sprzedaż
 - Synchronizacja wersji aplikacji z package.json
 
-## [1.0.6] - 2025-01-08
+## [1.0.6] - 2025-10-14
 
 ### Naprawiono
 - Poprawki stabilności aplikacji
 
-## [1.0.5] - 2025-01-05
+## [1.0.5] - 2025-10-14
 
 ### Dodano
 - Przyciski kalkulatora do szybkiego wprowadzania kwot
@@ -34,7 +45,7 @@ export const CHANGELOG = `# Historia zmian
 - Automatyczne zamykanie szuflady nawigacyjnej
 - Otwieranie tylko gdy wymagane
 
-## [1.0.4] - 2025-01-03
+## [1.0.4] - 2025-10-14
 
 ### Naprawiono
 - Usunięcie starej wersji

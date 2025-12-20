@@ -1,7 +1,7 @@
 import {View, StyleSheet} from 'react-native';
 import {RadioButton} from 'react-native-paper';
 
-import {Text} from '@/components';
+import Text from '@/components/CustomText';
 import {sizes} from '@/constants/theme';
 
 interface SelectRadioButtonsProps {

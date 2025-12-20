@@ -1,4 +1,4 @@
-import {Card, ProgressBar, IconButton} from 'react-native-paper';
+import {Card, ProgressBar, IconButton, Button} from 'react-native-paper';
 import {StyleSheet, View, ScrollView, Pressable} from 'react-native';
 import {useState} from 'react';
 import {router} from 'expo-router';
@@ -96,51 +96,66 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
         )}
       />
       <Card.Content style={{paddingBottom: 0}}>
-        <ScrollView
-          style={[styles.scrollView, {maxHeight: calculateCardHeight() - 56}]}
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled={true}
-        >
-          {items.map(item => (
-            <Pressable
-              key={item.id}
-              onPress={() => handleBudgetItemPress(item.budgetedName)}
-              style={({pressed}) => [
-                styles.mainContentBox,
-                pressed && styles.pressedItem,
-              ]}
+        {items.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text variant="bodyMedium" style={styles.emptyText}>
+              Nie masz jeszcze budżetu na ten miesiąc
+            </Text>
+            <Button
+              mode="contained"
+              onPress={() => router.push('/budget')}
+              style={styles.ctaButton}
             >
-              {/* Top box */}
-              <View style={styles.mainInnerBox}>
-                {/* Left side */}
-                <View>
-                  <Text variant="titleMedium">{item.budgetedName}</Text>
-                  <Text variant="bodySmall">{formatPrice(item.amount)}</Text>
+              Dodaj budżet
+            </Button>
+          </View>
+        ) : (
+          <ScrollView
+            style={[styles.scrollView, {maxHeight: calculateCardHeight() - 56}]}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          >
+            {items.map(item => (
+              <Pressable
+                key={item.id}
+                onPress={() => handleBudgetItemPress(item.budgetedName)}
+                style={({pressed}) => [
+                  styles.mainContentBox,
+                  pressed && styles.pressedItem,
+                ]}
+              >
+                {/* Top box */}
+                <View style={styles.mainInnerBox}>
+                  {/* Left side */}
+                  <View>
+                    <Text variant="titleMedium">{item.budgetedName}</Text>
+                    <Text variant="bodySmall">{formatPrice(item.amount)}</Text>
+                  </View>
+
+                  {/* Right side */}
+                  <View>
+                    <Text variant="titleMedium">
+                      {formatPrice(item.allocated)}
+                    </Text>
+                  </View>
                 </View>
 
-                {/* Right side */}
+                {/* Bottom box slider */}
                 <View>
-                  <Text variant="titleMedium">
-                    {formatPrice(item.allocated)}
-                  </Text>
+                  <ProgressBar
+                    progress={calculateProgress(
+                      +item.amount,
+                      +item.allocated || 0,
+                    )}
+                    color={getColor(
+                      calculateProgress(+item.amount, +item.allocated || 0),
+                    )}
+                  />
                 </View>
-              </View>
-
-              {/* Bottom box slider */}
-              <View>
-                <ProgressBar
-                  progress={calculateProgress(
-                    +item.amount,
-                    +item.allocated || 0,
-                  )}
-                  color={getColor(
-                    calculateProgress(+item.amount, +item.allocated || 0),
-                  )}
-                />
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
       </Card.Content>
     </Card>
   );
@@ -169,5 +184,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: sizes.xs,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: sizes.xl,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginBottom: sizes.lg,
+    opacity: 0.7,
+  },
+  ctaButton: {
+    marginTop: sizes.sm,
   },
 });
