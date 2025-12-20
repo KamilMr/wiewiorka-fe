@@ -36,15 +36,6 @@ const DevPage = () => {
             Keyboard Avoid
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.cardItem}
-          onPress={() => router.navigate('/dev/crashlytics')}
-        >
-          <TabBarIcon name="bug" color={t.colors.primary} />
-          <Text style={[styles.cardText, {color: t.colors.primary}]}>
-            Crashlytics
-          </Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
