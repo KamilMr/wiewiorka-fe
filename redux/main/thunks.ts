@@ -8,6 +8,7 @@ import {
   addDebt as addDebtAction,
   addDebtPayment as addDebtPaymentAction,
   removeDebtPayment as removeDebtPaymentAction,
+  updateDebtPayment as updateDebtPaymentAction,
   addExchangeRate as addExchangeRateAction,
   addBidAskExchangeRate as addBidAskExchangeRateAction,
   updateBudget as updateBudgetAction,
@@ -1300,6 +1301,34 @@ export const deleteDebtPaymentThunk = createAsyncThunk<
     if (result.err) throw result.err;
 
     dispatch(removeDebtPaymentAction({debtId, paymentId}));
+    return result.d;
+  } catch (error) {
+    throw String(error);
+  }
+});
+
+export const updateDebtPaymentThunk = createAsyncThunk<
+  any,
+  {debtId: string; paymentId: string; amount?: number; date?: string; note?: string},
+  {state: RootState}
+>('debt/updatePayment', async ({debtId, paymentId, ...updates}, thunkAPI) => {
+  const {dispatch, getState} = thunkAPI;
+  const token = getState().auth.token;
+
+  try {
+    const response = await fetch(getURL(`debt/${debtId}/payment/${paymentId}`), {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+
+    const result = await response.json();
+    if (result.err) throw result.err;
+
+    dispatch(updateDebtPaymentAction({debtId, payment: result.d}));
     return result.d;
   } catch (error) {
     throw String(error);
