@@ -10,7 +10,7 @@ import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectDebtById} from '@/redux/main/selectors';
 import {addDebtPaymentThunk} from '@/redux/main/thunks';
 import {setSnackbar} from '@/redux/main/mainSlice';
-import {formatGrosze} from '@/utils/currencyUtils';
+import {formatGrosze, parseZlotyToGrosze} from '@/utils/currencyUtils';
 
 export default function DebtDetailsScreen() {
   const dispatch = useAppDispatch();
@@ -42,8 +42,9 @@ export default function DebtDetailsScreen() {
   const isPaid = remainingAmount <= 0;
 
   const handleAddPayment = async () => {
-    if (!newPayment.amount) {
-      dispatch(setSnackbar({msg: 'Podaj kwotę', type: 'error'}));
+    const amountInGrosze = parseZlotyToGrosze(newPayment.amount);
+    if (amountInGrosze <= 0) {
+      dispatch(setSnackbar({msg: 'Podaj poprawną kwotę', type: 'error'}));
       return;
     }
 
@@ -52,7 +53,7 @@ export default function DebtDetailsScreen() {
       await dispatch(
         addDebtPaymentThunk({
           debtId: id,
-          amount: parseFloat(newPayment.amount),
+          amount: amountInGrosze,
           date: format(newPayment.date, 'yyyy-MM-dd'),
           note: newPayment.note.trim() || undefined,
         }),
