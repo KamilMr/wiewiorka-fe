@@ -4,11 +4,11 @@ import {useLocalSearchParams} from 'expo-router';
 import {Card, FAB, Portal, Dialog, Button, Caption, Divider, Surface} from 'react-native-paper';
 import {format} from 'date-fns';
 
-import {Text, TextInput, DatePicker} from '@/components';
+import {Text, TextInput, DatePicker, SwipeToDelete} from '@/components';
 import {sizes, useAppTheme} from '@/constants/theme';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectDebtById} from '@/redux/main/selectors';
-import {addDebtPaymentThunk} from '@/redux/main/thunks';
+import {addDebtPaymentThunk, deleteDebtPaymentThunk} from '@/redux/main/thunks';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {formatGrosze, parseZlotyToGrosze} from '@/utils/currencyUtils';
 
@@ -119,15 +119,20 @@ export default function DebtDetailsScreen() {
             <Caption style={styles.noPayments}>Brak wpłat</Caption>
           ) : (
             sortedPayments.map(payment => (
-              <Card key={payment.id} style={styles.paymentCard}>
-                <Card.Content>
-                  <View style={styles.paymentRow}>
-                    <Text>{format(new Date(payment.date), 'dd/MM/yyyy')}</Text>
-                    <Text style={styles.paymentAmount}>{formatGrosze(payment.amount)}</Text>
-                  </View>
-                  {payment.note && <Caption>{payment.note}</Caption>}
-                </Card.Content>
-              </Card>
+              <SwipeToDelete
+                key={payment.id}
+                onDelete={() => dispatch(deleteDebtPaymentThunk({debtId: id, paymentId: payment.id}))}
+              >
+                <Card style={styles.paymentCard}>
+                  <Card.Content>
+                    <View style={styles.paymentRow}>
+                      <Text>{format(new Date(payment.date), 'dd/MM/yyyy')}</Text>
+                      <Text style={styles.paymentAmount}>{formatGrosze(payment.amount)}</Text>
+                    </View>
+                    {payment.note && <Caption>{payment.note}</Caption>}
+                  </Card.Content>
+                </Card>
+              </SwipeToDelete>
             ))
           )}
         </ScrollView>
