@@ -220,7 +220,13 @@ export default function DebtDetailsScreen() {
             sortedPayments.map(payment => (
               <SwipeToDelete
                 key={payment.id}
-                onDelete={() => dispatch(deleteDebtPaymentThunk({debtId: id, paymentId: payment.id}))}
+                onDelete={async () => {
+                  try {
+                    await dispatch(deleteDebtPaymentThunk({debtId: id, paymentId: payment.id})).unwrap();
+                  } catch (error) {
+                    dispatch(setSnackbar({msg: String(error), type: 'error'}));
+                  }
+                }}
               >
                 <Card style={styles.paymentCard} onPress={() => handleOpenEditPayment(payment)}>
                   <Card.Content>
