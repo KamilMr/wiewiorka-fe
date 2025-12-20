@@ -2,6 +2,7 @@ import {createAsyncThunk} from '@reduxjs/toolkit';
 import {RootState} from '../store';
 
 import {getURL, makeNewIdArr, makeRandomId} from '@/common';
+import {logError, log, setAttribute} from '@/utils/crashlytics';
 import {Expense, Income} from '@/types';
 import {
   addBudgets as addBudgetsAction,
@@ -239,6 +240,11 @@ export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
           ).unwrap();
         } catch (error) {
           // If any operation fails, stop processing and don't fetch ini
+          const errorObj = error instanceof Error ? error : new Error(String(error));
+          log(`fetchIni: Pending operation failed - ${operation.id}`);
+          setAttribute('failedOperationId', operation.id);
+          setAttribute('failedOperationPath', operation.path.join('/'));
+          logError(errorObj, 'fetchIni:pendingOperation');
           throw error;
         }
       }
@@ -248,7 +254,12 @@ export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
       const remainingOps = updatedState.sync.pendingOperations || [];
 
       // Only proceed if queue is now empty
-      if (remainingOps.length > 0) throw 'Nie możemy pobrać danych';
+      if (remainingOps.length > 0) {
+        log(`fetchIni: ${remainingOps.length} operations still pending after sync`);
+        setAttribute('remainingOpsCount', String(remainingOps.length));
+        logError(new Error('Pending operations remain after sync'), 'fetchIni:remainingOps');
+        throw 'Nie możemy pobrać danych';
+      }
     }
 
     const token = getState().auth.token;
@@ -260,10 +271,13 @@ export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
         },
       });
       data = await resp.json();
-      if (data.err) throw data.err;
+      if (data.err) throw new Error(data.err);
       return data.d;
     } catch (err) {
-      throw String(err);
+      const errorObj = err instanceof Error ? err : new Error(String(err));
+      log('fetchIni: API fetch failed');
+      logError(errorObj, 'fetchIni:apiFetch');
+      throw errorObj;
     }
   },
 );
@@ -486,7 +500,7 @@ export const addSubcategorySync = createAsyncThunk<
 
     return subcategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -578,7 +592,7 @@ export const updateSubcategorySync = createAsyncThunk<
 
     return subcategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -640,7 +654,7 @@ export const deleteSubcategorySync = createAsyncThunk<
 
     return id;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -710,7 +724,7 @@ export const addGroupCategorySync = createAsyncThunk<
 
     return groupCategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -798,7 +812,7 @@ export const updateGroupCategorySync = createAsyncThunk<
 
     return groupCategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -867,7 +881,7 @@ export const deleteGroupCategorySync = createAsyncThunk<
 
     return id;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1096,12 +1110,23 @@ export const genericSync = createAsyncThunk<
 
       return result.d;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorObj = error instanceof Error ? error : new Error(errorMessage);
+
+      // Log to Crashlytics with context
+      log(`genericSync failed: ${method} ${path.join('/')}`);
+      setAttribute('syncOperationId', operationId);
+      setAttribute('syncPath', path.join('/'));
+      setAttribute('syncMethod', method);
+      if (frontendId) setAttribute('syncFrontendId', frontendId);
+      logError(errorObj, 'genericSync');
+
       dispatch(
         incrementRetryCount({operationId, maxRetries: SYNC_CONFIG.MAX_RETRIES}),
       );
-      dispatch(setSyncError({operationId, error: String(error)}));
+      dispatch(setSyncError({operationId, error: errorMessage}));
 
-      return {error: true, message: String(error)};
+      return {error: true, message: errorMessage};
     }
   },
 );
@@ -1251,7 +1276,7 @@ export const addDebtThunk = createAsyncThunk<
     dispatch(addDebtAction({...result.d, payments: []}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1279,7 +1304,7 @@ export const addDebtPaymentThunk = createAsyncThunk<
     dispatch(addDebtPaymentAction({debtId, payment: result.d}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1303,7 +1328,7 @@ export const deleteDebtPaymentThunk = createAsyncThunk<
     dispatch(removeDebtPaymentAction({debtId, paymentId}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1331,6 +1356,6 @@ export const updateDebtPaymentThunk = createAsyncThunk<
     dispatch(updateDebtPaymentAction({debtId, payment: result.d}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
