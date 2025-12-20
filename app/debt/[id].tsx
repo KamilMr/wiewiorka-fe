@@ -210,7 +210,7 @@ export default function DebtDetailsScreen() {
                 keyboardType="numeric"
                 autoFocus
               />
-              <View style={{marginTop: sizes.md}}>
+              <View style={{marginTop: sizes.lg, minHeight: 80}}>
                 <DatePicker
                   value={newPayment.date}
                   onChange={date => setNewPayment(prev => ({...prev, date: date || new Date()}))}
@@ -243,7 +243,7 @@ export default function DebtDetailsScreen() {
                 onChangeText={text => setEditPayment(prev => ({...prev, amount: text}))}
                 keyboardType="numeric"
               />
-              <View style={{marginTop: sizes.md}}>
+              <View style={{marginTop: sizes.lg, minHeight: 80, backgroundColor: 'white'}}>
                 <DatePicker
                   value={editPayment.date}
                   onChange={date => setEditPayment(prev => ({...prev, date: date || new Date()}))}
