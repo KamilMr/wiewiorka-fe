@@ -15,6 +15,44 @@ interface SwipeToDeleteProps {
   onDelete: () => void;
 }
 
+interface DeleteActionProps {
+  translation: SharedValue<number>;
+  halfWidth: number;
+  autoDeleteThreshold: number;
+  hasTriggeredDelete: SharedValue<boolean>;
+  onDelete: () => void;
+}
+
+const DeleteAction = ({
+  translation,
+  halfWidth,
+  autoDeleteThreshold,
+  hasTriggeredDelete,
+  onDelete,
+}: DeleteActionProps) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    const dragX = Math.abs(translation.value);
+
+    if (dragX >= autoDeleteThreshold && !hasTriggeredDelete.value) {
+      hasTriggeredDelete.value = true;
+      runOnJS(onDelete)();
+    }
+
+    return {
+      opacity: interpolate(dragX, [0, halfWidth * 0.3, halfWidth], [0, 0.9, 1]),
+      transform: [{scale: interpolate(dragX, [0, halfWidth], [0.5, 1], 'clamp')}],
+    };
+  });
+
+  return (
+    <Reanimated.View style={[styles.rightAction, {width: halfWidth}]}>
+      <Reanimated.View style={[styles.buttonContainer, animatedStyle]}>
+        <IconButton icon="trash-can" iconColor="white" size={28} onPress={onDelete} />
+      </Reanimated.View>
+    </Reanimated.View>
+  );
+};
+
 export default function SwipeToDelete({children, onDelete}: SwipeToDeleteProps) {
   const [containerWidth, setContainerWidth] = useState(300);
   const swipeableRef = useRef<any>(null);
@@ -28,38 +66,15 @@ export default function SwipeToDelete({children, onDelete}: SwipeToDeleteProps) 
     onDelete();
   }, [onDelete]);
 
-  const renderRightActions = (
-    _progress: SharedValue<number>,
-    translation: SharedValue<number>,
-  ) => {
-    const animatedStyle = useAnimatedStyle(() => {
-      const dragX = Math.abs(translation.value);
-
-      // Trigger auto-delete when swiped past threshold
-      if (dragX >= autoDeleteThreshold && !hasTriggeredDelete.value) {
-        hasTriggeredDelete.value = true;
-        runOnJS(handleDelete)();
-      }
-
-      return {
-        opacity: interpolate(dragX, [0, halfWidth * 0.3, halfWidth], [0, 0.9, 1]),
-        transform: [{scale: interpolate(dragX, [0, halfWidth], [0.5, 1], 'clamp')}],
-      };
-    });
-
-    return (
-      <Reanimated.View style={[styles.rightAction, {width: halfWidth}]}>
-        <Reanimated.View style={[styles.buttonContainer, animatedStyle]}>
-          <IconButton
-            icon="trash-can"
-            iconColor="white"
-            size={28}
-            onPress={handleDelete}
-          />
-        </Reanimated.View>
-      </Reanimated.View>
-    );
-  };
+  const renderRightActions = (_progress: SharedValue<number>, translation: SharedValue<number>) => (
+    <DeleteAction
+      translation={translation}
+      halfWidth={halfWidth}
+      autoDeleteThreshold={autoDeleteThreshold}
+      hasTriggeredDelete={hasTriggeredDelete}
+      onDelete={handleDelete}
+    />
+  );
 
   const handleSwipeableOpen = () => {
     hasTriggeredDelete.value = false;
