@@ -1,8 +1,15 @@
 export const CHANGELOG = `# Historia zmian
 
-## [1.0.9] - 2025-11-23
+## [1.0.9] - 2025-12-20
+### Dodano
+- Zarządzanie długami (dodawanie, edytowanie, usuwanie długów i płatności)
+- Przycisk CTA na karcie budżetu gdy brak budżetu
+- Paginacja cytatów
+
 ### Zmieniono
 - Historia zmian - żeby zobaczyć trzeba kliknąć na wersję
+- Zmieniono kolor tła na biały
+- Zaktualizowano pakiety
 
 ## [1.0.8] - 2025-11-16
 
