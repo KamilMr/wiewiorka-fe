@@ -1159,6 +1159,21 @@ export const genericSync = createAsyncThunk<
       );
       dispatch(setSyncError({operationId, error: errorMessage}));
 
+      // Check if operation permanently failed (max retries exceeded)
+      const updatedState = thunkAPI.getState();
+      const operation = updatedState.sync.pendingOperations.find(
+        op => op.id === operationId,
+      );
+      if (operation?.status === 'failed') {
+        dispatch(
+          setSnackbar({
+            msg: 'Synchronizacja nie powiodła się. Sprawdź w ustawieniach.',
+            type: 'error',
+            setTime: 5000,
+          }),
+        );
+      }
+
       return {error: true, message: errorMessage};
     }
   },
