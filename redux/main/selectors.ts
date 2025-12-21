@@ -214,7 +214,11 @@ export const selectComparison = createSelector(
     const calPrice = (price: number, vat: number = 0): number =>
       price - price * (vat / 100);
 
-    const mmYY = (date: string) => ({month: +date.split('/')[0], year: +date.split('/')[1]});
+    const mmYY = (date: string) => {
+      const parts = date.split('/');
+      if (parts.length === 1) return {month: 0, year: +parts[0]};
+      return {month: +parts[0], year: +parts[1]};
+    };
     /** {
     2023: {income, date, outcome}
     11/2023: {income, date, outcome}

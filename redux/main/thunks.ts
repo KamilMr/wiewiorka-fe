@@ -258,7 +258,7 @@ export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
         log(`fetchIni: ${remainingOps.length} operations still pending after sync`);
         setAttribute('remainingOpsCount', String(remainingOps.length));
         logError(new Error('Pending operations remain after sync'), 'fetchIni:remainingOps');
-        throw 'Nie możemy pobrać danych';
+        throw new Error('Nie możemy pobrać danych');
       }
     }
 

@@ -38,7 +38,11 @@ const setUserId = (userId: string | number) => {
 };
 
 const setAttribute = (key: string, value: string | number) => {
-  safeExecute(() => fbSetAttribute(crashlyticsInstance, key, String(value)));
+  safeExecute(() => {
+    fbSetAttribute(crashlyticsInstance, key, String(value)).catch((err) =>
+      console.log('Crashlytics setAttribute error:', err),
+    );
+  });
 };
 
 const testCrash = () => {
