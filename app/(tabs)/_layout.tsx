@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import {Redirect, Tabs} from 'expo-router';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, Text} from 'react-native';
 
 import {selectToken} from '@/redux/auth/authSlice';
 import {fetchIni} from '@/redux/main/thunks';
@@ -9,6 +9,24 @@ import {TabBarIcon} from '@/components/navigation/TabBarIcon';
 import {sizes} from '@/constants/theme';
 import DevModeToggle from '@/components/DevModeToggle';
 import StatusIndicator from '@/components/StatusIndicator';
+import {selectFailedOperationsCount} from '@/redux/sync/syncSlice';
+
+const SettingsTabIcon = ({color}: {color: string}) => {
+  const failedCount = useAppSelector(selectFailedOperationsCount);
+
+  return (
+    <View>
+      <TabBarIcon name="settings" color={color} />
+      {failedCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {failedCount > 9 ? '9+' : failedCount}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+};
 
 export default function TabLayout() {
   const token = useAppSelector(selectToken);
@@ -73,7 +91,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          tabBarIcon: ({color}) => <TabBarIcon name="settings" color={color} />,
+          tabBarIcon: ({color}) => <SettingsTabIcon color={color} />,
           title: 'Ustawienia',
         }}
       />
@@ -81,4 +99,22 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#FF4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});

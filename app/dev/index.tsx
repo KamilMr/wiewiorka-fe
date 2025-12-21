@@ -2,9 +2,16 @@ import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
 import {router} from 'expo-router';
 import {TabBarIcon} from '@/components/navigation/TabBarIcon';
 import {useAppTheme} from '@/constants/theme';
+import {useAppDispatch} from '@/hooks';
+import {addTestFailedOperations} from '@/redux/sync/syncSlice';
 
 const DevPage = () => {
   const t = useAppTheme();
+  const dispatch = useAppDispatch();
+
+  const handleAddTestFailedOps = () => {
+    dispatch(addTestFailedOperations());
+  };
 
   return (
     <View style={[styles.root, {backgroundColor: t.colors.white}]}>
@@ -34,6 +41,15 @@ const DevPage = () => {
           <TabBarIcon name="eye" color={t.colors.primary} />
           <Text style={[styles.cardText, {color: t.colors.primary}]}>
             Keyboard Avoid
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.cardItem, {backgroundColor: 'rgba(255,0,0,0.1)'}]}
+          onPress={handleAddTestFailedOps}
+        >
+          <TabBarIcon name="sync" color="#FF4444" />
+          <Text style={[styles.cardText, {color: '#FF4444'}]}>
+            Add Failed Sync
           </Text>
         </TouchableOpacity>
       </View>
