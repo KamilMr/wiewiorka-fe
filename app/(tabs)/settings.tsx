@@ -42,6 +42,9 @@ const Settings = () => {
   const handleDevModeToggle = () => {
     dispatch(clearDevMode());
   };
+
+  const handleNavigate = (path: string) => () => router.navigate(path);
+
   return (
     <ScrollView
       style={{backgroundColor: t.colors.white}}
@@ -50,7 +53,7 @@ const Settings = () => {
       {__DEV__ && failedCount > 0 && (
         <TouchableOpacity
           style={styles.failedSyncCard}
-          onPress={() => router.navigate('/failed-sync')}
+          onPress={handleNavigate('/failed-sync')}
         >
           <View style={styles.failedSyncContent}>
             <TabBarIcon name="sync" color="#FF4444" />
@@ -67,7 +70,7 @@ const Settings = () => {
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => router.navigate('/budget')}
+          onPress={handleNavigate('/budget')}
         >
           <TabBarIcon name="wallet" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>
@@ -76,7 +79,7 @@ const Settings = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => router.navigate('/categories')}
+          onPress={handleNavigate('/categories')}
         >
           <TabBarIcon name="list" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>
@@ -85,7 +88,7 @@ const Settings = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => router.navigate('/debt')}
+          onPress={handleNavigate('/debt')}
         >
           <TabBarIcon name="cash-outline" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>Długi</Text>
@@ -93,7 +96,7 @@ const Settings = () => {
         {devMode && (
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => router.navigate('/dev')}
+            onPress={handleNavigate('/dev')}
           >
             <TabBarIcon name="bug" color={t.colors.primary} />
             <Text style={[styles.tabText, {color: t.colors.primary}]}>Dev</Text>
