@@ -13,7 +13,7 @@ interface SummaryCard_v2Props {
 }
 
 const SummaryCard_v2 = (props: SummaryCard_v2Props) => {
-  const summary = useAppSelector(selectComparison(1));
+  const summary = useAppSelector(state => selectComparison(state, 1));
   const date = props.date
     ? format(new Date(props.date), 'MM/yyyy')
     : format(new Date(), 'MM/yyyy');
