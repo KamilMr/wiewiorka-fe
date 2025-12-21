@@ -2,7 +2,7 @@ import {createSelector} from '@reduxjs/toolkit';
 import {format, formatDate, isAfter, isBefore, isSameDay} from 'date-fns';
 import _ from 'lodash';
 
-import {EXCLUDED_CAT, dh, makeNewIdArr, normalize} from '@/common';
+import {EXCLUDED_CAT, dh, makeNewIdArr, normalize, printJsonIndent} from '@/common';
 import {RootState} from '../store';
 import {Category, Expense, Income, Subcategory} from '@/types';
 import {BudgetMainSlice, BudgetCardItem} from '@/utils/types';
@@ -214,6 +214,7 @@ export const selectComparison = createSelector(
     const calPrice = (price: number, vat: number = 0): number =>
       price - price * (vat / 100);
 
+    const mmYY = (date: string) => ({month: +date.split('/')[0], year: +date.split('/')[1]});
     /** {
     2023: {income, date, outcome}
     11/2023: {income, date, outcome}
@@ -225,13 +226,13 @@ export const selectComparison = createSelector(
       if (!tR[fd]) tR[fd] = {income: 0, date: fd, outcome: 0, costs: {}};
 
       tR[fd].income += calPrice(price, vat);
-      tR[fd].month = +fd.split('/')[0];
-      tR[fd].year = +fd.split('/')[1];
+      tR[fd] = {...tR[fd], ...mmYY(fd)}
     });
 
     expenses.forEach(({date, price, owner, categoryId}) => {
       const fd = format(new Date(date), pattern);
       if (!tR[fd]) tR[fd] = {income: 0, date: fd, outcome: 0, costs: {}};
+    if (!tR[fd].month) tR[fd] = {...tR[fd], ...mmYY(fd)}
       tR[fd].outcome += price;
       tR[fd].costs[owner] ??= 0;
       tR[fd].costs[owner] += EXCLUDED_CAT.includes(categoryId) ? price : 0;
@@ -240,6 +241,7 @@ export const selectComparison = createSelector(
     const arr = Object.values(tR);
     const ids = makeNewIdArr(arr.length);
     arr.forEach((object, idx) => (object.id = ids[idx]));
+    printJsonIndent(arr[0])
     return _.orderBy(arr, ['year', 'month'], ['desc', 'desc']);
   },
 );
