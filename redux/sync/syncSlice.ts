@@ -17,6 +17,7 @@ const getOperationType = (path: string[]): string => {
 };
 
 const emptyState = (): SyncSlice => ({
+  shouldReload: false,
   pendingOperations: [],
   isSyncing: false,
   lastSyncTimestamp: null,
@@ -161,6 +162,105 @@ const syncSlice = createSlice({
       delete state.syncErrors[action.payload];
     },
 
+    retryOperation: (state, action: PayloadAction<string>) => {
+      const operation = state.pendingOperations.find(
+        op => op.id === action.payload,
+      );
+      if (!operation || operation.status !== 'failed') return;
+
+      operation.status = 'pending';
+      operation.retryCount = 0;
+      operation.nextRetryAt = undefined;
+      operation.lastAttempt = undefined;
+      delete state.syncErrors[action.payload];
+    },
+
+    retryAllFailed: state => {
+      state.pendingOperations.forEach(op => {
+        if (op.status === 'failed') {
+          op.status = 'pending';
+          op.retryCount = 0;
+          op.nextRetryAt = undefined;
+          op.lastAttempt = undefined;
+          delete state.syncErrors[op.id];
+        }
+      });
+    },
+
+    discardOperation: (state, action: PayloadAction<string>) => {
+      const operation = state.pendingOperations.find(op => op.id === action.payload);
+      if (!operation || operation.status !== 'failed') return;
+
+      state.pendingOperations = state.pendingOperations.filter(op => op.id !== action.payload);
+      delete state.syncErrors[action.payload];
+    },
+
+    discardAllFailed: state => {
+      const failedIds = state.pendingOperations
+        .filter(op => op.status === 'failed')
+        .map(op => op.id);
+      state.pendingOperations = state.pendingOperations.filter(
+        op => op.status !== 'failed',
+      );
+      failedIds.forEach(id => delete state.syncErrors[id]);
+    },
+
+    // Dev-only: Add test failed operations
+    addTestFailedOperations: state => {
+      if (!__DEV__) return;
+
+      const testOperations: SyncOperation[] = [
+        {
+          id: `test_${makeRandomId(8)}`,
+          path: ['main', 'expenses'],
+          method: 'POST',
+          data: {price: 150, category: 'Zakupy'},
+          timestamp: Date.now() - 3600000,
+          retryCount: 3,
+          handler: 'genericSync',
+          frontendId: `f_test1`,
+          status: 'failed',
+        },
+        {
+          id: `test_${makeRandomId(8)}`,
+          path: ['main', 'income'],
+          method: 'POST',
+          data: {price: 5000, source: 'Wypłata'},
+          timestamp: Date.now() - 86400000,
+          retryCount: 3,
+          handler: 'genericSync',
+          frontendId: `f_test2`,
+          status: 'failed',
+        },
+        {
+          id: `test_${makeRandomId(8)}`,
+          path: ['main', 'expenses', '123'],
+          method: 'PUT',
+          data: {price: 200},
+          timestamp: Date.now() - 172800000,
+          retryCount: 3,
+          handler: 'genericSync',
+          frontendId: `123`,
+          status: 'failed',
+        },
+        {
+          id: `test_${makeRandomId(8)}`,
+          path: ['main', 'income', '456'],
+          method: 'DELETE',
+          timestamp: Date.now() - 259200000,
+          retryCount: 3,
+          handler: 'genericSync',
+          frontendId: `456`,
+          status: 'failed',
+        },
+      ];
+
+      testOperations.forEach(op => {
+        state.pendingOperations.push(op);
+        state.syncErrors[op.id] = 'Test error: Network request failed';
+      });
+    },
+
     dropSync: () => emptyState(),
   },
 });
@@ -168,13 +268,24 @@ const syncSlice = createSlice({
 export const selectOperations = (state: RootState) =>
   state.sync.pendingOperations;
 
+export const selectFailedOperations = (state: RootState) =>
+  state.sync.pendingOperations.filter(op => op.status === 'failed');
+
+export const selectFailedOperationsCount = (state: RootState) =>
+  state.sync.pendingOperations.filter(op => op.status === 'failed').length;
+
 export const {
+  addTestFailedOperations,
   addToQueue,
   clearQueue,
   clearSyncError,
+  discardAllFailed,
+  discardOperation,
   dropSync,
   incrementRetryCount,
   removeFromQueue,
+  retryAllFailed,
+  retryOperation,
   setLastSyncTimestamp,
   setOperationStatus,
   setSyncError,
