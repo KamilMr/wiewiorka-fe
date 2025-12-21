@@ -9,21 +9,36 @@ import {
 
 const crashlyticsInstance = getCrashlytics();
 
+const safeExecute = <T>(fn: () => T): T | undefined => {
+  try {
+    return fn();
+  } catch (err) {
+    console.log('Crashlytics error:', err);
+    return undefined;
+  }
+};
+
 const logError = (error: Error, context?: string) => {
-  if (context) fbLog(crashlyticsInstance, context);
-  fbRecordError(crashlyticsInstance, error);
+  safeExecute(() => {
+    if (context) fbLog(crashlyticsInstance, context);
+    fbRecordError(crashlyticsInstance, error);
+  });
 };
 
 const log = (message: string) => {
-  fbLog(crashlyticsInstance, message);
+  safeExecute(() => fbLog(crashlyticsInstance, message));
 };
 
-const setUserId = (userId: string) => {
-  fbSetUserId(crashlyticsInstance, userId);
+const setUserId = (userId: string | number) => {
+  safeExecute(() => {
+    fbSetUserId(crashlyticsInstance, String(userId)).catch((err) =>
+      console.log('Crashlytics setUserId error:', err),
+    );
+  });
 };
 
-const setAttribute = (key: string, value: string) => {
-  fbSetAttribute(crashlyticsInstance, key, value);
+const setAttribute = (key: string, value: string | number) => {
+  safeExecute(() => fbSetAttribute(crashlyticsInstance, key, String(value)));
 };
 
 const testCrash = () => {
