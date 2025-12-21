@@ -1,8 +1,9 @@
 import {Button, ActivityIndicator} from 'react-native-paper';
-import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
+import {StyleSheet, View, TouchableOpacity, Text, ScrollView} from 'react-native';
 
 import AppVersion from '@/components/AppVersion';
 import {TabBarIcon} from '@/components/navigation/TabBarIcon';
+import {selectFailedOperationsCount} from '@/redux/sync/syncSlice';
 import {clearDevMode} from '@/redux/main/mainSlice';
 import {logout} from '@/redux/auth/thunks';
 import {router} from 'expo-router';
@@ -19,6 +20,7 @@ const Settings = () => {
   const t = useAppTheme();
   const fetching = useAppSelector(selectStatus);
   const operations = useAppSelector(selectOperations);
+  const failedCount = useAppSelector(selectFailedOperationsCount);
   const netInfo = useNetInfo();
   const devMode = useDev();
 
@@ -40,12 +42,35 @@ const Settings = () => {
   const handleDevModeToggle = () => {
     dispatch(clearDevMode());
   };
+
+  const handleNavigate = (path: string) => () => router.navigate(path);
+
   return (
-    <View style={[styles.root, {backgroundColor: t.colors.white}]}>
+    <ScrollView
+      style={{backgroundColor: t.colors.white}}
+      contentContainerStyle={styles.root}
+    >
+      {__DEV__ && failedCount > 0 && (
+        <TouchableOpacity
+          style={styles.failedSyncCard}
+          onPress={handleNavigate('/failed-sync')}
+        >
+          <View style={styles.failedSyncContent}>
+            <TabBarIcon name="sync" color="#FF4444" />
+            <View style={styles.failedSyncText}>
+              <Text style={styles.failedSyncTitle}>Niezsynchronizowane</Text>
+              <Text style={styles.failedSyncSubtitle}>
+                {failedCount} {failedCount === 1 ? 'operacja wymaga' : 'operacji wymaga'} uwagi
+              </Text>
+            </View>
+          </View>
+          <TabBarIcon name="chevron-forward" color="#999" />
+        </TouchableOpacity>
+      )}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => router.navigate('/budget')}
+          onPress={handleNavigate('/budget')}
         >
           <TabBarIcon name="wallet" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>
@@ -54,7 +79,7 @@ const Settings = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => router.navigate('/categories')}
+          onPress={handleNavigate('/categories')}
         >
           <TabBarIcon name="list" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>
@@ -63,7 +88,7 @@ const Settings = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => router.navigate('/debt')}
+          onPress={handleNavigate('/debt')}
         >
           <TabBarIcon name="cash-outline" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>Długi</Text>
@@ -71,7 +96,7 @@ const Settings = () => {
         {devMode && (
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => router.navigate('/dev')}
+            onPress={handleNavigate('/dev')}
           >
             <TabBarIcon name="bug" color={t.colors.primary} />
             <Text style={[styles.tabText, {color: t.colors.primary}]}>Dev</Text>
@@ -112,16 +137,45 @@ const Settings = () => {
         Wyloguj się
       </Button>
       <AppVersion />
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   root: {
+    flexGrow: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    height: '100%',
-    marginBottom: 90,
+  },
+  failedSyncCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 68, 68, 0.1)',
+    marginHorizontal: 16,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 68, 68, 0.3)',
+    width: '90%',
+  },
+  failedSyncContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  failedSyncText: {
+    marginLeft: 12,
+  },
+  failedSyncTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF4444',
+  },
+  failedSyncSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
   },
   tabsContainer: {
     flexDirection: 'row',

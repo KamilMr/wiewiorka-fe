@@ -1,5 +1,13 @@
 export const CHANGELOG = `# Historia zmian
 
+## [1.0.10] - 2025-12-21
+### Zmieniono
+- Poprawa wydajności listy rekordów i podsumowań
+
+### Dodano
+- Śledzenie błędów w aplikacji (Crashlytics)
+- Ponowne próby synchronizacji nieudanych transakcji z informacją dla użytkownika
+
 ## [1.0.9] - 2025-12-20
 ### Dodano
 - Zarządzanie długami (dodawanie, edytowanie, usuwanie długów i płatności)

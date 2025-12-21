@@ -2,6 +2,7 @@ import {createAsyncThunk} from '@reduxjs/toolkit';
 import {RootState} from '../store';
 
 import {getURL, makeNewIdArr, makeRandomId} from '@/common';
+import {logError, log, setAttribute} from '@/utils/crashlytics';
 import {Expense, Income} from '@/types';
 import {
   addBudgets as addBudgetsAction,
@@ -239,6 +240,11 @@ export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
           ).unwrap();
         } catch (error) {
           // If any operation fails, stop processing and don't fetch ini
+          const errorObj = error instanceof Error ? error : new Error(String(error));
+          log(`fetchIni: Pending operation failed - ${operation.id}`);
+          setAttribute('failedOperationId', operation.id);
+          setAttribute('failedOperationPath', operation.path.join('/'));
+          logError(errorObj, 'fetchIni:pendingOperation');
           throw error;
         }
       }
@@ -248,7 +254,12 @@ export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
       const remainingOps = updatedState.sync.pendingOperations || [];
 
       // Only proceed if queue is now empty
-      if (remainingOps.length > 0) throw 'Nie możemy pobrać danych';
+      if (remainingOps.length > 0) {
+        log(`fetchIni: ${remainingOps.length} operations still pending after sync`);
+        setAttribute('remainingOpsCount', String(remainingOps.length));
+        logError(new Error('Pending operations remain after sync'), 'fetchIni:remainingOps');
+        throw new Error('Nie możemy pobrać danych');
+      }
     }
 
     const token = getState().auth.token;
@@ -260,10 +271,13 @@ export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
         },
       });
       data = await resp.json();
-      if (data.err) throw data.err;
+      if (data.err) throw new Error(data.err);
       return data.d;
     } catch (err) {
-      throw String(err);
+      const errorObj = err instanceof Error ? err : new Error(String(err));
+      log('fetchIni: API fetch failed');
+      logError(errorObj, 'fetchIni:apiFetch');
+      throw errorObj;
     }
   },
 );
@@ -290,6 +304,11 @@ export const addNewExpense = createAsyncThunk<
     ]),
   );
 
+  // Log breadcrumb for sync tracking
+  log(`Expense queued for sync: ${frontendId}`);
+  setAttribute('lastExpenseCategory', expense.category || '');
+  setAttribute('lastExpenseAmount', String(expense.price || 0));
+
   dispatch(
     addToQueue({
       path: ['main', 'expenses'],
@@ -309,6 +328,9 @@ export const updateExpense = createAsyncThunk<any, Expense, {state: RootState}>(
 
     // Editing existing expense
     dispatch(updateExpenseAction(expense));
+
+    // Log breadcrumb for sync tracking
+    log(`Expense update queued for sync: ${expense.id}`);
 
     dispatch(
       addToQueue({
@@ -342,6 +364,11 @@ export const addNewIncome = createAsyncThunk<
   const frontendId = `f_${makeNewIdArr(1)[0]}`;
   dispatch(addIncomeAction([{...incomeWithAuth, id: frontendId}]));
 
+  // Log breadcrumb for sync tracking
+  log(`Income queued for sync: ${frontendId}`);
+  setAttribute('lastIncomeSource', income.source || '');
+  setAttribute('lastIncomeAmount', String(income.price || 0));
+
   dispatch(
     addToQueue({
       path: ['main', 'income'],
@@ -367,6 +394,9 @@ export const updateIncome = createAsyncThunk<any, Income, {state: RootState}>(
         owner: '',
       }),
     );
+
+    // Log breadcrumb for sync tracking
+    log(`Income update queued for sync: ${income.id}`);
 
     dispatch(
       addToQueue({
@@ -486,7 +516,7 @@ export const addSubcategorySync = createAsyncThunk<
 
     return subcategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -578,7 +608,7 @@ export const updateSubcategorySync = createAsyncThunk<
 
     return subcategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -640,7 +670,7 @@ export const deleteSubcategorySync = createAsyncThunk<
 
     return id;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -710,7 +740,7 @@ export const addGroupCategorySync = createAsyncThunk<
 
     return groupCategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -798,7 +828,7 @@ export const updateGroupCategorySync = createAsyncThunk<
 
     return groupCategory;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -867,7 +897,7 @@ export const deleteGroupCategorySync = createAsyncThunk<
 
     return id;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1010,6 +1040,9 @@ export const deleteIncome = createAsyncThunk<any, string, {state: RootState}>(
     // Always remove from local state first
     dispatch(removeIncomeAction(id));
 
+    // Log breadcrumb for sync tracking
+    log(`Income delete queued for sync: ${id}`);
+
     // Check if it's a synced item (needs backend deletion)
     // Schedule backend deletion for synced items
     dispatch(
@@ -1032,6 +1065,9 @@ export const deleteExpenseLocal = createAsyncThunk<
 
   // Always remove from local state first
   dispatch(removeExpenseAction(id));
+
+  // Log breadcrumb for sync tracking
+  log(`Expense delete queued for sync: ${id}`);
 
   // Schedule backend deletion for synced items
   dispatch(
@@ -1096,12 +1132,49 @@ export const genericSync = createAsyncThunk<
 
       return result.d;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorObj = error instanceof Error ? error : new Error(errorMessage);
+
+      // Determine operation type for better Crashlytics filtering
+      const pathStr = path.join('/').toLowerCase();
+      let operationType = 'unknown';
+      if (pathStr.includes('expenses')) operationType = 'expense';
+      else if (pathStr.includes('income')) operationType = 'income';
+      else if (pathStr.includes('budget')) operationType = 'budget';
+      else if (pathStr.includes('category')) operationType = 'category';
+      else if (pathStr.includes('debt')) operationType = 'debt';
+
+      // Log to Crashlytics with context
+      log(`genericSync failed: ${operationType} ${method} ${path.join('/')}`);
+      setAttribute('syncOperationType', operationType);
+      setAttribute('syncOperationId', operationId);
+      setAttribute('syncPath', path.join('/'));
+      setAttribute('syncMethod', method);
+      if (frontendId) setAttribute('syncFrontendId', frontendId);
+      if (data) setAttribute('syncDataKeys', Object.keys(data).join(','));
+      logError(errorObj, `genericSync:${operationType}`);
+
       dispatch(
         incrementRetryCount({operationId, maxRetries: SYNC_CONFIG.MAX_RETRIES}),
       );
-      dispatch(setSyncError({operationId, error: String(error)}));
+      dispatch(setSyncError({operationId, error: errorMessage}));
 
-      return {error: true, message: String(error)};
+      // Check if operation permanently failed (max retries exceeded)
+      const updatedState = thunkAPI.getState();
+      const operation = updatedState.sync.pendingOperations.find(
+        op => op.id === operationId,
+      );
+      if (operation?.status === 'failed') {
+        dispatch(
+          setSnackbar({
+            msg: 'Synchronizacja nie powiodła się. Sprawdź w ustawieniach.',
+            type: 'error',
+            setTime: 5000,
+          }),
+        );
+      }
+
+      return {error: true, message: errorMessage};
     }
   },
 );
@@ -1251,7 +1324,7 @@ export const addDebtThunk = createAsyncThunk<
     dispatch(addDebtAction({...result.d, payments: []}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1279,7 +1352,7 @@ export const addDebtPaymentThunk = createAsyncThunk<
     dispatch(addDebtPaymentAction({debtId, payment: result.d}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1303,7 +1376,7 @@ export const deleteDebtPaymentThunk = createAsyncThunk<
     dispatch(removeDebtPaymentAction({debtId, paymentId}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
 
@@ -1331,6 +1404,6 @@ export const updateDebtPaymentThunk = createAsyncThunk<
     dispatch(updateDebtPaymentAction({debtId, payment: result.d}));
     return result.d;
   } catch (error) {
-    throw String(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });

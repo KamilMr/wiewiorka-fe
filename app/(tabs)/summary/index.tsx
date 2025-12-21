@@ -54,7 +54,7 @@ const Config: React.FC<{
 
 const Summary = () => {
   const [filter, setFilter] = useState(MONTH);
-  const summary: SummaryCardProps[] = useAppSelector(selectComparison(filter));
+  const summary: SummaryCardProps[] = useAppSelector(state => selectComparison(state, filter));
   const handleChange = (f: string) => setFilter(+f);
 
   const t = useAppTheme();

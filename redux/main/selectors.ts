@@ -41,11 +41,37 @@ const filterHolidayTag = (item: Expense | Income, shouldFilter: boolean) => {
   return item.tags?.map(o => o.name).includes('urlop') ?? false;
 };
 
-export const selectRecords = (number: number, search: Search) =>
-  createSelector(
-    [selectExpensesAll, selectCategories, selectIncomes],
-    (expenses, categories, incomes) => {
-      const {txt: searchedTxt, categories: fc, dates, holidayTag} = search;
+export const selectIncomes = (state: RootState) => state.main.incomes;
+
+export const selectCategories = createSelector(
+  [state => state.main.categories],
+  cat => {
+    const arr = Object.entries(cat);
+    return arr.reduce((pv: Array<Subcategory>, [key, cv]: [string, any]) => {
+      if (!cv.subcategories) cv.subcategories = [];
+      const subcategories: Array<Subcategory> = [...cv.subcategories].map(
+        obj => ({
+          ...obj,
+          groupName: cv.name,
+          color: obj.color?.startsWith('#') ? obj.color : `#${obj.color || 'FFFFFF'}`,
+        }),
+      );
+      if (Array.isArray(pv)) pv.push(...subcategories);
+      return pv;
+    }, []);
+  },
+);
+
+export const selectRecords = createSelector(
+  [
+    selectExpensesAll,
+    selectCategories,
+    selectIncomes,
+    (_state: RootState, number: number) => number,
+    (_state: RootState, _number: number, search: Search) => search,
+  ],
+  (expenses, categories, incomes, number, search) => {
+    const {txt: searchedTxt, categories: fc, dates, holidayTag} = search;
       const isValidArr =
         Array.isArray(dates) &&
         dates.length === 2 &&
@@ -93,10 +119,9 @@ export const selectRecords = (number: number, search: Search) =>
         }))
         .groupBy('date') // Group by the formatted date
         .value();
-    },
-  );
+  },
+);
 
-export const selectIncomes = (state: RootState) => state.main.incomes;
 export const selectExpense = (id: number) =>
   createSelector([selectCategories, selectExpensesAll], (cat, exp) => {
     const expense = exp.find(ex => ex.id === +id);
@@ -116,25 +141,6 @@ export const selectIncome = (id: string | number) =>
     if (!income) return;
     return income;
   });
-
-export const selectCategories = createSelector(
-  [state => state.main.categories],
-  cat => {
-    const arr = Object.entries(cat);
-    return arr.reduce((pv: Array<Subcategory>, [key, cv]: [string, any]) => {
-      if (!cv.subcategories) cv.subcategories = [];
-      const subcategories: Array<Subcategory> = [...cv.subcategories].map(
-        obj => ({
-          ...obj,
-          groupName: cv.name,
-          color: obj.color?.startsWith('#') ? obj.color : `#${obj.color || 'FFFFFF'}`,
-        }),
-      );
-      if (Array.isArray(pv)) pv.push(...subcategories);
-      return pv;
-    }, []);
-  },
-);
 
 export const selectCategoriesByUsage = createSelector(
   [selectExpensesAll, selectCategories],
@@ -197,43 +203,51 @@ export const selectMainCategories = createSelector(
   },
 );
 
-export const selectComparison = (number1or12: number | string) =>
-  createSelector(
-    [selectIncomes, selectExpensesAll],
-    (income, expenses): SummaryCardProps[] => {
-      const pattern: string = +number1or12 === 1 ? 'MM/yyyy' : 'yyyy';
-      const calPrice = (price: number, vat: number = 0): number =>
-        price - price * (vat / 100);
+export const selectComparison = createSelector(
+  [
+    selectIncomes,
+    selectExpensesAll,
+    (_state: RootState, number1or12: number | string) => number1or12,
+  ],
+  (income, expenses, number1or12): SummaryCardProps[] => {
+    const pattern: string = +number1or12 === 1 ? 'MM/yyyy' : 'yyyy';
+    const calPrice = (price: number, vat: number = 0): number =>
+      price - price * (vat / 100);
 
-      /** {
-      2023: {income, date, outcome}
-      11/2023: {income, date, outcome}
-     }*/
-      const tR: any = {};
-      income.forEach(obj => {
-        const {date, price, vat} = obj;
-        const fd: string = format(new Date(date), pattern);
-        if (!tR[fd]) tR[fd] = {income: 0, date: fd, outcome: 0, costs: {}};
+    const mmYY = (date: string) => {
+      const parts = date.split('/');
+      if (parts.length === 1) return {month: 0, year: +parts[0]};
+      return {month: +parts[0], year: +parts[1]};
+    };
+    /** {
+    2023: {income, date, outcome}
+    11/2023: {income, date, outcome}
+   }*/
+    const tR: any = {};
+    income.forEach(obj => {
+      const {date, price, vat} = obj;
+      const fd: string = format(new Date(date), pattern);
+      if (!tR[fd]) tR[fd] = {income: 0, date: fd, outcome: 0, costs: {}};
 
-        tR[fd].income += calPrice(price, vat);
-        tR[fd].month = +fd.split('/')[0];
-        tR[fd].year = +fd.split('/')[1];
-      });
+      tR[fd].income += calPrice(price, vat);
+      tR[fd] = {...tR[fd], ...mmYY(fd)}
+    });
 
-      expenses.forEach(({date, price, owner, categoryId}) => {
-        const fd = format(new Date(date), pattern);
-        if (!tR[fd]) tR[fd] = {income: 0, date: fd, outcome: 0, costs: {}};
-        tR[fd].outcome += price;
-        tR[fd].costs[owner] ??= 0;
-        tR[fd].costs[owner] += EXCLUDED_CAT.includes(categoryId) ? price : 0;
-      });
+    expenses.forEach(({date, price, owner, categoryId}) => {
+      const fd = format(new Date(date), pattern);
+      if (!tR[fd]) tR[fd] = {income: 0, date: fd, outcome: 0, costs: {}};
+    if (!tR[fd].month) tR[fd] = {...tR[fd], ...mmYY(fd)}
+      tR[fd].outcome += price;
+      tR[fd].costs[owner] ??= 0;
+      tR[fd].costs[owner] += EXCLUDED_CAT.includes(categoryId) ? price : 0;
+    });
 
-      const arr = Object.values(tR);
-      const ids = makeNewIdArr(arr.length);
-      arr.forEach((object, idx) => (object.id = ids[idx]));
-      return _.orderBy(arr, ['year', 'month'], ['desc', 'desc']);
-    },
-  );
+    const arr = Object.values(tR);
+    const ids = makeNewIdArr(arr.length);
+    arr.forEach((object, idx) => (object.id = ids[idx]));
+    return _.orderBy(arr, ['year', 'month'], ['desc', 'desc']);
+  },
+);
 
 export const selectSources = (state: RootState) => {
   return state.main.sources[state.auth.name];

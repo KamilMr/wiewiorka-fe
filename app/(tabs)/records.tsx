@@ -69,8 +69,8 @@ const Records = () => {
         ]
       : undefined;
 
-  const records = useAppSelector(
-    selectRecords(number, {
+  const records = useAppSelector(state =>
+    selectRecords(state, number, {
       txt: searchQuery,
       categories: filters.categories,
       dates: dateRange,
