@@ -1,6 +1,6 @@
 import {useRef, useState, useMemo, useCallback} from 'react';
-import {View, StyleSheet, FlatList} from 'react-native';
-import {Searchbar, Divider, Text, FAB} from 'react-native-paper';
+import {View, StyleSheet, SectionList, TouchableOpacity} from 'react-native';
+import {Searchbar, Divider, Text, FAB, Checkbox} from 'react-native-paper';
 import BottomSheet, {
   BottomSheetView,
   BottomSheetTextInput,
@@ -11,11 +11,16 @@ import {useAppSelector, useAppDispatch} from '@/hooks';
 import {
   selectStorageItems,
   selectShopList,
+  selectBoughtItems,
   setStorageItems,
   setShopList,
   updateShopListItem,
   addShopListItem,
+  removeShopListItem,
+  addBoughtItem,
+  removeBoughtItem,
 } from '@/redux/storage/storageSlice';
+import type {BoughtItem} from '@/redux/storage/storageSlice';
 import Stepper from '@/components/storage/Stepper';
 import {getSocket} from '@/utils/socket';
 import {ShopListItem} from '@/types';
@@ -33,12 +38,13 @@ export default function ShopListScreen() {
   const dispatch = useAppDispatch();
   const storageItems = useAppSelector(selectStorageItems);
   const shopList = useAppSelector(selectShopList);
+  const boughtItems = useAppSelector(selectBoughtItems);
   const [search, setSearch] = useState('');
   const [drawerText, setDrawerText] = useState('');
+  const [boughtOpen, setBoughtOpen] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   useFocusEffect(
-    // TODO: this is prob not needed 
     useCallback(() => {
       const socket = getSocket();
       if (!socket) return;
@@ -78,6 +84,36 @@ export default function ShopListScreen() {
     });
   };
 
+  const handleCheckItem = (item: EnrichedShopItem) => {
+    dispatch(addBoughtItem({
+      name: item.name,
+      unit: item.unit,
+      itemNumber: item.itemNumber,
+      storageId: item.storageId,
+      boughtAt: new Date().toISOString(),
+    }));
+    dispatch(removeShopListItem(item.id));
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('shopList:delete', item.id, (res: any) => {
+      if (res.err) console.error('shopList:delete error', res.err);
+    });
+  };
+
+  const handleUncheckBought = (index: number) => {
+    const item = boughtItems[index];
+    dispatch(removeBoughtItem(index));
+    const socket = getSocket();
+    if (!socket) return;
+    const payload = item.storageId
+      ? {storageId: item.storageId, itemNumber: item.itemNumber}
+      : {name: item.name, itemNumber: item.itemNumber};
+    socket.emit('shopList:create', payload, (res: any) => {
+      if (!res.err) dispatch(addShopListItem(res.d));
+      else console.error('shopList:create error', res.err);
+    });
+  };
+
   const handleDrawerSubmit = () => {
     const items = drawerText
       .split(',')
@@ -96,20 +132,12 @@ export default function ShopListScreen() {
     bottomSheetRef.current?.close();
   };
 
-  const renderItem = ({item}: {item: EnrichedShopItem}) => (
-    <View>
-      <View style={[styles.row, {backgroundColor: t.colors.surface}]}>
-        <Text variant="bodyLarge" style={{flex: 1}}>{item.name}</Text>
-        <Stepper
-          value={item.itemNumber}
-          unit={item.unit}
-          onChange={v => handleQuantityChange(item, v)}
-          min={0}
-        />
-      </View>
-      <Divider />
-    </View>
-  );
+  const sections = useMemo(() => {
+    const result = [{title: 'list', data: filtered}];
+    if (boughtItems.length > 0)
+      result.push({title: 'bought', data: boughtOpen ? boughtItems as any[] : []});
+    return result;
+  }, [filtered, boughtItems, boughtOpen]);
 
   return (
     <View style={[styles.root, {backgroundColor: t.colors.background}]}>
@@ -120,20 +148,81 @@ export default function ShopListScreen() {
         style={styles.search}
       />
 
-      {filtered.length === 0 ? (
-        <View style={styles.empty}>
-          <Text variant="bodyLarge" style={{color: t.colors.textSecondary}}>
-            Lista zakupów jest pusta
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={i => String(i.id)}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-        />
-      )}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item, index) => item.id?.toString() ?? `bought-${index}`}
+        renderSectionHeader={({section}) => {
+          if (section.title === 'bought') return (
+            <TouchableOpacity
+              onPress={() => setBoughtOpen(prev => !prev)}
+              style={[styles.boughtHeader, {backgroundColor: t.colors.surfaceVariant}]}
+            >
+              <Text variant="titleSmall" style={{color: t.colors.textSecondary}}>
+                Kupione ({boughtItems.length})
+              </Text>
+              <Text style={{color: t.colors.textSecondary}}>
+                {boughtOpen ? '▲' : '▼'}
+              </Text>
+            </TouchableOpacity>
+          );
+          return null;
+        }}
+        renderItem={({item, section}) => {
+          if (section.title === 'bought') {
+            const bought = item as BoughtItem;
+            const idx = boughtItems.indexOf(bought);
+            return (
+              <View>
+                <View style={[styles.row, {backgroundColor: t.colors.surface, opacity: 0.6}]}>
+                  <Checkbox
+                    status="checked"
+                    onPress={() => handleUncheckBought(idx)}
+                    color={t.colors.success}
+                  />
+                  <Text
+                    variant="bodyLarge"
+                    style={[styles.boughtText, {color: t.colors.textSecondary}]}
+                  >
+                    {bought.name}
+                  </Text>
+                  <Text variant="bodySmall" style={{color: t.colors.textTertiary}}>
+                    {bought.itemNumber} {bought.unit}
+                  </Text>
+                </View>
+                <Divider />
+              </View>
+            );
+          }
+          const shopItem = item as EnrichedShopItem;
+          return (
+            <View>
+              <View style={[styles.row, {backgroundColor: t.colors.surface}]}>
+                <Checkbox
+                  status="unchecked"
+                  onPress={() => handleCheckItem(shopItem)}
+                  color={t.colors.primary}
+                />
+                <Text variant="bodyLarge" style={{flex: 1}}>{shopItem.name}</Text>
+                <Stepper
+                  value={shopItem.itemNumber}
+                  unit={shopItem.unit}
+                  onChange={v => handleQuantityChange(shopItem, v)}
+                  min={0}
+                />
+              </View>
+              <Divider />
+            </View>
+          );
+        }}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text variant="bodyLarge" style={{color: t.colors.textSecondary}}>
+              Lista zakupów jest pusta
+            </Text>
+          </View>
+        }
+      />
 
       <View style={styles.fabColumn}>
         <FAB
@@ -192,7 +281,6 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: sizes.md,
@@ -204,6 +292,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 100,
+  },
+  boughtHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: sizes.md,
+    marginTop: sizes.lg,
+  },
+  boughtText: {
+    flex: 1,
+    textDecorationLine: 'line-through',
   },
   fabColumn: {
     position: 'absolute',
