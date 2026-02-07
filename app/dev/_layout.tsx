@@ -34,6 +34,7 @@ export default function DevLayout() {
         <Stack.Screen name="index" options={{title: 'Dev'}} />
         <Stack.Screen name="show-reel" options={{title: 'Show Reel'}} />
         <Stack.Screen name="dropdown" options={{title: 'Dropdown'}} />
+        <Stack.Screen name="storage" options={{title: 'Storage'}} />
       </Stack>
     </KeyboardView>
   );
