@@ -100,6 +100,19 @@ export interface MainSlice {
   snackbar: Snackbar;
 }
 
+export interface StorageItem {
+  id: string;
+  name: string;
+  itemNumber: number;
+  unit: string;
+}
+
+export interface ShopListItem {
+  id: number;
+  storageId: string;
+  itemNumber: number;
+}
+
 export interface SyncOperation {
   id: string;
   path: string[];

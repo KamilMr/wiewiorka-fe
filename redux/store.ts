@@ -10,11 +10,13 @@ import mainReducer, {
   stopLoading,
 } from './main/mainSlice';
 import syncReducer, {syncEmptyState, dropSync} from './sync/syncSlice';
+import storageReducer, {resetStorage} from './storage/storageSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   main: mainReducer,
   sync: syncReducer,
+  storage: storageReducer,
 });
 
 const authMiddleware =
@@ -23,6 +25,7 @@ const authMiddleware =
       store.dispatch(dropMe());
       store.dispatch(dropMain());
       store.dispatch(dropSync());
+      store.dispatch(resetStorage());
     }
     return next(action);
   };

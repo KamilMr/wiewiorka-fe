@@ -14,14 +14,35 @@ import {Provider as PaperProvider} from 'react-native-paper';
 import {store, persistor} from '@/redux/store';
 import {paperTheme} from '@/constants/theme';
 import {SnackBar, Text, Button} from '@/components';
-import {useSync} from '@/hooks';
+import {useSync, useAppSelector} from '@/hooks';
 import {logError, log, setAttribute} from '@/utils/crashlytics';
+import {selectToken} from '@/redux/auth/authSlice';
+import {connectSocket, disconnectSocket} from '@/utils/socket';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 const Sync = () => {
   useSync();
+
+  return null;
+};
+
+const SocketConnector = () => {
+  const token = useAppSelector(selectToken);
+
+  useEffect(() => {
+    if (!token) {
+      disconnectSocket();
+      return;
+    }
+
+    connectSocket(token);
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [token]);
 
   return null;
 };
@@ -61,6 +82,7 @@ const RootLayout = () => {
       <Provider store={store}>
         <PersistGate persistor={persistor}>
           <Sync />
+          <SocketConnector />
           <PaperProvider theme={paperTheme}>
             <KeyboardProvider>
               <Stack initialRouteName="(tabs)">
