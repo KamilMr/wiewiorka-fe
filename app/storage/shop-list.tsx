@@ -1,5 +1,5 @@
 import {useRef, useState, useMemo, useCallback} from 'react';
-import {View, StyleSheet, SectionList, TouchableOpacity} from 'react-native';
+import {View, StyleSheet, SectionList, TouchableOpacity, Pressable} from 'react-native';
 import {Searchbar, Divider, Text, FAB, Checkbox} from 'react-native-paper';
 import BottomSheet, {
   BottomSheetView,
@@ -41,6 +41,9 @@ export default function ShopListScreen() {
   const boughtItems = useAppSelector(selectBoughtItems);
   const [search, setSearch] = useState('');
   const [drawerText, setDrawerText] = useState('');
+  const [editingItem, setEditingItem] = useState<EnrichedShopItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editQuantity, setEditQuantity] = useState(1);
   const [boughtOpen, setBoughtOpen] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -132,6 +135,32 @@ export default function ShopListScreen() {
     bottomSheetRef.current?.close();
   };
 
+  const openEdit = (item: EnrichedShopItem) => {
+    setEditingItem(item);
+    setEditName(item.name);
+    setEditQuantity(item.itemNumber);
+    bottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const openCreate = () => {
+    setEditingItem(null);
+    bottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editingItem) return;
+    const trimmed = editName.trim();
+    if (!trimmed) return;
+    dispatch(updateShopListItem({id: editingItem.id, itemNumber: editQuantity, name: trimmed}));
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('shopList:update', {id: editingItem.id, itemNumber: editQuantity, name: trimmed}, (res: any) => {
+      if (res.err) console.error('shopList:update error', res.err);
+    });
+    bottomSheetRef.current?.close();
+    setEditingItem(null);
+  };
+
   const sections = useMemo(() => {
     const result = [{title: 'list', data: filtered}];
     if (boughtItems.length > 0)
@@ -202,7 +231,9 @@ export default function ShopListScreen() {
                   onPress={() => handleCheckItem(shopItem)}
                   color={t.colors.primary}
                 />
-                <Text variant="bodyLarge" style={{flex: 1}}>{shopItem.name}</Text>
+                <Pressable onPress={() => openEdit(shopItem)} style={{flex: 1}}>
+                  <Text variant="bodyLarge">{shopItem.name}</Text>
+                </Pressable>
                 <Stepper
                   value={shopItem.itemNumber}
                   unit={shopItem.unit}
@@ -234,7 +265,7 @@ export default function ShopListScreen() {
         />
         <FAB
           icon="plus"
-          onPress={() => bottomSheetRef.current?.snapToIndex(0)}
+          onPress={openCreate}
           style={[styles.fab, {backgroundColor: t.colors.primary}]}
           color={t.colors.onPrimary}
           size="medium"
@@ -251,21 +282,60 @@ export default function ShopListScreen() {
         handleIndicatorStyle={{backgroundColor: t.colors.textSecondary}}
       >
         <BottomSheetView style={styles.drawerContent}>
-          <BottomSheetTextInput
-            placeholder="kminek, mleko, gruszki 2kg, chleb"
-            value={drawerText}
-            onChangeText={setDrawerText}
-            multiline
-            numberOfLines={3}
-            style={[
-              styles.drawerInput,
-              {backgroundColor: t.colors.surfaceVariant, color: t.colors.textPrimary},
-            ]}
-            placeholderTextColor={t.colors.textTertiary}
-          />
-          <Button mode="contained" onPress={handleDrawerSubmit}>
-            Dodaj
-          </Button>
+          {editingItem ? (
+            <>
+              <BottomSheetTextInput
+                value={editName}
+                onChangeText={setEditName}
+                style={[
+                  styles.drawerInput,
+                  {backgroundColor: t.colors.surfaceVariant, color: t.colors.textPrimary, minHeight: 0},
+                ]}
+                placeholderTextColor={t.colors.textTertiary}
+                placeholder="Nazwa"
+              />
+              <View style={styles.editStepperRow}>
+                <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
+                  Ilość
+                </Text>
+                <Stepper
+                  value={editQuantity}
+                  unit={editingItem.unit}
+                  onChange={setEditQuantity}
+                  min={0}
+                />
+              </View>
+              <View style={styles.editButtons}>
+                <Button mode="outlined" onPress={() => {
+                  bottomSheetRef.current?.close();
+                  setEditingItem(null);
+                }}>
+                  Przerwij
+                </Button>
+                <Button mode="contained" onPress={handleEditSubmit}>
+                  Zapisz
+                </Button>
+              </View>
+            </>
+          ) : (
+            <>
+              <BottomSheetTextInput
+                placeholder="kminek, mleko, gruszki 2kg, chleb"
+                value={drawerText}
+                onChangeText={setDrawerText}
+                multiline
+                numberOfLines={3}
+                style={[
+                  styles.drawerInput,
+                  {backgroundColor: t.colors.surfaceVariant, color: t.colors.textPrimary},
+                ]}
+                placeholderTextColor={t.colors.textTertiary}
+              />
+              <Button mode="contained" onPress={handleDrawerSubmit}>
+                Dodaj
+              </Button>
+            </>
+          )}
         </BottomSheetView>
       </BottomSheet>
     </View>
@@ -319,6 +389,17 @@ const styles = StyleSheet.create({
   drawerContent: {
     padding: 20,
     gap: 12,
+  },
+  editStepperRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: sizes.sm,
+  },
+  editButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: sizes.sm,
   },
   drawerInput: {
     borderRadius: 8,
