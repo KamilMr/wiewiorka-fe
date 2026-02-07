@@ -114,6 +114,7 @@ const RootLayout = () => {
                   name="income-summary"
                   options={{headerShown: false}}
                 />
+                <Stack.Screen name="storage" options={{headerShown: false}} />
                 <Stack.Screen name="dev" options={{headerShown: false}} />
                 <Stack.Screen
                   name="changelog"

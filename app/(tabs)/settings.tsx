@@ -93,6 +93,15 @@ const Settings = () => {
           <TabBarIcon name="cash-outline" color={t.colors.primary} />
           <Text style={[styles.tabText, {color: t.colors.primary}]}>Długi</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={handleNavigate('/storage')}
+        >
+          <TabBarIcon name="cube" color={t.colors.primary} />
+          <Text style={[styles.tabText, {color: t.colors.primary}]}>
+            Spiżarnia
+          </Text>
+        </TouchableOpacity>
         {devMode && (
           <TouchableOpacity
             style={styles.tabItem}

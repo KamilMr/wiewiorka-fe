@@ -1,0 +1,102 @@
+import {useState} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {Text, Button} from 'react-native-paper';
+import {useAppTheme, sizes} from '@/constants/theme';
+import {TextInput, Select} from '@/components';
+import Stepper from './Stepper';
+
+const UNIT_OPTIONS = [
+  {label: 'sztuka', value: 'szt'},
+  {label: 'kilogram', value: 'kg'},
+  {label: 'gram', value: 'g'},
+  {label: 'mililitr', value: 'ml'},
+];
+
+export interface StorageFormData {
+  name: string;
+  unit: string;
+  itemNumber: number;
+  minQuantity: number;
+}
+
+interface StorageFormProps {
+  onSubmit: (data: StorageFormData) => void;
+  onCancel: () => void;
+  initial?: Partial<StorageFormData>;
+}
+
+const StorageForm = ({onSubmit, onCancel, initial}: StorageFormProps) => {
+  const t = useAppTheme();
+  const [name, setName] = useState(initial?.name ?? '');
+  const [unit, setUnit] = useState(initial?.unit ?? 'szt');
+  const [itemNumber, setItemNumber] = useState(initial?.itemNumber ?? 1);
+  const [minQuantity, setMinQuantity] = useState(initial?.minQuantity ?? 1);
+
+  const handleSubmit = () => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    onSubmit({name: trimmed, unit, itemNumber, minQuantity});
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        label="Nazwa"
+        mode="outlined"
+        value={name}
+        onChangeText={setName}
+      />
+
+      <Select
+        items={UNIT_OPTIONS}
+        value={unit}
+        onChange={item => setUnit(item.value)}
+        placeholder="Jednostka"
+      />
+
+      <View style={styles.stepperRow}>
+        <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
+          W magazynie
+        </Text>
+        <Stepper value={itemNumber} onChange={setItemNumber} min={0} />
+      </View>
+
+      <View style={styles.stepperRow}>
+        <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
+          Ilość min:
+        </Text>
+        <Stepper value={minQuantity} onChange={setMinQuantity} min={0} />
+      </View>
+
+      <View style={styles.buttons}>
+        <Button mode="outlined" onPress={onCancel} style={styles.button}>
+          Przerwij
+        </Button>
+        <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+          Zapisz
+        </Button>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 12,
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: sizes.sm,
+  },
+  buttons: {
+    gap: 8,
+    marginTop: sizes.sm,
+  },
+  button: {
+    borderRadius: 8,
+  },
+});
+
+export default StorageForm;

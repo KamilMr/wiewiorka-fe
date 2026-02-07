@@ -75,6 +75,9 @@ export default function SwipeToAdd({children, onAdd}: SwipeToAddProps) {
         leftThreshold={halfWidth * 0.6}
         overshootLeft={false}
         friction={2}
+        onSwipeableOpen={direction => {
+          if (direction === 'right') handleAdd();
+        }}
       >
         {children}
       </ReanimatedSwipeable>
