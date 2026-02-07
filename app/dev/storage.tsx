@@ -6,6 +6,7 @@ import {useAppTheme} from '@/constants/theme';
 import StorageFab from '@/components/storage/StorageFab';
 import SwipeToAdd from '@/components/storage/SwipeToAdd';
 import BottomDrawer from '@/components/storage/BottomDrawer';
+import Stepper from '@/components/storage/Stepper';
 
 const mockItems = [
   {id: '1', name: 'Ziemniaki', itemNumber: 1, unit: 'kg'},
@@ -16,6 +17,7 @@ const mockItems = [
 const StorageDevPage = () => {
   const t = useAppTheme();
   const [shopListCount, setShopListCount] = useState(0);
+  const [stepperValue, setStepperValue] = useState(1);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const handleAddToShopList = (name: string) => {
@@ -45,6 +47,13 @@ const StorageDevPage = () => {
           <Divider />
         </SwipeToAdd>
       ))}
+
+      <View style={styles.stepperSection}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Stepper
+        </Text>
+        <Stepper value={stepperValue} unit="kg" onChange={setStepperValue} />
+      </View>
 
       <TouchableOpacity
         onPress={() => {
@@ -83,6 +92,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
+  },
+  stepperSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   addOther: {
     paddingVertical: 14,
