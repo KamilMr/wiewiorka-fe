@@ -1,11 +1,11 @@
 import {useRef, useState, useMemo, useCallback} from 'react';
-import {View, StyleSheet, FlatList} from 'react-native';
+import {View, StyleSheet, FlatList, Pressable} from 'react-native';
 import {Searchbar, Divider, Text, FAB, Badge} from 'react-native-paper';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {useAppTheme, sizes} from '@/constants/theme';
 import {useFocusEffect, router} from 'expo-router';
 import {useAppSelector, useAppDispatch} from '@/hooks';
-import {selectStorageItems, selectShopList, addStorageItem, addShopListItem, setStorageItems, setShopList} from '@/redux/storage/storageSlice';
+import {selectStorageItems, selectShopList, addStorageItem, updateStorageItem, addShopListItem, setStorageItems, setShopList} from '@/redux/storage/storageSlice';
 import SwipeToAdd from '@/components/storage/SwipeToAdd';
 import StorageForm, {type StorageFormData} from '@/components/storage/StorageForm';
 import {getSocket} from '@/utils/socket';
@@ -21,6 +21,7 @@ export default function StorageScreen() {
   const items = useAppSelector(selectStorageItems);
   const shopList = useAppSelector(selectShopList);
   const [search, setSearch] = useState('');
+  const [editingItem, setEditingItem] = useState<StorageItem | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   useFocusEffect(
@@ -42,16 +43,38 @@ export default function StorageScreen() {
     return items.filter(i => normalize(i.name).includes(q));
   }, [items, search]);
 
+  const openEdit = (item: StorageItem) => {
+    setEditingItem(item);
+    bottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const openCreate = () => {
+    setEditingItem(null);
+    bottomSheetRef.current?.snapToIndex(0);
+  };
+
   const handleFormSubmit = (data: StorageFormData) => {
     const socket = getSocket();
     if (!socket) return;
-    const {name, unit, itemNumber} = data;
-    socket.emit('storage:create', {name, unit, itemNumber}, (res: any) => {
-      if (!res.err) {
-        dispatch(addStorageItem(res.d));
-        bottomSheetRef.current?.close();
-      } else console.error('storage:create error', res.err);
-    });
+
+    if (editingItem) {
+      const {name, unit, itemNumber} = data;
+      socket.emit('storage:update', {id: editingItem.id, name, unit, itemNumber}, (res: any) => {
+        if (!res.err) {
+          dispatch(updateStorageItem({id: editingItem.id, name, unit, itemNumber}));
+          bottomSheetRef.current?.close();
+          setEditingItem(null);
+        } else console.error('storage:update error', res.err);
+      });
+    } else {
+      const {name, unit, itemNumber} = data;
+      socket.emit('storage:create', {name, unit, itemNumber}, (res: any) => {
+        if (!res.err) {
+          dispatch(addStorageItem(res.d));
+          bottomSheetRef.current?.close();
+        } else console.error('storage:create error', res.err);
+      });
+    }
   };
 
   const handleAddToShopList = (item: StorageItem) => {
@@ -78,14 +101,16 @@ export default function StorageScreen() {
 
   const renderItem = ({item}: {item: StorageItem}) => (
     <SwipeToAdd onAdd={() => handleAddToShopList(item)}>
-      <View style={[styles.row, {backgroundColor: t.colors.surface}]}>
-        <Text variant="bodyLarge" style={inShopSet.has(item.id) ? {color: t.colors.success} : undefined}>
-          {item.name}
-        </Text>
-        <Text variant="bodyLarge" style={{color: t.colors.textSecondary}}>
-          {item.itemNumber}
-        </Text>
-      </View>
+      <Pressable onPress={() => openEdit(item)}>
+        <View style={[styles.row, {backgroundColor: t.colors.surface}]}>
+          <Text variant="bodyLarge" style={inShopSet.has(item.id) ? {color: t.colors.success} : undefined}>
+            {item.name}
+          </Text>
+          <Text variant="bodyLarge" style={{color: t.colors.textSecondary}}>
+            {item.itemNumber}
+          </Text>
+        </View>
+      </Pressable>
       <Divider />
     </SwipeToAdd>
   );
@@ -121,7 +146,7 @@ export default function StorageScreen() {
         </View>
         <FAB
           icon="plus"
-          onPress={() => bottomSheetRef.current?.snapToIndex(0)}
+          onPress={openCreate}
           style={[styles.fab, {backgroundColor: t.colors.primary}]}
           color={t.colors.onPrimary}
           size="medium"
@@ -139,8 +164,13 @@ export default function StorageScreen() {
       >
         <BottomSheetView style={styles.drawerContent}>
           <StorageForm
+            key={editingItem?.id ?? 'new'}
             onSubmit={handleFormSubmit}
-            onCancel={() => bottomSheetRef.current?.close()}
+            onCancel={() => {
+              bottomSheetRef.current?.close();
+              setEditingItem(null);
+            }}
+            initial={editingItem ?? undefined}
           />
         </BottomSheetView>
       </BottomSheet>

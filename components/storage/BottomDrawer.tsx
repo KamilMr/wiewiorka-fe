@@ -5,6 +5,7 @@ import BottomSheet, {
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import {Button} from 'react-native-paper';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useAppTheme} from '@/constants/theme';
 
 interface BottomDrawerProps {
@@ -14,6 +15,7 @@ interface BottomDrawerProps {
 const BottomDrawer = forwardRef<BottomSheet, BottomDrawerProps>(
   ({onSubmit}, ref) => {
     const t = useAppTheme();
+    const {bottom} = useSafeAreaInsets();
     const [text, setText] = useState('');
 
     const handleSubmit = useCallback(() => {
@@ -31,14 +33,14 @@ const BottomDrawer = forwardRef<BottomSheet, BottomDrawerProps>(
     return (
       <BottomSheet
         ref={ref}
-        index={-1}
-        snapPoints={['55%']}
+        index={0}
+        snapPoints={['80%']}
         enablePanDownToClose
         enableDynamicSizing={false}
         backgroundStyle={{backgroundColor: t.colors.surface}}
         handleIndicatorStyle={{backgroundColor: t.colors.textSecondary}}
       >
-        <BottomSheetView style={styles.content}>
+        <BottomSheetView style={[styles.content, {paddingBottom: bottom + 20}]}>
           <BottomSheetTextInput
             placeholder="mleko, chleb, masło 2szt"
             value={text}
