@@ -169,8 +169,8 @@ export default function ShopListScreen() {
         }}
         renderItem={({item, section}) => {
           if (section.title === 'bought') {
-            const bought = item as BoughtItem;
-            const idx = boughtItems.indexOf(bought);
+            const bought = item as unknown as BoughtItem;
+            const idx = boughtItems.findIndex(b => b.boughtAt === bought.boughtAt && b.name === bought.name);
             return (
               <View>
                 <View style={[styles.row, {backgroundColor: t.colors.surface, opacity: 0.6}]}>

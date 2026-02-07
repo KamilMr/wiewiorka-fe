@@ -32,7 +32,7 @@ const BottomDrawer = forwardRef<BottomSheet, BottomDrawerProps>(
       <BottomSheet
         ref={ref}
         index={-1}
-        snapPoints={['35%']}
+        snapPoints={['55%']}
         enablePanDownToClose
         enableDynamicSizing={false}
         backgroundStyle={{backgroundColor: t.colors.surface}}

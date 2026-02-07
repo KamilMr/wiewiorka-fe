@@ -109,18 +109,16 @@ export default function StorageScreen() {
       />
 
       <View style={styles.fabColumn}>
-        {shopListCount > 0 && (
-          <View>
-            <FAB
-              icon="cart"
-              onPress={() => router.push('/storage/shop-list')}
-              style={[styles.fab, {backgroundColor: t.colors.primary}]}
-              color={t.colors.onPrimary}
-              size="medium"
-            />
-            <Badge style={styles.badge}>{shopListCount}</Badge>
-          </View>
-        )}
+        <View>
+          <FAB
+            icon="cart"
+            onPress={() => router.push('/storage/shop-list')}
+            style={[styles.fab, {backgroundColor: t.colors.primary}]}
+            color={t.colors.onPrimary}
+            size="medium"
+          />
+          {shopListCount > 0 && <Badge style={styles.badge}>{shopListCount}</Badge>}
+        </View>
         <FAB
           icon="plus"
           onPress={() => bottomSheetRef.current?.snapToIndex(0)}

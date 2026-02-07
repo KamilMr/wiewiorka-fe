@@ -19,7 +19,10 @@ const connectSocket = (token: string): Socket => {
     socket.disconnect();
   }
 
-  socket = io(env.apiUrl, {
+  const url = new URL(env.apiUrl);
+  const basePath = url.pathname.replace(/\/$/, '');
+  socket = io(url.origin, {
+    path: `${basePath}/socket.io/`,
     autoConnect: false,
     auth: {token},
   });
