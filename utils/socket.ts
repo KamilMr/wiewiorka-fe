@@ -1,5 +1,13 @@
 import {io, Socket} from 'socket.io-client';
 import {env} from '@/config/environment';
+import {
+  addStorageItem,
+  updateStorageItem,
+  removeStorageItem,
+  addShopListItem,
+  updateShopListItem,
+  removeShopListItem,
+} from '@/redux/storage/storageSlice';
 
 let socket: Socket | null = null;
 
@@ -33,4 +41,13 @@ const disconnectSocket = () => {
 
 const getSocket = (): Socket | null => socket;
 
-export {connectSocket, disconnectSocket, getSocket};
+const broadcastEvents = {
+  'storage:created': (data: any) => addStorageItem(data),
+  'storage:updated': (data: any) => updateStorageItem(data),
+  'storage:deleted': (data: any) => removeStorageItem(data.id),
+  'shopList:created': (data: any) => addShopListItem(data),
+  'shopList:updated': (data: any) => updateShopListItem(data),
+  'shopList:deleted': (data: any) => removeShopListItem(data.id),
+};
+
+export {connectSocket, disconnectSocket, getSocket, broadcastEvents};

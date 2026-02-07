@@ -14,10 +14,11 @@ import {Provider as PaperProvider} from 'react-native-paper';
 import {store, persistor} from '@/redux/store';
 import {paperTheme} from '@/constants/theme';
 import {SnackBar, Text, Button} from '@/components';
-import {useSync, useAppSelector} from '@/hooks';
+import {useSync, useAppSelector, useAppDispatch} from '@/hooks';
 import {logError, log, setAttribute} from '@/utils/crashlytics';
 import {selectToken} from '@/redux/auth/authSlice';
-import {connectSocket, disconnectSocket} from '@/utils/socket';
+import {connectSocket, disconnectSocket, broadcastEvents} from '@/utils/socket';
+import {setStorageItems, setShopList} from '@/redux/storage/storageSlice';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -30,6 +31,7 @@ const Sync = () => {
 
 const SocketConnector = () => {
   const token = useAppSelector(selectToken);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (!token) {
@@ -37,12 +39,25 @@ const SocketConnector = () => {
       return;
     }
 
-    connectSocket(token);
+    const socket = connectSocket(token);
+
+    socket.on('connect', () => {
+      socket.emit('storage:getAll', (res: any) => {
+        if (!res.err) dispatch(setStorageItems(res.d));
+      });
+      socket.emit('shopList:getAll', (res: any) => {
+        if (!res.err) dispatch(setShopList(res.d));
+      });
+    });
+
+    Object.entries(broadcastEvents).forEach(([event, toAction]) => {
+      socket.on(event, data => dispatch(toAction(data)));
+    });
 
     return () => {
       disconnectSocket();
     };
-  }, [token]);
+  }, [token, dispatch]);
 
   return null;
 };
