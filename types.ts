@@ -109,7 +109,8 @@ export interface StorageItem {
 
 export interface ShopListItem {
   id: number;
-  storageId: string;
+  storageId?: string;
+  name?: string;
   itemNumber: number;
 }
 

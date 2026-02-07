@@ -7,7 +7,6 @@ export default function Layout() {
   return (
     <Stack
       screenOptions={{
-        title: 'Spiżarnia',
         headerRightContainerStyle: {paddingRight: sizes.xxl},
         headerRight: () => (
           <DevModeToggle>
@@ -15,6 +14,9 @@ export default function Layout() {
           </DevModeToggle>
         ),
       }}
-    />
+    >
+      <Stack.Screen name="index" options={{title: 'Spiżarnia'}} />
+      <Stack.Screen name="shop-list" options={{title: 'Lista zakupów'}} />
+    </Stack>
   );
 }

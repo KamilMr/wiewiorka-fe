@@ -3,7 +3,7 @@ import {View, StyleSheet, FlatList} from 'react-native';
 import {Searchbar, Divider, Text, FAB, Badge} from 'react-native-paper';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {useAppTheme, sizes} from '@/constants/theme';
-import {useFocusEffect} from 'expo-router';
+import {useFocusEffect, router} from 'expo-router';
 import {useAppSelector, useAppDispatch} from '@/hooks';
 import {selectStorageItems, selectShopList, addStorageItem, addShopListItem, setStorageItems, setShopList} from '@/redux/storage/storageSlice';
 import SwipeToAdd from '@/components/storage/SwipeToAdd';
@@ -113,7 +113,7 @@ export default function StorageScreen() {
           <View>
             <FAB
               icon="cart"
-              onPress={() => console.log('Navigate to shop list')}
+              onPress={() => router.push('/storage/shop-list')}
               style={[styles.fab, {backgroundColor: t.colors.primary}]}
               color={t.colors.onPrimary}
               size="medium"
