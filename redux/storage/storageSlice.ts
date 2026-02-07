@@ -20,7 +20,9 @@ export const storageSlice = createSlice({
       state.items = action.payload;
     },
     addStorageItem: (state, action: PayloadAction<StorageItem>) => {
-      state.items.push(action.payload);
+      const idx = state.items.findIndex(i => i.id === action.payload.id);
+      if (idx !== -1) Object.assign(state.items[idx], action.payload);
+      else state.items.push(action.payload);
     },
     updateStorageItem: (
       state,
@@ -36,7 +38,9 @@ export const storageSlice = createSlice({
       state.shopList = action.payload;
     },
     addShopListItem: (state, action: PayloadAction<ShopListItem>) => {
-      state.shopList.push(action.payload);
+      const idx = state.shopList.findIndex(i => i.id === action.payload.id);
+      if (idx !== -1) Object.assign(state.shopList[idx], action.payload);
+      else state.shopList.push(action.payload);
     },
     updateShopListItem: (
       state,

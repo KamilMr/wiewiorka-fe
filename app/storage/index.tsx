@@ -5,10 +5,11 @@ import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {useAppTheme, sizes} from '@/constants/theme';
 import {useFocusEffect} from 'expo-router';
 import {useAppSelector, useAppDispatch} from '@/hooks';
-import {selectStorageItems, selectShopList, addStorageItem, setStorageItems, setShopList} from '@/redux/storage/storageSlice';
+import {selectStorageItems, selectShopList, addStorageItem, addShopListItem, setStorageItems, setShopList} from '@/redux/storage/storageSlice';
 import SwipeToAdd from '@/components/storage/SwipeToAdd';
 import StorageForm, {type StorageFormData} from '@/components/storage/StorageForm';
 import {getSocket} from '@/utils/socket';
+import {setSnackbar} from '@/redux/main/mainSlice';
 import {StorageItem} from '@/types';
 import { printJsonIndent } from '@/common';
 
@@ -54,22 +55,33 @@ export default function StorageScreen() {
   };
 
   const handleAddToShopList = (item: StorageItem) => {
-    console.log('this is not showing',item)
+    if (inShopSet.has(item.id)) {
+      dispatch(setSnackbar({msg: `${item.name} jest już na liście zakupów`, type: 'info'}));
+      return;
+    }
     const socket = getSocket();
     if (!socket) return;
     socket.emit(
       'shopList:create',
       {storageId: item.id, itemNumber: item.itemNumber},
       (res: any) => {
-        if (res.err) console.error('shopList:create error', res.err);
+        if (!res.err) dispatch(addShopListItem(res.d));
+        else console.error('shopList:create error', res.err);
       },
     );
   };
 
+  const inShopSet = useMemo(
+    () => new Set(shopList.map(s => s.storageId)),
+    [shopList],
+  );
+
   const renderItem = ({item}: {item: StorageItem}) => (
     <SwipeToAdd onAdd={() => handleAddToShopList(item)}>
       <View style={[styles.row, {backgroundColor: t.colors.surface}]}>
-        <Text variant="bodyLarge">{item.name}</Text>
+        <Text variant="bodyLarge" style={inShopSet.has(item.id) ? {color: t.colors.success} : undefined}>
+          {item.name}
+        </Text>
         <Text variant="bodyLarge" style={{color: t.colors.textSecondary}}>
           {item.itemNumber}
         </Text>
