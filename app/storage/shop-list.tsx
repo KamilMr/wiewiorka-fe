@@ -71,7 +71,7 @@ export default function ShopListScreen() {
         unit: storage?.unit ?? '',
         step: storage?.step ?? 1,
       };
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name));
   }, [shopList, storageItems]);
 
   const activeItems = useMemo(() => {

@@ -56,7 +56,8 @@ export const storageSlice = createSlice({
   },
 });
 
-export const selectStorageItems = (state: RootState) => state.storage.items;
+export const selectStorageItems = (state: RootState) =>
+  [...state.storage.items].sort((a, b) => a.name.localeCompare(b.name));
 export const selectShopList = (state: RootState) => state.storage.shopList;
 
 export const {
