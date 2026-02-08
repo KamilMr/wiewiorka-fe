@@ -24,9 +24,10 @@ interface StorageFormProps {
   onSubmit: (data: StorageFormData) => void;
   onCancel: () => void;
   initial?: Partial<StorageFormData>;
+  loading?: boolean;
 }
 
-const StorageForm = ({onSubmit, onCancel, initial}: StorageFormProps) => {
+const StorageForm = ({onSubmit, onCancel, initial, loading}: StorageFormProps) => {
   const t = useAppTheme();
   const [name, setName] = useState(initial?.name ?? '');
   const [unit, setUnit] = useState(initial?.unit ?? 'szt');
@@ -94,7 +95,7 @@ const StorageForm = ({onSubmit, onCancel, initial}: StorageFormProps) => {
         <Button mode="outlined" onPress={onCancel} style={styles.button}>
           Przerwij
         </Button>
-        <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+        <Button mode="contained" onPress={handleSubmit} style={styles.button} loading={loading} disabled={loading}>
           Zapisz
         </Button>
       </View>

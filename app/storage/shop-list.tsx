@@ -46,6 +46,7 @@ export default function ShopListScreen() {
   const [editQuantity, setEditQuantity] = useState(1);
   const [boughtOpen, setBoughtOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<EnrichedShopItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [renameChoice, setRenameChoice] = useState<{item: EnrichedShopItem; name: string; quantity: number} | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -121,11 +122,14 @@ export default function ShopListScreen() {
     if (!deleteItem) return;
     const socket = getSocket();
     if (!socket) return;
+    setDeleting(true);
     socket.emit('shopList:delete', {id: deleteItem.id}, (res: any) => {
-      if (!res.err) dispatch(removeShopListItem(deleteItem.id));
-      else dispatch(setSnackbar({msg: 'Nie udało się usunąć', type: 'error'}));
+      setDeleting(false);
+      if (!res.err) {
+        dispatch(removeShopListItem(deleteItem.id));
+        setDeleteItem(null);
+      } else dispatch(setSnackbar({msg: 'Nie udało się usunąć', type: 'error'}));
     });
-    setDeleteItem(null);
   };
 
   const handleDrawerSubmit = () => {
@@ -395,6 +399,7 @@ export default function ShopListScreen() {
         content={`Czy na pewno chcesz usunąć "${deleteItem?.name}"?`}
         onApprove={handleDeleteConfirm}
         onDismiss={() => setDeleteItem(null)}
+        loading={deleting}
       />
 
       <CustomModal

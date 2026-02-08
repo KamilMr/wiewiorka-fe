@@ -25,6 +25,7 @@ export default function StorageScreen() {
   const [search, setSearch] = useState('');
   const [editingItem, setEditingItem] = useState<StorageItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<StorageItem | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   useFocusEffect(
@@ -59,9 +60,11 @@ export default function StorageScreen() {
   const handleFormSubmit = (data: StorageFormData) => {
     const socket = getSocket();
     if (!socket) return;
+    setSubmitting(true);
 
     if (editingItem) {
       socket.emit('storage:update', {id: editingItem.id, ...data}, (res: any) => {
+        setSubmitting(false);
         if (!res.err) {
           dispatch(updateStorageItem(res.d));
           bottomSheetRef.current?.close();
@@ -70,6 +73,7 @@ export default function StorageScreen() {
       });
     } else {
       socket.emit('storage:create', data, (res: any) => {
+        setSubmitting(false);
         if (!res.err) {
           dispatch(addStorageItem(res.d));
           bottomSheetRef.current?.close();
@@ -181,6 +185,7 @@ const handleAddToShopList = (item: StorageItem) => {
               bottomSheetRef.current?.close();
               setEditingItem(null);
             }}
+            loading={submitting}
             initial={editingItem ?? undefined}
           />
         </BottomSheetView>
