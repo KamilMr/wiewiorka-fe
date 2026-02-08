@@ -16,6 +16,7 @@ import {
   updateShopListItem,
   addShopListItem,
   removeShopListItem,
+  updateStorageItem,
 } from '@/redux/storage/storageSlice';
 import SwipeableRow from '@/components/storage/SwipeToAdd';
 import CustomModal from '@/components/CustomModal';
@@ -44,6 +45,7 @@ export default function ShopListScreen() {
   const [editQuantity, setEditQuantity] = useState(1);
   const [boughtOpen, setBoughtOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<EnrichedShopItem | null>(null);
+  const [renameChoice, setRenameChoice] = useState<{item: EnrichedShopItem; name: string; quantity: number} | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   useFocusEffect(
@@ -159,14 +161,56 @@ export default function ShopListScreen() {
     if (!editingItem) return;
     const trimmed = editName.trim();
     if (!trimmed) return;
-    dispatch(updateShopListItem({id: editingItem.id, itemNumber: editQuantity, name: trimmed}));
+    const nameChanged = trimmed !== editingItem.name;
+    if (nameChanged && editingItem.storageId) {
+      setRenameChoice({item: editingItem, name: trimmed, quantity: editQuantity});
+      bottomSheetRef.current?.close();
+      return;
+    }
+    submitShopListEdit(editingItem, trimmed, editQuantity);
+  };
+
+  const submitShopListEdit = (item: EnrichedShopItem, name: string, quantity: number) => {
+    dispatch(updateShopListItem({id: item.id, itemNumber: quantity, name}));
     const socket = getSocket();
     if (!socket) return;
-    socket.emit('shopList:update', {id: editingItem.id, itemNumber: editQuantity, name: trimmed}, (res: any) => {
+    socket.emit('shopList:update', {id: item.id, itemNumber: quantity, name}, (res: any) => {
       if (res.err) console.error('shopList:update error', res.err);
     });
     bottomSheetRef.current?.close();
     setEditingItem(null);
+  };
+
+  const handleRenameStorage = () => {
+    if (!renameChoice) return;
+    const {item, name, quantity} = renameChoice;
+    submitShopListEdit(item, name, quantity);
+    dispatch(updateStorageItem({id: item.storageId!, name}));
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('storage:update', {id: item.storageId, name}, (res: any) => {
+      if (res.err) console.error('storage:update error', res.err);
+    });
+    setRenameChoice(null);
+  };
+
+  const handleRenameUnlink = () => {
+    if (!renameChoice) return;
+    const {item, name, quantity} = renameChoice;
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('shopList:delete', {id: item.id}, (res: any) => {
+      if (!res.err) {
+        dispatch(removeShopListItem(item.id));
+        socket.emit('shopList:create', {name, itemNumber: quantity}, (createRes: any) => {
+          if (!createRes.err) dispatch(addShopListItem(createRes.d));
+          else console.error('shopList:create error', createRes.err);
+        });
+      } else console.error('shopList:delete error', res.err);
+    });
+    bottomSheetRef.current?.close();
+    setEditingItem(null);
+    setRenameChoice(null);
   };
 
   const sections = useMemo(() => {
@@ -351,6 +395,27 @@ export default function ShopListScreen() {
         onApprove={handleDeleteConfirm}
         onDismiss={() => setDeleteItem(null)}
       />
+
+      <CustomModal
+        visible={!!renameChoice}
+        title="Zmiana nazwy"
+        content={
+          <View style={styles.renameActions}>
+            <Text variant="bodyMedium">
+              Ten produkt jest powiązany z magazynem. Co chcesz zrobić?
+            </Text>
+            <Button mode="contained" onPress={handleRenameStorage}>
+              Zmień też w magazynie
+            </Button>
+            <Button mode="outlined" onPress={handleRenameUnlink}>
+              Utwórz nowy (odłącz)
+            </Button>
+            <Button onPress={() => setRenameChoice(null)}>
+              Anuluj
+            </Button>
+          </View>
+        }
+      />
     </View>
   );
 }
@@ -420,5 +485,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+  renameActions: {
+    gap: 12,
   },
 });
