@@ -1,4 +1,4 @@
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {createSlice, createSelector, PayloadAction} from '@reduxjs/toolkit';
 import {StorageItem, ShopListItem} from '@/types';
 import {RootState} from '../store';
 
@@ -56,8 +56,10 @@ export const storageSlice = createSlice({
   },
 });
 
-export const selectStorageItems = (state: RootState) =>
-  [...state.storage.items].sort((a, b) => a.name.localeCompare(b.name));
+export const selectStorageItems = createSelector(
+  (state: RootState) => state.storage.items,
+  items => [...items].sort((a, b) => a.name.localeCompare(b.name)),
+);
 export const selectShopList = (state: RootState) => state.storage.shopList;
 
 export const {

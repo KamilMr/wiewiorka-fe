@@ -7,6 +7,7 @@ import BottomSheet, {
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import {useFocusEffect, router} from 'expo-router';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useAppTheme, sizes} from '@/constants/theme';
 import {useAppSelector, useAppDispatch} from '@/hooks';
 import {
@@ -37,6 +38,7 @@ interface EnrichedShopItem extends ShopListItem {
 
 export default function ShopListScreen() {
   const t = useAppTheme();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const storageItems = useAppSelector(selectStorageItems);
   const shopList = useAppSelector(selectShopList);
@@ -143,7 +145,7 @@ export default function ShopListScreen() {
 
   const handleDrawerSubmit = () => {
     const items = drawerText
-      .split(',')
+      .split(/[,\n]/)
       .map(i => i.trim())
       .filter(Boolean);
     if (items.length === 0) return;
@@ -318,7 +320,7 @@ export default function ShopListScreen() {
         }
       />
 
-      <View style={styles.fabColumn}>
+      <View style={[styles.fabColumn, {bottom: 16 + insets.bottom}]}>
         <FAB
           icon="format-list-numbered"
           onPress={() => router.back()}
@@ -471,7 +473,6 @@ const styles = StyleSheet.create({
   },
   fabColumn: {
     position: 'absolute',
-    bottom: 16,
     right: 16,
     gap: 12,
     alignItems: 'center',

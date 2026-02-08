@@ -20,7 +20,7 @@ const BottomDrawer = forwardRef<BottomSheet, BottomDrawerProps>(
 
     const handleSubmit = useCallback(() => {
       const items = text
-        .split(',')
+        .split(/[,\n]/)
         .map(item => item.trim())
         .filter(Boolean);
 
@@ -33,7 +33,7 @@ const BottomDrawer = forwardRef<BottomSheet, BottomDrawerProps>(
     return (
       <BottomSheet
         ref={ref}
-        index={0}
+        index={-1}
         snapPoints={['80%']}
         enablePanDownToClose
         enableDynamicSizing={false}
