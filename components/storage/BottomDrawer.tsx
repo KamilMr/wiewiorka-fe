@@ -79,4 +79,6 @@ const styles = StyleSheet.create({
   },
 });
 
+BottomDrawer.displayName = 'BottomDrawer';
+
 export default BottomDrawer;
