@@ -22,6 +22,7 @@ import SwipeableRow from '@/components/storage/SwipeToAdd';
 import CustomModal from '@/components/CustomModal';
 import Stepper from '@/components/storage/Stepper';
 import {getSocket} from '@/utils/socket';
+import {setSnackbar} from '@/redux/main/mainSlice';
 import {ShopListItem} from '@/types';
 import {Button} from 'react-native-paper';
 
@@ -91,7 +92,7 @@ export default function ShopListScreen() {
     const socket = getSocket();
     if (!socket) return;
     socket.emit('shopList:update', {id: item.id, itemNumber: value}, (res: any) => {
-      if (res.err) console.error('shopList:update error', res.err);
+      if (res.err) dispatch(setSnackbar({msg: 'Nie udało się zmienić ilości', type: 'error'}));
     });
   };
 
@@ -102,7 +103,7 @@ export default function ShopListScreen() {
     dispatch(updateShopListItem({id: item.id, boughtAt}));
     socket.emit('shopList:update', {id: item.id, boughtAt}, (res: any) => {
       if (!res.err) dispatch(updateShopListItem(res.d));
-      else console.error('shopList:update error', res.err);
+      else dispatch(setSnackbar({msg: 'Nie udało się oznaczyć jako kupione', type: 'error'}));
     });
   };
 
@@ -112,7 +113,7 @@ export default function ShopListScreen() {
     dispatch(updateShopListItem({id: item.id, boughtAt: null}));
     socket.emit('shopList:update', {id: item.id, boughtAt: null}, (res: any) => {
       if (!res.err) dispatch(updateShopListItem(res.d));
-      else console.error('shopList:update error', res.err);
+      else dispatch(setSnackbar({msg: 'Nie udało się cofnąć zakupu', type: 'error'}));
     });
   };
 
@@ -122,7 +123,7 @@ export default function ShopListScreen() {
     if (!socket) return;
     socket.emit('shopList:delete', {id: deleteItem.id}, (res: any) => {
       if (!res.err) dispatch(removeShopListItem(deleteItem.id));
-      else console.error('shopList:delete error', res.err);
+      else dispatch(setSnackbar({msg: 'Nie udało się usunąć', type: 'error'}));
     });
     setDeleteItem(null);
   };
@@ -138,7 +139,7 @@ export default function ShopListScreen() {
     items.forEach(name => {
       socket.emit('shopList:create', {name, itemNumber: 1}, (res: any) => {
         if (!res.err) dispatch(addShopListItem(res.d));
-        else console.error('shopList:create error', res.err);
+        else dispatch(setSnackbar({msg: `Nie udało się dodać "${name}"`, type: 'error'}));
       });
     });
     setDrawerText('');
@@ -175,7 +176,7 @@ export default function ShopListScreen() {
     const socket = getSocket();
     if (!socket) return;
     socket.emit('shopList:update', {id: item.id, itemNumber: quantity, name}, (res: any) => {
-      if (res.err) console.error('shopList:update error', res.err);
+      if (res.err) dispatch(setSnackbar({msg: 'Nie udało się zaktualizować', type: 'error'}));
     });
     bottomSheetRef.current?.close();
     setEditingItem(null);
@@ -189,7 +190,7 @@ export default function ShopListScreen() {
     const socket = getSocket();
     if (!socket) return;
     socket.emit('storage:update', {id: item.storageId, name}, (res: any) => {
-      if (res.err) console.error('storage:update error', res.err);
+      if (res.err) dispatch(setSnackbar({msg: 'Nie udało się zmienić nazwy w magazynie', type: 'error'}));
     });
     setRenameChoice(null);
   };
@@ -204,9 +205,9 @@ export default function ShopListScreen() {
         dispatch(removeShopListItem(item.id));
         socket.emit('shopList:create', {name, itemNumber: quantity}, (createRes: any) => {
           if (!createRes.err) dispatch(addShopListItem(createRes.d));
-          else console.error('shopList:create error', createRes.err);
+          else dispatch(setSnackbar({msg: 'Usunięto, ale nie udało się utworzyć nowego', type: 'error'}));
         });
-      } else console.error('shopList:delete error', res.err);
+      } else dispatch(setSnackbar({msg: 'Nie udało się odłączyć', type: 'error'}));
     });
     bottomSheetRef.current?.close();
     setEditingItem(null);

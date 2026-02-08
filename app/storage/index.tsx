@@ -66,14 +66,14 @@ export default function StorageScreen() {
           dispatch(updateStorageItem(res.d));
           bottomSheetRef.current?.close();
           setEditingItem(null);
-        } else console.error('storage:update error', res.err);
+        } else dispatch(setSnackbar({msg: 'Nie udało się zaktualizować', type: 'error'}));
       });
     } else {
       socket.emit('storage:create', data, (res: any) => {
         if (!res.err) {
           dispatch(addStorageItem(res.d));
           bottomSheetRef.current?.close();
-        } else console.error('storage:create error', res.err);
+        } else dispatch(setSnackbar({msg: 'Nie udało się utworzyć', type: 'error'}));
       });
     }
   };
@@ -89,7 +89,7 @@ const handleAddToShopList = (item: StorageItem) => {
       {storageId: item.id, itemNumber: item.step},
       (res: any) => {
         if (!res.err) dispatch(addShopListItem(res.d));
-        else console.error('shopList:create error', res.err);
+        else dispatch(setSnackbar({msg: 'Nie udało się dodać do listy', type: 'error'}));
       },
     );
   };
@@ -100,7 +100,7 @@ const handleAddToShopList = (item: StorageItem) => {
     if (!socket) return;
     socket.emit('storage:delete', {id: deleteItem.id}, (res: any) => {
       if (!res.err) dispatch(removeStorageItem(deleteItem.id));
-      else console.error('storage:delete error', res.err);
+      else dispatch(setSnackbar({msg: 'Nie udało się usunąć', type: 'error'}));
     });
     setDeleteItem(null);
   };
