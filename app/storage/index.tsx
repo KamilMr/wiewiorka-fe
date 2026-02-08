@@ -75,8 +75,7 @@ export default function StorageScreen() {
       });
     }
   };
-
-  const handleAddToShopList = (item: StorageItem) => {
+const handleAddToShopList = (item: StorageItem) => {
     if (inShopSet.has(item.id)) {
       dispatch(setSnackbar({msg: `${item.name} jest już na liście zakupów`, type: 'info'}));
       return;
@@ -166,7 +165,7 @@ export default function StorageScreen() {
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
-        snapPoints={['60%']}
+        snapPoints={['80%']}
         enablePanDownToClose
         enableDynamicSizing={false}
         backgroundStyle={{backgroundColor: t.colors.surface}}

@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'rgba(0,0,0,0.05)',
     borderRadius: 12,
-    width: '28%',
+    width: '42%',
     margin: 8,
   },
   tabText: {

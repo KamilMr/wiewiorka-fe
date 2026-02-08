@@ -419,7 +419,7 @@ export default function AddNew() {
         <View>
           {!isSplit && (
             <TextInput
-              style={styles.input}
+              style={{...styles.input, marginVertical: sizes.sm}}
               label={'Opis'}
               multiline
               onChangeText={text => setForm({...form, description: text})}
