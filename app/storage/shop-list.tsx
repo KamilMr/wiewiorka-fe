@@ -1,4 +1,5 @@
-import {useRef, useState, useMemo, useCallback} from 'react';
+import {useRef, useState, useMemo, useCallback, useEffect} from 'react';
+import _ from 'lodash';
 import {View, StyleSheet, SectionList, TouchableOpacity, Pressable} from 'react-native';
 import {Searchbar, Divider, Text, FAB, Checkbox} from 'react-native-paper';
 import BottomSheet, {
@@ -88,13 +89,21 @@ export default function ShopListScreen() {
     [enriched],
   );
 
+  const debouncedQuantityEmit = useRef(
+    _.debounce((id: number, value: number) => {
+      const socket = getSocket();
+      if (!socket) return;
+      socket.emit('shopList:update', {id, itemNumber: value}, (res: any) => {
+        if (res.err) dispatch(setSnackbar({msg: 'Nie udało się zmienić ilości', type: 'error'}));
+      });
+    }, 500),
+  ).current;
+
+  useEffect(() => () => debouncedQuantityEmit.cancel(), [debouncedQuantityEmit]);
+
   const handleQuantityChange = (item: EnrichedShopItem, value: number) => {
     dispatch(updateShopListItem({id: item.id, itemNumber: value}));
-    const socket = getSocket();
-    if (!socket) return;
-    socket.emit('shopList:update', {id: item.id, itemNumber: value}, (res: any) => {
-      if (res.err) dispatch(setSnackbar({msg: 'Nie udało się zmienić ilości', type: 'error'}));
-    });
+    debouncedQuantityEmit(item.id, value);
   };
 
   const handleCheckItem = (item: EnrichedShopItem) => {
