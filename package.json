@@ -1,7 +1,7 @@
 {
   "name": "wiewiorka",
   "main": "expo-router/entry",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "type": "module",
   "scripts": {
     "dev": "node scripts/setup-ip.js && expo start --android",
@@ -29,6 +29,7 @@
     "@date-fns/tz": "^1.4.1",
     "@expo/metro-runtime": "~5.0.5",
     "@expo/vector-icons": "^14.1.0",
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native-firebase/app": "^23.7.0",
@@ -69,7 +70,8 @@
     "react-native-web": "^0.20.0",
     "react-redux": "^9.2.0",
     "reanimated-color-picker": "^4.1.1",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",

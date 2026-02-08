@@ -14,14 +14,50 @@ import {Provider as PaperProvider} from 'react-native-paper';
 import {store, persistor} from '@/redux/store';
 import {paperTheme} from '@/constants/theme';
 import {SnackBar, Text, Button} from '@/components';
-import {useSync} from '@/hooks';
+import {useSync, useAppSelector, useAppDispatch} from '@/hooks';
 import {logError, log, setAttribute} from '@/utils/crashlytics';
+import {selectToken} from '@/redux/auth/authSlice';
+import {connectSocket, disconnectSocket, broadcastEvents} from '@/utils/socket';
+import {setStorageItems, setShopList} from '@/redux/storage/storageSlice';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 const Sync = () => {
   useSync();
+
+  return null;
+};
+
+const SocketConnector = () => {
+  const token = useAppSelector(selectToken);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (!token) {
+      disconnectSocket();
+      return;
+    }
+
+    const socket = connectSocket(token);
+
+    socket.on('connect', () => {
+      socket.emit('storage:getAll', (res: any) => {
+        if (!res.err) dispatch(setStorageItems(res.d));
+      });
+      socket.emit('shopList:getAll', (res: any) => {
+        if (!res.err) dispatch(setShopList(res.d));
+      });
+    });
+
+    Object.entries(broadcastEvents).forEach(([event, toAction]) => {
+      socket.on(event, data => dispatch(toAction(data)));
+    });
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [token, dispatch]);
 
   return null;
 };
@@ -61,6 +97,7 @@ const RootLayout = () => {
       <Provider store={store}>
         <PersistGate persistor={persistor}>
           <Sync />
+          <SocketConnector />
           <PaperProvider theme={paperTheme}>
             <KeyboardProvider>
               <Stack initialRouteName="(tabs)">
@@ -77,6 +114,7 @@ const RootLayout = () => {
                   name="income-summary"
                   options={{headerShown: false}}
                 />
+                <Stack.Screen name="storage" options={{headerShown: false}} />
                 <Stack.Screen name="dev" options={{headerShown: false}} />
                 <Stack.Screen
                   name="changelog"

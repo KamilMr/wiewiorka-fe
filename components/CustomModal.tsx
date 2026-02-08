@@ -9,10 +9,11 @@ export interface CustomModal {
   onApprove?: () => void;
   title?: string;
   content: string | React.ReactNode;
+  loading?: boolean;
 }
 
 const CustomModal = (props: CustomModal) => {
-  const {visible, onDismiss, onApprove, content, title} = props;
+  const {visible, onDismiss, onApprove, content, title, loading} = props;
 
   // If 'visible' is false or 'content' is not provided, don't render the modal
   if (!visible || !content) {
@@ -36,8 +37,8 @@ const CustomModal = (props: CustomModal) => {
         {/* Render actions only if 'onApprove' or 'onDismiss' is provided */}
         {(onApprove || onDismiss) && (
           <Dialog.Actions>
-            {onApprove && <Button onPress={onApprove}>Tak</Button>}
-            {onDismiss && <Button onPress={onDismiss}>Nie</Button>}
+            {onApprove && <Button onPress={onApprove} loading={loading} disabled={loading}>Tak</Button>}
+            {onDismiss && <Button onPress={onDismiss} disabled={loading}>Nie</Button>}
           </Dialog.Actions>
         )}
       </Dialog>

@@ -44,6 +44,15 @@ const DevPage = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={styles.cardItem}
+          onPress={() => router.navigate('/dev/storage')}
+        >
+          <TabBarIcon name="cube" color={t.colors.primary} />
+          <Text style={[styles.cardText, {color: t.colors.primary}]}>
+            Storage
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.cardItem, {backgroundColor: 'rgba(255,0,0,0.1)'}]}
           onPress={handleAddTestFailedOps}
         >
