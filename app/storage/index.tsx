@@ -1,4 +1,5 @@
 import {useRef, useState, useMemo, useCallback} from 'react';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {View, StyleSheet, FlatList, Pressable} from 'react-native';
 import {Searchbar, Divider, Text, FAB, Badge} from 'react-native-paper';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
@@ -17,6 +18,7 @@ const normalize = (s: string) => s.toLowerCase().trim();
 
 export default function StorageScreen() {
   const t = useAppTheme();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectStorageItems);
   const shopList = useAppSelector(selectShopList);
@@ -142,7 +144,7 @@ const handleAddToShopList = (item: StorageItem) => {
         contentContainerStyle={styles.list}
       />
 
-      <View style={styles.fabColumn}>
+      <View style={[styles.fabColumn, {bottom: 16 + insets.bottom}]}>
         <View>
           <FAB
             icon="cart"
@@ -215,7 +217,6 @@ const styles = StyleSheet.create({
   },
   fabColumn: {
     position: 'absolute',
-    bottom: 16,
     right: 16,
     gap: 12,
     alignItems: 'center',

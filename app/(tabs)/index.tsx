@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollView: {
+    flex: 1,
     width: '100%',
     paddingHorizontal: '5%',
   },
