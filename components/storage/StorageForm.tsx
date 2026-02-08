@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {StyleSheet, View} from 'react-native';
-import {Text, Button} from 'react-native-paper';
+import {Text, Button, Tooltip, IconButton} from 'react-native-paper';
 import {useAppTheme, sizes} from '@/constants/theme';
 import {TextInput, Select} from '@/components';
 import Stepper from './Stepper';
@@ -16,7 +16,8 @@ export interface StorageFormData {
   name: string;
   unit: string;
   itemNumber: number;
-  minQuantity: number;
+  minValue: number;
+  step: number;
 }
 
 interface StorageFormProps {
@@ -30,12 +31,13 @@ const StorageForm = ({onSubmit, onCancel, initial}: StorageFormProps) => {
   const [name, setName] = useState(initial?.name ?? '');
   const [unit, setUnit] = useState(initial?.unit ?? 'szt');
   const [itemNumber, setItemNumber] = useState(initial?.itemNumber ?? 1);
-  const [minQuantity, setMinQuantity] = useState(initial?.minQuantity ?? 1);
+  const [minValue, setMinValue] = useState(initial?.minValue ?? 1);
+  const [step, setStep] = useState(initial?.step ?? 1);
 
   const handleSubmit = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    onSubmit({name: trimmed, unit, itemNumber, minQuantity});
+    onSubmit({name: trimmed, unit, itemNumber, minValue, step});
   };
 
   return (
@@ -56,16 +58,33 @@ const StorageForm = ({onSubmit, onCancel, initial}: StorageFormProps) => {
 
       <View style={styles.stepperRow}>
         <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
-          W magazynie
+          W domu
         </Text>
         <Stepper value={itemNumber} onChange={setItemNumber} min={0} />
       </View>
 
-      <View style={styles.stepperRow}>
-        <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
-          Ilość min:
+      <View>
+        <View style={styles.stepperRow}>
+          <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
+            Ilość min
+          </Text>
+          <Stepper value={minValue} onChange={setMinValue} min={0} />
+        </View>
+        <Text variant="bodySmall" style={{color: t.colors.textTertiary}}>
+          Próg dodania do listy zakupów
         </Text>
-        <Stepper value={minQuantity} onChange={setMinQuantity} min={0} />
+      </View>
+
+      <View style={styles.stepperRow}>
+        <View style={styles.labelWithIcon}>
+          <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
+            Krok
+          </Text>
+          <Tooltip title="Ile dodaje każde kliknięcie +/−">
+            <IconButton icon="information-outline" size={18} style={styles.infoIcon} />
+          </Tooltip>
+        </View>
+        <Stepper value={step} onChange={setStep} min={1} />
       </View>
 
       <View style={styles.buttons}>
@@ -90,11 +109,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: sizes.sm,
   },
+  labelWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoIcon: {
+    margin: 0,
+  },
   buttons: {
+    flexDirection: 'row',
     gap: 8,
     marginTop: sizes.sm,
   },
   button: {
+    flex: 1,
     borderRadius: 8,
   },
 });

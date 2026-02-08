@@ -2,24 +2,14 @@ import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {StorageItem, ShopListItem} from '@/types';
 import {RootState} from '../store';
 
-export interface BoughtItem {
-  name: string;
-  unit: string;
-  itemNumber: number;
-  storageId?: string;
-  boughtAt: string;
-}
-
 interface StorageState {
   items: StorageItem[];
   shopList: ShopListItem[];
-  boughtItems: BoughtItem[];
 }
 
 const emptyState = (): StorageState => ({
   items: [],
   shopList: [],
-  boughtItems: [],
 });
 
 export const storageSlice = createSlice({
@@ -62,22 +52,12 @@ export const storageSlice = createSlice({
     removeShopListItem: (state, action: PayloadAction<number>) => {
       state.shopList = state.shopList.filter(i => i.id !== action.payload);
     },
-    addBoughtItem: (state, action: PayloadAction<BoughtItem>) => {
-      state.boughtItems.push(action.payload);
-    },
-    removeBoughtItem: (state, action: PayloadAction<number>) => {
-      state.boughtItems.splice(action.payload, 1);
-    },
-    clearBoughtItems: (state) => {
-      state.boughtItems = [];
-    },
     resetStorage: () => emptyState(),
   },
 });
 
 export const selectStorageItems = (state: RootState) => state.storage.items;
 export const selectShopList = (state: RootState) => state.storage.shopList;
-export const selectBoughtItems = (state: RootState) => state.storage.boughtItems;
 
 export const {
   setStorageItems,
@@ -88,9 +68,6 @@ export const {
   addShopListItem,
   updateShopListItem,
   removeShopListItem,
-  addBoughtItem,
-  removeBoughtItem,
-  clearBoughtItems,
   resetStorage,
 } = storageSlice.actions;
 

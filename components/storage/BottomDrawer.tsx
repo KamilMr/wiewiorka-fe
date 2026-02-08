@@ -1,5 +1,5 @@
 import {forwardRef, useCallback, useState} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {StyleSheet} from 'react-native';
 import BottomSheet, {
   BottomSheetView,
   BottomSheetTextInput,
@@ -40,7 +40,7 @@ const BottomDrawer = forwardRef<BottomSheet, BottomDrawerProps>(
         backgroundStyle={{backgroundColor: t.colors.surface}}
         handleIndicatorStyle={{backgroundColor: t.colors.textSecondary}}
       >
-        <BottomSheetView style={[styles.content, {paddingBottom: bottom + 20}]}>
+        <BottomSheetView style={[styles.content, {flex: 1, paddingBottom: bottom + 20}]}>
           <BottomSheetTextInput
             placeholder="mleko, chleb, masło 2szt"
             value={text}

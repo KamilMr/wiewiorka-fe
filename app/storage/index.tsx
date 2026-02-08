@@ -58,17 +58,15 @@ export default function StorageScreen() {
     if (!socket) return;
 
     if (editingItem) {
-      const {name, unit, itemNumber} = data;
-      socket.emit('storage:update', {id: editingItem.id, name, unit, itemNumber}, (res: any) => {
+      socket.emit('storage:update', {id: editingItem.id, ...data}, (res: any) => {
         if (!res.err) {
-          dispatch(updateStorageItem({id: editingItem.id, name, unit, itemNumber}));
+          dispatch(updateStorageItem(res.d));
           bottomSheetRef.current?.close();
           setEditingItem(null);
         } else console.error('storage:update error', res.err);
       });
     } else {
-      const {name, unit, itemNumber} = data;
-      socket.emit('storage:create', {name, unit, itemNumber}, (res: any) => {
+      socket.emit('storage:create', data, (res: any) => {
         if (!res.err) {
           dispatch(addStorageItem(res.d));
           bottomSheetRef.current?.close();
@@ -95,7 +93,7 @@ export default function StorageScreen() {
   };
 
   const inShopSet = useMemo(
-    () => new Set(shopList.map(s => s.storageId)),
+    () => new Set(shopList.filter(s => !s.boughtAt).map(s => s.storageId)),
     [shopList],
   );
 
@@ -107,7 +105,7 @@ export default function StorageScreen() {
             {item.name}
           </Text>
           <Text variant="bodyLarge" style={{color: t.colors.textSecondary}}>
-            {item.itemNumber}
+            {item.itemNumber} {item.unit}
           </Text>
         </View>
       </Pressable>
@@ -115,7 +113,7 @@ export default function StorageScreen() {
     </SwipeToAdd>
   );
 
-  const shopListCount = shopList.length;
+  const shopListCount = shopList.filter(s => !s.boughtAt).length;
 
   return (
     <View style={[styles.root, {backgroundColor: t.colors.background}]}>

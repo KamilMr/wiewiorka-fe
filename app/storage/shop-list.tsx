@@ -11,16 +11,11 @@ import {useAppSelector, useAppDispatch} from '@/hooks';
 import {
   selectStorageItems,
   selectShopList,
-  selectBoughtItems,
   setStorageItems,
   setShopList,
   updateShopListItem,
   addShopListItem,
-  removeShopListItem,
-  addBoughtItem,
-  removeBoughtItem,
 } from '@/redux/storage/storageSlice';
-import type {BoughtItem} from '@/redux/storage/storageSlice';
 import Stepper from '@/components/storage/Stepper';
 import {getSocket} from '@/utils/socket';
 import {ShopListItem} from '@/types';
@@ -38,7 +33,6 @@ export default function ShopListScreen() {
   const dispatch = useAppDispatch();
   const storageItems = useAppSelector(selectStorageItems);
   const shopList = useAppSelector(selectShopList);
-  const boughtItems = useAppSelector(selectBoughtItems);
   const [search, setSearch] = useState('');
   const [drawerText, setDrawerText] = useState('');
   const [editingItem, setEditingItem] = useState<EnrichedShopItem | null>(null);
@@ -72,11 +66,17 @@ export default function ShopListScreen() {
     });
   }, [shopList, storageItems]);
 
-  const filtered = useMemo(() => {
-    if (!search) return enriched;
+  const activeItems = useMemo(() => {
+    const notBought = enriched.filter(i => !i.boughtAt);
+    if (!search) return notBought;
     const q = normalize(search);
-    return enriched.filter(i => normalize(i.name).includes(q));
+    return notBought.filter(i => normalize(i.name).includes(q));
   }, [enriched, search]);
+
+  const boughtList = useMemo(
+    () => enriched.filter(i =>i.boughtAt && i.boughtAt !== null),
+    [enriched],
+  );
 
   const handleQuantityChange = (item: EnrichedShopItem, value: number) => {
     dispatch(updateShopListItem({id: item.id, itemNumber: value}));
@@ -88,32 +88,23 @@ export default function ShopListScreen() {
   };
 
   const handleCheckItem = (item: EnrichedShopItem) => {
-    dispatch(addBoughtItem({
-      name: item.name,
-      unit: item.unit,
-      itemNumber: item.itemNumber,
-      storageId: item.storageId,
-      boughtAt: new Date().toISOString(),
-    }));
-    dispatch(removeShopListItem(item.id));
     const socket = getSocket();
     if (!socket) return;
-    socket.emit('shopList:delete', item.id, (res: any) => {
-      if (res.err) console.error('shopList:delete error', res.err);
+    const boughtAt = new Date().toISOString();
+    dispatch(updateShopListItem({id: item.id, boughtAt}));
+    socket.emit('shopList:update', {id: item.id, boughtAt}, (res: any) => {
+      if (!res.err) dispatch(updateShopListItem(res.d));
+      else console.error('shopList:update error', res.err);
     });
   };
 
-  const handleUncheckBought = (index: number) => {
-    const item = boughtItems[index];
-    dispatch(removeBoughtItem(index));
+  const handleUncheckBought = (item: EnrichedShopItem) => {
     const socket = getSocket();
     if (!socket) return;
-    const payload = item.storageId
-      ? {storageId: item.storageId, itemNumber: item.itemNumber}
-      : {name: item.name, itemNumber: item.itemNumber};
-    socket.emit('shopList:create', payload, (res: any) => {
-      if (!res.err) dispatch(addShopListItem(res.d));
-      else console.error('shopList:create error', res.err);
+    dispatch(updateShopListItem({id: item.id, boughtAt: null}));
+    socket.emit('shopList:update', {id: item.id, boughtAt: null}, (res: any) => {
+      if (!res.err) dispatch(updateShopListItem(res.d));
+      else console.error('shopList:update error', res.err);
     });
   };
 
@@ -162,11 +153,11 @@ export default function ShopListScreen() {
   };
 
   const sections = useMemo(() => {
-    const result = [{title: 'list', data: filtered}];
-    if (boughtItems.length > 0)
-      result.push({title: 'bought', data: boughtOpen ? boughtItems as any[] : []});
+    const result: {title: string; data: EnrichedShopItem[]}[] = [{title: 'list', data: activeItems}];
+    if (boughtList.length > 0)
+      result.push({title: 'bought', data: boughtOpen ? boughtList : []});
     return result;
-  }, [filtered, boughtItems, boughtOpen]);
+  }, [activeItems, boughtList, boughtOpen]);
 
   return (
     <View style={[styles.root, {backgroundColor: t.colors.background}]}>
@@ -187,7 +178,7 @@ export default function ShopListScreen() {
               style={[styles.boughtHeader, {backgroundColor: t.colors.surfaceVariant}]}
             >
               <Text variant="titleSmall" style={{color: t.colors.textSecondary}}>
-                Kupione ({boughtItems.length})
+                Kupione ({boughtList.length})
               </Text>
               <Text style={{color: t.colors.textSecondary}}>
                 {boughtOpen ? '▲' : '▼'}
@@ -197,32 +188,28 @@ export default function ShopListScreen() {
           return null;
         }}
         renderItem={({item, section}) => {
-          if (section.title === 'bought') {
-            const bought = item as unknown as BoughtItem;
-            const idx = boughtItems.findIndex(b => b.boughtAt === bought.boughtAt && b.name === bought.name);
-            return (
-              <View>
-                <View style={[styles.row, {backgroundColor: t.colors.surface, opacity: 0.6}]}>
-                  <Checkbox
-                    status="checked"
-                    onPress={() => handleUncheckBought(idx)}
-                    color={t.colors.success}
-                  />
-                  <Text
-                    variant="bodyLarge"
-                    style={[styles.boughtText, {color: t.colors.textSecondary}]}
-                  >
-                    {bought.name}
-                  </Text>
-                  <Text variant="bodySmall" style={{color: t.colors.textTertiary}}>
-                    {bought.itemNumber} {bought.unit}
-                  </Text>
-                </View>
-                <Divider />
+          if (section.title === 'bought') return (
+            <View>
+              <View style={[styles.row, {backgroundColor: t.colors.surface, opacity: 0.6}]}>
+                <Checkbox
+                  status="checked"
+                  onPress={() => handleUncheckBought(item)}
+                  color={t.colors.success}
+                />
+                <Text
+                  variant="bodyLarge"
+                  style={[styles.boughtText, {color: t.colors.textSecondary}]}
+                >
+                  {item.name}
+                </Text>
+                <Text variant="bodySmall" style={{color: t.colors.textTertiary}}>
+                  {item.itemNumber} {item.unit}
+                </Text>
               </View>
-            );
-          }
-          const shopItem = item as EnrichedShopItem;
+              <Divider />
+            </View>
+          );
+          const shopItem = item;
           return (
             <View>
               <View style={[styles.row, {backgroundColor: t.colors.surface}]}>

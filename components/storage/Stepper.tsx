@@ -27,11 +27,16 @@ const Stepper = ({value, unit, onChange, min = 0}: StepperProps) => {
     setIsEditing(true);
   };
 
+  const handleDraftChange = (text: string) => {
+    setDraft(text);
+    const parsed = parseFloat(text);
+    if (!isNaN(parsed) && parsed >= min) onChange(parsed);
+  };
+
   const handleEndEdit = () => {
     setIsEditing(false);
     const parsed = parseFloat(draft);
-    if (!isNaN(parsed) && parsed >= min) onChange(parsed);
-    else setDraft(String(value));
+    if (isNaN(parsed) || parsed < min) setDraft(String(value));
   };
 
   return (
@@ -45,7 +50,7 @@ const Stepper = ({value, unit, onChange, min = 0}: StepperProps) => {
       {isEditing ? (
         <TextInput
           value={draft}
-          onChangeText={setDraft}
+          onChangeText={handleDraftChange}
           onBlur={handleEndEdit}
           onSubmitEditing={handleEndEdit}
           keyboardType="numeric"
