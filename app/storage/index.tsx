@@ -26,6 +26,8 @@ export default function StorageScreen() {
   const [editingItem, setEditingItem] = useState<StorageItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<StorageItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [formKey, setFormKey] = useState(0);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   useFocusEffect(
@@ -77,6 +79,7 @@ export default function StorageScreen() {
         if (!res.err) {
           dispatch(addStorageItem(res.d));
           bottomSheetRef.current?.close();
+          setFormKey(k => k + 1);
         } else dispatch(setSnackbar({msg: 'Nie udało się utworzyć', type: 'error'}));
       });
     }
@@ -102,11 +105,14 @@ const handleAddToShopList = (item: StorageItem) => {
     if (!deleteItem) return;
     const socket = getSocket();
     if (!socket) return;
+    setDeleting(true);
     socket.emit('storage:delete', {id: deleteItem.id}, (res: any) => {
-      if (!res.err) dispatch(removeStorageItem(deleteItem.id));
-      else dispatch(setSnackbar({msg: 'Nie udało się usunąć', type: 'error'}));
+      setDeleting(false);
+      if (!res.err) {
+        dispatch(removeStorageItem(deleteItem.id));
+        setDeleteItem(null);
+      } else dispatch(setSnackbar({msg: 'Nie udało się usunąć', type: 'error'}));
     });
-    setDeleteItem(null);
   };
 
   const inShopSet = useMemo(
@@ -179,7 +185,7 @@ const handleAddToShopList = (item: StorageItem) => {
       >
         <BottomSheetView style={styles.drawerContent}>
           <StorageForm
-            key={editingItem?.id ?? 'new'}
+            key={editingItem?.id ?? `new-${formKey}`}
             onSubmit={handleFormSubmit}
             onCancel={() => {
               bottomSheetRef.current?.close();
@@ -197,6 +203,7 @@ const handleAddToShopList = (item: StorageItem) => {
         content={`Czy na pewno chcesz usunąć "${deleteItem?.name}"?`}
         onApprove={handleDeleteConfirm}
         onDismiss={() => setDeleteItem(null)}
+        loading={deleting}
       />
     </View>
   );
