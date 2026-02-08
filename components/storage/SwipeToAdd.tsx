@@ -9,18 +9,19 @@ import Reanimated, {
 import {Icon} from 'react-native-paper';
 import {useAppTheme} from '@/constants/theme';
 
-interface SwipeToAddProps {
+interface SwipeableRowProps {
   children: React.ReactNode;
-  onAdd: () => void;
+  onAdd?: () => void;
+  onDelete?: () => void;
 }
 
-interface AddActionProps {
+interface ActionProps {
   translation: SharedValue<number>;
   halfWidth: number;
-  onAdd: () => void;
+  onPress: () => void;
 }
 
-const AddAction = ({translation, halfWidth, onAdd}: AddActionProps) => {
+const AddAction = ({translation, halfWidth, onPress}: ActionProps) => {
   const t = useAppTheme();
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -35,8 +36,8 @@ const AddAction = ({translation, halfWidth, onAdd}: AddActionProps) => {
 
   return (
     <Pressable
-      onPress={onAdd}
-      style={[styles.leftAction, {backgroundColor: t.colors.primary, width: halfWidth}]}
+      onPress={onPress}
+      style={[styles.action, {backgroundColor: t.colors.primary, width: halfWidth}]}
     >
       <Reanimated.View style={[styles.buttonContainer, animatedStyle]}>
         <Icon source="cart-plus" color={t.colors.onPrimary} size={28} />
@@ -45,7 +46,32 @@ const AddAction = ({translation, halfWidth, onAdd}: AddActionProps) => {
   );
 };
 
-export default function SwipeToAdd({children, onAdd}: SwipeToAddProps) {
+const DeleteAction = ({translation, halfWidth, onPress}: ActionProps) => {
+  const t = useAppTheme();
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const dragX = Math.abs(translation.value);
+    return {
+      opacity: interpolate(dragX, [0, halfWidth * 0.3, halfWidth], [0, 0.9, 1]),
+      transform: [
+        {scale: interpolate(dragX, [0, halfWidth], [0.5, 1], 'clamp')},
+      ],
+    };
+  });
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.action, {backgroundColor: t.colors.error, width: halfWidth}]}
+    >
+      <Reanimated.View style={[styles.buttonContainer, animatedStyle]}>
+        <Icon source="trash-can-outline" color={t.colors.onPrimary} size={28} />
+      </Reanimated.View>
+    </Pressable>
+  );
+};
+
+export default function SwipeableRow({children, onAdd, onDelete}: SwipeableRowProps) {
   const [containerWidth, setContainerWidth] = useState(300);
   const swipeableRef = useRef<any>(null);
 
@@ -53,30 +79,40 @@ export default function SwipeToAdd({children, onAdd}: SwipeToAddProps) {
 
   const handleAdd = useCallback(() => {
     swipeableRef.current?.close();
-    onAdd();
+    onAdd?.();
   }, [onAdd]);
 
-  const renderLeftActions = (
-    _progress: SharedValue<number>,
-    translation: SharedValue<number>,
-  ) => (
-    <AddAction
-      translation={translation}
-      halfWidth={halfWidth}
-      onAdd={handleAdd}
-    />
-  );
+  const handleDelete = useCallback(() => {
+    swipeableRef.current?.close();
+    onDelete?.();
+  }, [onDelete]);
+
+  const renderLeftActions = onAdd
+    ? (_progress: SharedValue<number>, translation: SharedValue<number>) => (
+        <AddAction translation={translation} halfWidth={halfWidth} onPress={handleAdd} />
+      )
+    : undefined;
+
+  const renderRightActions = onDelete
+    ? (_progress: SharedValue<number>, translation: SharedValue<number>) => (
+        <DeleteAction translation={translation} halfWidth={halfWidth} onPress={handleDelete} />
+      )
+    : undefined;
 
   return (
     <View onLayout={e => setContainerWidth(e.nativeEvent.layout.width)}>
       <ReanimatedSwipeable
         ref={swipeableRef}
         renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
         leftThreshold={halfWidth * 0.6}
+        rightThreshold={halfWidth * 0.6}
         overshootLeft={false}
+        overshootRight={false}
         friction={2}
         onSwipeableOpen={direction => {
           if (direction === 'right') handleAdd();
+          if (direction === 'left') handleDelete();
         }}
       >
         {children}
@@ -86,7 +122,7 @@ export default function SwipeToAdd({children, onAdd}: SwipeToAddProps) {
 }
 
 const styles = StyleSheet.create({
-  leftAction: {
+  action: {
     justifyContent: 'center',
     alignItems: 'center',
   },

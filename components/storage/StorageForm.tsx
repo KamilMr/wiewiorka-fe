@@ -58,21 +58,20 @@ const StorageForm = ({onSubmit, onCancel, initial}: StorageFormProps) => {
 
       <View style={styles.stepperRow}>
         <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
-          W domu
+          Ilość
         </Text>
         <Stepper value={itemNumber} onChange={setItemNumber} min={0} />
       </View>
 
       <View>
         <View style={styles.stepperRow}>
-          <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
-            Ilość min
-          </Text>
+          <Tooltip title="Próg dodania do listy zakupów">
+            <Text variant="bodyLarge" style={{color: t.colors.textPrimary}}>
+              Ilość min
+            </Text>
+          </Tooltip>
           <Stepper value={minValue} onChange={setMinValue} min={0} />
         </View>
-        <Text variant="bodySmall" style={{color: t.colors.textTertiary}}>
-          Próg dodania do listy zakupów
-        </Text>
       </View>
 
       <View style={styles.stepperRow}>
@@ -81,7 +80,11 @@ const StorageForm = ({onSubmit, onCancel, initial}: StorageFormProps) => {
             Krok
           </Text>
           <Tooltip title="Ile dodaje każde kliknięcie +/−">
-            <IconButton icon="information-outline" size={18} style={styles.infoIcon} />
+            <IconButton
+              icon="information-outline"
+              size={18}
+              style={styles.infoIcon}
+            />
           </Tooltip>
         </View>
         <Stepper value={step} onChange={setStep} min={1} />

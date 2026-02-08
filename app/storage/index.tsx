@@ -5,13 +5,13 @@ import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {useAppTheme, sizes} from '@/constants/theme';
 import {useFocusEffect, router} from 'expo-router';
 import {useAppSelector, useAppDispatch} from '@/hooks';
-import {selectStorageItems, selectShopList, addStorageItem, updateStorageItem, addShopListItem, setStorageItems, setShopList} from '@/redux/storage/storageSlice';
-import SwipeToAdd from '@/components/storage/SwipeToAdd';
+import {selectStorageItems, selectShopList, addStorageItem, updateStorageItem, addShopListItem, removeStorageItem, setStorageItems, setShopList} from '@/redux/storage/storageSlice';
+import SwipeableRow from '@/components/storage/SwipeToAdd';
+import CustomModal from '@/components/CustomModal';
 import StorageForm, {type StorageFormData} from '@/components/storage/StorageForm';
 import {getSocket} from '@/utils/socket';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {StorageItem} from '@/types';
-import { printJsonIndent } from '@/common';
 
 const normalize = (s: string) => s.toLowerCase().trim();
 
@@ -22,6 +22,7 @@ export default function StorageScreen() {
   const shopList = useAppSelector(selectShopList);
   const [search, setSearch] = useState('');
   const [editingItem, setEditingItem] = useState<StorageItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<StorageItem | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   useFocusEffect(
@@ -84,12 +85,23 @@ export default function StorageScreen() {
     if (!socket) return;
     socket.emit(
       'shopList:create',
-      {storageId: item.id, itemNumber: item.itemNumber},
+      {storageId: item.id, itemNumber: item.step},
       (res: any) => {
         if (!res.err) dispatch(addShopListItem(res.d));
         else console.error('shopList:create error', res.err);
       },
     );
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteItem) return;
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('storage:delete', {id: deleteItem.id}, (res: any) => {
+      if (!res.err) dispatch(removeStorageItem(deleteItem.id));
+      else console.error('storage:delete error', res.err);
+    });
+    setDeleteItem(null);
   };
 
   const inShopSet = useMemo(
@@ -98,7 +110,7 @@ export default function StorageScreen() {
   );
 
   const renderItem = ({item}: {item: StorageItem}) => (
-    <SwipeToAdd onAdd={() => handleAddToShopList(item)}>
+    <SwipeableRow onAdd={() => handleAddToShopList(item)} onDelete={() => setDeleteItem(item)}>
       <Pressable onPress={() => openEdit(item)}>
         <View style={[styles.row, {backgroundColor: t.colors.surface}]}>
           <Text variant="bodyLarge" style={inShopSet.has(item.id) ? {color: t.colors.success} : undefined}>
@@ -110,7 +122,7 @@ export default function StorageScreen() {
         </View>
       </Pressable>
       <Divider />
-    </SwipeToAdd>
+    </SwipeableRow>
   );
 
   const shopListCount = shopList.filter(s => !s.boughtAt).length;
@@ -172,6 +184,14 @@ export default function StorageScreen() {
           />
         </BottomSheetView>
       </BottomSheet>
+
+      <CustomModal
+        visible={!!deleteItem}
+        title="Potwierdź usunięcie"
+        content={`Czy na pewno chcesz usunąć "${deleteItem?.name}"?`}
+        onApprove={handleDeleteConfirm}
+        onDismiss={() => setDeleteItem(null)}
+      />
     </View>
   );
 }

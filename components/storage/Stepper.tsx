@@ -6,21 +6,22 @@ import {useAppTheme} from '@/constants/theme';
 interface StepperProps {
   value: number;
   unit?: string;
+  step?: number;
   onChange: (value: number) => void;
   min?: number;
 }
 
-const Stepper = ({value, unit, onChange, min = 0}: StepperProps) => {
+const Stepper = ({value, unit, step = 1, onChange, min = 0}: StepperProps) => {
   const t = useAppTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
 
   const handleDecrement = () => {
-    const next = value - 1;
+    const next = value - step;
     if (next >= min) onChange(next);
   };
 
-  const handleIncrement = () => onChange(value + 1);
+  const handleIncrement = () => onChange(value + step);
 
   const handleStartEdit = () => {
     setDraft(String(value));

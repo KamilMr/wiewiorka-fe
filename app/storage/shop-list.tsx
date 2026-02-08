@@ -15,7 +15,10 @@ import {
   setShopList,
   updateShopListItem,
   addShopListItem,
+  removeShopListItem,
 } from '@/redux/storage/storageSlice';
+import SwipeableRow from '@/components/storage/SwipeToAdd';
+import CustomModal from '@/components/CustomModal';
 import Stepper from '@/components/storage/Stepper';
 import {getSocket} from '@/utils/socket';
 import {ShopListItem} from '@/types';
@@ -26,6 +29,7 @@ const normalize = (s: string) => s.toLowerCase().trim();
 interface EnrichedShopItem extends ShopListItem {
   name: string;
   unit: string;
+  step: number;
 }
 
 export default function ShopListScreen() {
@@ -39,6 +43,7 @@ export default function ShopListScreen() {
   const [editName, setEditName] = useState('');
   const [editQuantity, setEditQuantity] = useState(1);
   const [boughtOpen, setBoughtOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<EnrichedShopItem | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   useFocusEffect(
@@ -62,6 +67,7 @@ export default function ShopListScreen() {
         ...item,
         name: storage?.name ?? item.name ?? '—',
         unit: storage?.unit ?? '',
+        step: storage?.step ?? 1,
       };
     });
   }, [shopList, storageItems]);
@@ -106,6 +112,17 @@ export default function ShopListScreen() {
       if (!res.err) dispatch(updateShopListItem(res.d));
       else console.error('shopList:update error', res.err);
     });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteItem) return;
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('shopList:delete', {id: deleteItem.id}, (res: any) => {
+      if (!res.err) dispatch(removeShopListItem(deleteItem.id));
+      else console.error('shopList:delete error', res.err);
+    });
+    setDeleteItem(null);
   };
 
   const handleDrawerSubmit = () => {
@@ -189,7 +206,7 @@ export default function ShopListScreen() {
         }}
         renderItem={({item, section}) => {
           if (section.title === 'bought') return (
-            <View>
+            <SwipeableRow onDelete={() => setDeleteItem(item)}>
               <View style={[styles.row, {backgroundColor: t.colors.surface, opacity: 0.6}]}>
                 <Checkbox
                   status="checked"
@@ -207,11 +224,11 @@ export default function ShopListScreen() {
                 </Text>
               </View>
               <Divider />
-            </View>
+            </SwipeableRow>
           );
           const shopItem = item;
           return (
-            <View>
+            <SwipeableRow onDelete={() => setDeleteItem(shopItem)}>
               <View style={[styles.row, {backgroundColor: t.colors.surface}]}>
                 <Checkbox
                   status="unchecked"
@@ -224,12 +241,13 @@ export default function ShopListScreen() {
                 <Stepper
                   value={shopItem.itemNumber}
                   unit={shopItem.unit}
+                  step={shopItem.step}
                   onChange={v => handleQuantityChange(shopItem, v)}
                   min={0}
                 />
               </View>
               <Divider />
-            </View>
+            </SwipeableRow>
           );
         }}
         contentContainerStyle={styles.list}
@@ -325,6 +343,14 @@ export default function ShopListScreen() {
           )}
         </BottomSheetView>
       </BottomSheet>
+
+      <CustomModal
+        visible={!!deleteItem}
+        title="Potwierdź usunięcie"
+        content={`Czy na pewno chcesz usunąć "${deleteItem?.name}"?`}
+        onApprove={handleDeleteConfirm}
+        onDismiss={() => setDeleteItem(null)}
+      />
     </View>
   );
 }
