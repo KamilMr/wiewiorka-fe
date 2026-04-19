@@ -38,7 +38,6 @@ export const warmShadow = {
     shadowOpacity: 0.08,
     shadowOffset: {width: 0, height: 2},
     shadowRadius: 4,
-    elevation: 2,
   },
   md: {
     shadowColor: '#4a3b33',

@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: warmColors.cardSolid,
     borderWidth: 1,
-    borderColor: warmColors.border,
+    borderColor: warmColors.cardBorder,
     ...warmShadow.sm,
   },
   pressed: {
@@ -370,12 +370,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 24,
     marginBottom: 8,
-    backgroundColor: warmColors.inputBackground,
+    backgroundColor: warmColors.cardSolid,
     borderWidth: 1,
-    borderColor: warmColors.border,
+    borderColor: warmColors.cardBorder,
     borderRadius: warmRadius.lg,
     paddingHorizontal: 14,
     height: 44,
+    ...warmShadow.sm,
   },
   searchIcon: {
     marginRight: 10,
@@ -392,7 +393,7 @@ const styles = StyleSheet.create({
   stickyFilters: {
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: warmColors.border,
+    borderBottomColor: warmColors.cardBorder,
   },
   dateBtn: {
     flexDirection: 'row',
@@ -404,8 +405,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: warmColors.cardSolid,
     borderWidth: 1,
-    borderColor: warmColors.border,
+    borderColor: warmColors.cardBorder,
     borderRadius: warmRadius.lg,
+    ...warmShadow.sm,
   },
   dateBtnLeft: {
     flexDirection: 'row',

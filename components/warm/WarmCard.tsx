@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   },
   glass: {
     backgroundColor: warmColors.card,
-    borderColor: warmColors.cardBorder,
+    borderColor: warmColors.border,
   },
   solid: {
     backgroundColor: warmColors.cardSolid,
