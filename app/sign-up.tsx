@@ -14,23 +14,7 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import {signup} from '@/redux/auth/thunks';
 import {useAppDispatch} from '@/hooks';
 import {Text} from '@/components';
-
-const theme = {
-  background: '#fdfbf7',
-  foreground: '#4a3b33',
-  card: 'rgba(248, 244, 238, 0.7)',
-  cardBorder: 'rgba(228, 217, 188, 0.5)',
-  primary: '#b45309',
-  primaryForeground: '#ffffff',
-  secondary: '#e4c090',
-  muted: '#f1e9da',
-  mutedForeground: '#78716c',
-  destructive: '#991b1b',
-  border: '#e4d9bc',
-  inputBackground: '#fdfbf7',
-  decorPrimary: 'rgba(180, 83, 9, 0.08)',
-  decorSecondary: 'rgba(228, 192, 144, 0.25)',
-};
+import {warmColors as theme} from '@/constants/warmTheme';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
