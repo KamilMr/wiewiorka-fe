@@ -40,7 +40,6 @@ const Login = () => {
   });
   const [rememberUser, setRememberUser] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [focused, setFocused] = useState<'email' | 'password' | null>(null);
 
   useEffect(() => {
     const loadSavedCredentials = async () => {
@@ -123,12 +122,7 @@ const Login = () => {
         <View style={styles.card}>
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Email</Text>
-            <View
-              style={[
-                styles.inputWrap,
-                focused === 'email' && styles.inputWrapFocused,
-              ]}
-            >
+            <View style={styles.inputWrap}>
               <FontAwesome6
                 name="envelope"
                 size={16}
@@ -139,8 +133,6 @@ const Login = () => {
               <RNTextInput
                 value={data.email}
                 onChangeText={handleData('email')}
-                onFocus={() => setFocused('email')}
-                onBlur={() => setFocused(null)}
                 placeholder="nazwa@przyklad.pl"
                 placeholderTextColor={theme.mutedForeground}
                 keyboardType="email-address"
@@ -154,16 +146,11 @@ const Login = () => {
           <View style={styles.fieldGroup}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>Hasło</Text>
-              <Pressable onPress={() => {}}>
+              <Pressable onPress={() => router.push('/forgot-password')}>
                 <Text style={styles.forgotLink}>Nie pamiętasz hasła?</Text>
               </Pressable>
             </View>
-            <View
-              style={[
-                styles.inputWrap,
-                focused === 'password' && styles.inputWrapFocused,
-              ]}
-            >
+            <View style={styles.inputWrap}>
               <FontAwesome6
                 name="lock"
                 size={16}
@@ -174,8 +161,6 @@ const Login = () => {
               <RNTextInput
                 value={data.password}
                 onChangeText={handleData('password')}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused(null)}
                 placeholder="••••••••"
                 placeholderTextColor={theme.mutedForeground}
                 secureTextEntry={!showPassword}
@@ -339,13 +324,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 52,
-  },
-  inputWrapFocused: {
-    borderColor: theme.primary,
-    shadowColor: theme.primary,
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    shadowOffset: {width: 0, height: 0},
   },
   inputIconLeft: {
     marginRight: 10,
