@@ -102,10 +102,10 @@ export default function DynamicRecordList({
               const amount = `${exp.exp ? '-' : '+'}${formatPrice(exp.price)}`;
               const amountColor = exp.exp ? warmColors.danger : warmColors.success;
               const chipBg = exp.exp
-                ? hexWithAlpha(exp.color, 0.18)
+                ? hexWithAlpha(exp.color || warmColors.primary, 0.22)
                 : warmColors.successBackground;
               const chipIconColor = exp.exp
-                ? exp.color || warmColors.primary
+                ? warmColors.primary
                 : warmColors.success;
               return (
                 <Pressable
