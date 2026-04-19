@@ -18,6 +18,7 @@ import DynamicRecordList from '@/components/DynamicList';
 import {NoData, Text} from '@/components';
 import FilterDrawer, {FilterState} from '@/components/FilterDrawer';
 import WarmPill from '@/components/warm/WarmPill';
+import WarmCard from '@/components/warm/WarmCard';
 import {isCloseToBottom} from '@/common';
 import {selectRecords, selectCategoriesByUsage} from '@/redux/main/selectors';
 import {useAppSelector} from '@/hooks';
@@ -93,6 +94,25 @@ const Records = () => {
   }, [recordsRaw, typeFilter]);
 
   const topCategories = categoriesByUsage.slice(0, 4);
+
+  const totals = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    Object.values(records).forEach(items => {
+      items.forEach(it => {
+        const price = Number(it.price) || 0;
+        if (it.exp) expense += price;
+        else income += price;
+      });
+    });
+    return {income, expense, net: income - expense};
+  }, [records]);
+
+  const formatPLN = (n: number) =>
+    `${n < 0 ? '-' : ''}${Math.abs(n).toLocaleString('pl-PL', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} zł`;
 
   const handleScroll = ({
     nativeEvent,
@@ -274,6 +294,30 @@ const Records = () => {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
       >
+        <WarmCard style={styles.summaryCard}>
+          <View style={styles.summaryTopRow}>
+            <View>
+              <Text style={styles.summaryLabel}>Saldo netto</Text>
+              <Text style={styles.summaryNet}>{formatPLN(totals.net)}</Text>
+            </View>
+          </View>
+          <View style={styles.summaryBottomRow}>
+            <View style={styles.summaryCell}>
+              <Text style={styles.summaryCellLabel}>Przychód</Text>
+              <Text style={[styles.summaryCellValue, {color: warmColors.success}]}>
+                {formatPLN(totals.income)}
+              </Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryCell}>
+              <Text style={styles.summaryCellLabel}>Wydatek</Text>
+              <Text style={[styles.summaryCellValue, {color: warmColors.danger}]}>
+                {formatPLN(totals.expense)}
+              </Text>
+            </View>
+          </View>
+        </WarmCard>
+
         {!_.keys(records).length ? (
           <NoData text="Nie ma tranzakcji" />
         ) : (
@@ -406,6 +450,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 24,
+  },
+  summaryCard: {
+    marginBottom: 20,
+  },
+  summaryTopRow: {
+    marginBottom: 16,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: warmColors.mutedForeground,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  summaryNet: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: warmColors.foreground,
+    lineHeight: 32,
+  },
+  summaryBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: warmColors.cardBorder,
+  },
+  summaryCell: {
+    flex: 1,
+  },
+  summaryCellLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: warmColors.mutedForeground,
+    marginBottom: 4,
+  },
+  summaryCellValue: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  summaryDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: warmColors.cardBorder,
+    marginHorizontal: 12,
   },
 });
 
