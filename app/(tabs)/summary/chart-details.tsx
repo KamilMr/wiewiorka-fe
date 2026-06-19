@@ -175,11 +175,16 @@ const Summary = () => {
       <DatePicker
         value={filterDates[1]}
         label="Koniec"
-        style={{marginBottom: 44}}
+        style={{marginBottom: 8}}
         onChange={(date = filterDates[1]) =>
           setFilterDates([filterDates[0], date])
         }
       />
+      <View style={{alignItems: 'center', marginBottom: 44}}>
+        <Text style={{fontSize: 16, fontWeight: 'bold'}}>
+          Wydano: {formatPrice(_.sumBy(data, 'value'))}
+        </Text>
+      </View>
       <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
         <GroupCategory axis={axis} onPress={handleAxisChange} />
         <View
