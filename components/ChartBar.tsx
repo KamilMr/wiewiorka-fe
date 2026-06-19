@@ -1,13 +1,11 @@
-import {BarChart, BarChartPropsType} from 'react-native-gifted-charts';
-
-type DataValue = {
-  value: number;
-  frontColor: string;
-  label: string;
-};
+import {
+  BarChart,
+  type BarChartPropsType,
+  type barDataItem,
+} from 'react-native-gifted-charts';
 
 interface Props {
-  barData: Array<DataValue>;
+  barData: barDataItem[];
   title?: string;
 }
 

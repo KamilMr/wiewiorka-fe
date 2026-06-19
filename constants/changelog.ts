@@ -1,5 +1,12 @@
 export const CHANGELOG = `# Historia zmian
 
+## [1.0.12] - 2026-06-19
+### Dodano
+- Kilka widoków testowych do analizy wykresów
+
+### Zmieniono
+- Zaktualizowano style widoków
+
 ## [1.0.10] - 2025-12-21
 ### Zmieniono
 - Poprawa wydajności listy rekordów i podsumowań

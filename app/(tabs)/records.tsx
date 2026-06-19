@@ -96,6 +96,10 @@ const Records = () => {
   const topCategories = categoriesByUsage.slice(0, 4);
 
   const totals = useMemo(() => {
+    if (!filters.dateFrom || !filters.dateTo) {
+      return {income: 0, expense: 0, net: 0};
+    }
+
     let income = 0;
     let expense = 0;
     Object.values(records).forEach(items => {
@@ -106,7 +110,7 @@ const Records = () => {
       });
     });
     return {income, expense, net: income - expense};
-  }, [records]);
+  }, [records, filters.dateFrom, filters.dateTo]);
 
   const formatPLN = (n: number) =>
     `${n < 0 ? '-' : ''}${Math.abs(n).toLocaleString('pl-PL', {
@@ -161,7 +165,7 @@ const Records = () => {
 
   const dateLabel = (() => {
     if (filters.dateFrom && filters.dateTo) {
-      return `${format(filters.dateFrom, 'dd MMM')} – ${format(filters.dateTo, 'dd MMM')}`;
+      return `${format(filters.dateFrom, 'dd MMM')} - ${format(filters.dateTo, 'dd MMM')}`;
     }
     if (filters.dateFrom) return `Od ${format(filters.dateFrom, 'dd MMM yyyy')}`;
     if (filters.dateTo) return `Do ${format(filters.dateTo, 'dd MMM yyyy')}`;
@@ -294,29 +298,31 @@ const Records = () => {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
       >
-        <WarmCard style={styles.summaryCard}>
-          <View style={styles.summaryTopRow}>
-            <View>
-              <Text style={styles.summaryLabel}>Saldo netto</Text>
-              <Text style={styles.summaryNet}>{formatPLN(totals.net)}</Text>
+        {filters.dateFrom && filters.dateTo && (
+          <WarmCard style={styles.summaryCard}>
+            <View style={styles.summaryTopRow}>
+              <View>
+                <Text style={styles.summaryLabel}>Saldo netto</Text>
+                <Text style={styles.summaryNet}>{formatPLN(totals.net)}</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.summaryBottomRow}>
-            <View style={styles.summaryCell}>
-              <Text style={styles.summaryCellLabel}>Przychód</Text>
-              <Text style={[styles.summaryCellValue, {color: warmColors.success}]}>
-                {formatPLN(totals.income)}
-              </Text>
+            <View style={styles.summaryBottomRow}>
+              <View style={styles.summaryCell}>
+                <Text style={styles.summaryCellLabel}>Przychód</Text>
+                <Text style={[styles.summaryCellValue, {color: warmColors.success}]}> 
+                  {formatPLN(totals.income)}
+                </Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryCell}>
+                <Text style={styles.summaryCellLabel}>Wydatek</Text>
+                <Text style={[styles.summaryCellValue, {color: warmColors.danger}]}> 
+                  {formatPLN(totals.expense)}
+                </Text>
+              </View>
             </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryCell}>
-              <Text style={styles.summaryCellLabel}>Wydatek</Text>
-              <Text style={[styles.summaryCellValue, {color: warmColors.danger}]}>
-                {formatPLN(totals.expense)}
-              </Text>
-            </View>
-          </View>
-        </WarmCard>
+          </WarmCard>
+        )}
 
         {!_.keys(records).length ? (
           <NoData text="Nie ma tranzakcji" />
