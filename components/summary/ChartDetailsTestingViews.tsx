@@ -41,6 +41,13 @@ type DayTotal = {
   categories: Record<string, number>;
 };
 
+type CategoryShareBucket = {
+  key: string;
+  label: string;
+  value: number;
+  categories: Record<string, number>;
+};
+
 type CategoryTotal = {
   id: string;
   name: string;
@@ -140,6 +147,51 @@ const buildCategoryTotals = (
 
 const shouldShowLabel = (index: number, length: number) =>
   length <= 10 || index === 0 || index === length - 1 || index % 5 === 0;
+
+const shouldUseMonthlyCategoryShare = (dayTotals: DayTotal[]) => {
+  const monthsCount = new Set(
+    dayTotals.map(day => format(new Date(day.date), 'yyyy-MM')),
+  ).size;
+
+  return monthsCount >= 2 && dayTotals.length >= 56;
+};
+
+const buildCategoryShareBuckets = (
+  dayTotals: DayTotal[],
+  mode: 'day' | 'month',
+): CategoryShareBucket[] => {
+  if (mode === 'day') {
+    return dayTotals.map(day => ({
+      key: day.date,
+      label: format(new Date(day.date), 'dd.MM'),
+      value: day.value,
+      categories: day.categories,
+    }));
+  }
+
+  const monthBuckets = dayTotals.reduce<Record<string, CategoryShareBucket>>(
+    (acc, day) => {
+      const key = format(new Date(day.date), 'yyyy-MM');
+      acc[key] ??= {
+        key,
+        label: format(new Date(`${key}-01`), 'MM.yyyy'),
+        value: 0,
+        categories: {},
+      };
+
+      acc[key].value += day.value;
+      Object.entries(day.categories).forEach(([categoryId, value]) => {
+        acc[key].categories[categoryId] ??= 0;
+        acc[key].categories[categoryId] += value;
+      });
+
+      return acc;
+    },
+    {},
+  );
+
+  return Object.values(monthBuckets).sort((a, b) => a.key.localeCompare(b.key));
+};
 
 type InfoAnchor = {
   x: number;
@@ -334,23 +386,32 @@ const ChartDetailsTestingViews = ({
     .slice(0, 5);
 
   const topCategories = currentCategoryTotals.slice(0, 4);
-  const stackData = dayTotals
-    .filter(day => day.value > 0)
-    .map(day => {
+  const categoryShareMode = shouldUseMonthlyCategoryShare(dayTotals)
+    ? 'month'
+    : 'day';
+  const categoryShareBuckets = buildCategoryShareBuckets(
+    dayTotals,
+    categoryShareMode,
+  );
+  const categoryShareLabelWidth =
+    categoryShareMode === 'month' ? 64 : labelWidth;
+  const stackData = categoryShareBuckets
+    .filter(bucket => bucket.value > 0)
+    .map(bucket => {
       const topIds = new Set(topCategories.map(category => category.id));
-      const otherValue = Object.entries(day.categories).reduce(
+      const otherValue = Object.entries(bucket.categories).reduce(
         (sum, [categoryId, value]) =>
           topIds.has(categoryId) ? sum : sum + value,
         0,
       );
 
       return {
-        label: format(new Date(day.date), 'dd.MM'),
-        labelWidth,
+        label: bucket.label,
+        labelWidth: categoryShareLabelWidth,
         labelTextStyle: styles.axisLabel,
         stacks: [
           ...topCategories.map(category => ({
-            value: day.categories[category.id] || 0,
+            value: bucket.categories[category.id] || 0,
             color: category.color,
           })),
           ...(otherValue > 0 ? [{value: otherValue, color: '#BDBDBD'}] : []),
@@ -433,8 +494,8 @@ const ChartDetailsTestingViews = ({
       </InsightCard>
 
       <InsightCard
-        title="7. Udział kategorii w czasie"
-        tooltip="Każdy słupek to jeden dzień. Kolory wewnątrz słupka pokazują, jaka część dziennej sumy pochodziła z najważniejszych kategorii. Szary kolor oznacza pozostałe kategorie."
+        title={`7. Udział kategorii w czasie (${categoryShareMode === 'month' ? 'miesiące' : 'dni'})`}
+        tooltip="Kolory w słupku pokazują udział najważniejszych kategorii w sumie wydatków. Dla krótszego zakresu jeden słupek oznacza dzień. Dla zakresu około dwóch miesięcy lub dłuższego jeden słupek oznacza miesiąc. Szary kolor oznacza pozostałe kategorie."
       >
         {stackData.length ? (
           <>
