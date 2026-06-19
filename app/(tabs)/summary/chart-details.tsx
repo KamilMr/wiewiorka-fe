@@ -8,12 +8,15 @@ import {format, lastDayOfMonth} from 'date-fns';
 
 import {Axis, PickFilter, decId, groupBy} from '@/utils/aggregateData';
 import {BarChart, Chip, DatePicker, PieChartBar, Text} from '@/components';
-import {Category, Subcategory} from '@/redux/main/mainSlice';
+import {type Subcategory} from '@/types';
 import {buildBarChart, buildPieChart} from '@/utils/chartBuilder';
 import {selectByTimeRange, selectCategories} from '@/redux/main/selectors';
 import {useAppSelector} from '@/hooks';
 import {useAppTheme} from '@/constants/theme';
 import {EXCLUDED_CAT, formatPrice, shortenText} from '@/common';
+import ChartDetailsTestingViews from '@/components/summary/ChartDetailsTestingViews';
+
+const excludedCategories = EXCLUDED_CAT as number[];
 
 type GroupedValue = number[];
 interface GroupedType {
@@ -87,7 +90,7 @@ const Summary = () => {
   useEffect(() => {
     setFilters(
       currentGroupOrCategory.filter(
-        (c: {id: number}) => !EXCLUDED_CAT.includes(c.id),
+        (c: {id: number}) => !excludedCategories.includes(c.id),
       ),
     );
   }, [axis]);
@@ -106,8 +109,11 @@ const Summary = () => {
     (str: string) => str.split('-')[+axis[0].split('-')[1]],
   );
 
-  const getCategoryName = (n: number, idOrIdGroup: string) => {
-    return getCategoryById(n, idOrIdGroup || axis[0] === '1-1');
+  const getCategoryName = (
+    n: number,
+    idOrIdGroup: 'id' | 'groupId' = axis[0] === '1-1' ? 'id' : 'groupId',
+  ) => {
+    return getCategoryById(n, idOrIdGroup === 'id');
   };
 
   const currentGroupOrCategory: {
@@ -117,7 +123,7 @@ const Summary = () => {
     color: string;
   }[] = idsGroupOrCategory.map((n: string) => {
     const idOrIdGroup = axis[0] === '1-1' ? 'id' : 'groupId';
-    const cat = getCategoryName(+n);
+    const cat = getCategoryName(+n, idOrIdGroup);
 
     return {
       name: cat?.[idOrIdGroup === 'id' ? 'name' : 'groupName'] || 'not found',
@@ -131,7 +137,7 @@ const Summary = () => {
 
   const [filters, setFilters] = useState(
     currentGroupOrCategory.filter(
-      (c: {id: number}) => !EXCLUDED_CAT.includes(c.id),
+      (c: {id: number}) => !excludedCategories.includes(c.id),
     ),
   );
 
@@ -140,10 +146,9 @@ const Summary = () => {
   const handleRemoveFilters = () => setFilters([]);
   const handleResetFilters = () => setFilters(currentGroupOrCategory);
 
-  const data =
-    chartDisplay === 'pie'
-      ? buildPieChart(grouped, setCat, stateCategories)
-      : buildBarChart(grouped, setCat, stateCategories);
+  const pieData = buildPieChart(grouped, setCat, stateCategories);
+  const barData = buildBarChart(grouped, setCat, stateCategories);
+  const data = chartDisplay === 'pie' ? pieData : barData;
 
   const handleFilters = (catId: number) => () => {
     const categoryToAdd = currentGroupOrCategory.find(f => f.id === catId);
@@ -216,7 +221,7 @@ const Summary = () => {
       </View>
       {chartDisplay === 'pie' ? (
         <PieChartBar
-          data={data}
+          data={pieData}
           labelsPosition="onBorder"
           innerRadius={70}
           strokeWidth={2}
@@ -225,7 +230,7 @@ const Summary = () => {
             if (axis[0] === '1-1') {
               const dates = filterDates.map(d => format(d, 'yyyy-MM-dd'));
               let category: string | undefined;
-              const cat: Category | undefined = getCategoryName(
+              const cat: Subcategory | undefined = getCategoryName(
                 +decId(item.id)[1],
                 'id',
               );
@@ -251,9 +256,9 @@ const Summary = () => {
                 <Text
                   style={{fontSize: 12, color: 'black', fontWeight: 'bold'}}
                 >
-                  {formatPrice(_.sumBy(data, 'value'))}
+                  {formatPrice(_.sumBy(pieData, 'value'))}
                 </Text>
-                {data.slice(0, 4).map(({label, value}) => (
+                {pieData.slice(0, 4).map(({label, value}) => (
                   <Text
                     key={label}
                     style={{
@@ -269,12 +274,12 @@ const Summary = () => {
         />
       ) : (
         <BarChart
-          barData={data}
+          barData={barData}
           onPress={(item: {label: string; id: string}) => {
             if (axis[0] === '1-1') {
               const dates = filterDates.map(d => format(d, 'yyyy-MM-dd'));
               let category: string | undefined;
-              const cat: Category | undefined = getCategoryName(
+              const cat: Subcategory | undefined = getCategoryName(
                 +decId(item.id)[1],
                 'id',
               );
@@ -303,6 +308,14 @@ const Summary = () => {
           />
         ) : null}
       </View>
+
+      <ChartDetailsTestingViews
+        selected={selected}
+        filterDates={filterDates}
+        filters={filters}
+        categories={stateCategories}
+        holidayTagFilter={holidayTagFilter}
+      />
 
       <View
         style={{

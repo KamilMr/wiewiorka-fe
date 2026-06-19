@@ -1,8 +1,8 @@
-import {barDataItem, pieDataItem} from 'react-native-gifted-charts';
+import {type barDataItem, type pieDataItem} from 'react-native-gifted-charts';
 
 import {Text} from '@/components';
 
-import {Subcategory} from '@/types';
+import {type Subcategory} from '@/types';
 import {decId, sumById} from '@/utils/aggregateData';
 import _ from 'lodash';
 import {formatPrice} from '@/common';
@@ -55,7 +55,7 @@ export const buildBarChart = (
   });
 
   const filteredSorted = tR
-    .filter(Boolean)
+    .filter((item): item is {id: string} & barDataItem => Boolean(item))
     .sort((a: any, b: any) => b.value - a.value);
 
   return filteredSorted;
@@ -98,7 +98,9 @@ export const buildPieChart = (
       };
       return tR;
     })
-    .filter(Boolean)
+    .filter((item): item is {label: string; id: string} & pieDataItem =>
+      Boolean(item),
+    )
     .sort((a: any, b: any) => b.value - a.value);
   return tR;
 };
