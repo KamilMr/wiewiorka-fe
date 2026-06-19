@@ -3,6 +3,7 @@ import {format, formatDate, isAfter, isBefore, isSameDay} from 'date-fns';
 import _ from 'lodash';
 
 import {EXCLUDED_CAT, dh, makeNewIdArr, normalize} from '@/common';
+import aggregateDataByDay from '@/utils/aggregateData';
 import {RootState} from '../store';
 import {Category, Expense, Income, Subcategory} from '@/types';
 import {BudgetMainSlice, BudgetCardItem} from '@/utils/types';
@@ -35,10 +36,20 @@ const filterTxt = (exp: any, f: string) => {
   return normalize(string.toLowerCase()).includes(normalize(f.toLowerCase()));
 };
 
+const hasHolidayTag = (item: {tags?: unknown[]}) => {
+  if (!Array.isArray(item.tags)) return false;
+  return item.tags.some(tag => {
+    if (typeof tag === 'string') return tag === 'urlop';
+    if (typeof tag === 'object' && tag !== null && 'name' in tag) {
+      return (tag as {name?: string}).name === 'urlop';
+    }
+    return false;
+  });
+};
+
 const filterHolidayTag = (item: Expense | Income, shouldFilter: boolean) => {
   if (!shouldFilter) return true;
-  // Check if item has tags array and includes 'urlop'
-  return item.tags?.map(o => o.name).includes('urlop') ?? false;
+  return hasHolidayTag(item as {tags?: unknown[]});
 };
 
 export const selectIncomes = (state: RootState) => state.main.incomes;
@@ -253,14 +264,34 @@ export const selectSources = (state: RootState) => {
   return state.main.sources[state.auth.name];
 };
 
-export const selectByTimeRange = (dates: [Date, Date]) => {
-  return createSelector([state => state.main._aggregated], data => {
-    if (dates?.length === 2)
-      return _.pickBy(data, (_, date) =>
-        dh.isBetweenDates(new Date(date), dates[0], dates[1]),
-      );
-    else return data;
-  });
+export const selectByTimeRange = (
+  dates: [Date, Date],
+  filters: {holidayTag?: boolean} = {},
+) => {
+  return createSelector(
+    [
+      state => state.main._aggregated,
+      selectExpensesAll,
+      state => state.main.categories,
+    ],
+    (data, expenses, categories) => {
+      const filterByDates = (date: string) =>
+        !dates?.length ||
+        dates.length !== 2 ||
+        dh.isBetweenDates(new Date(date), dates[0], dates[1]);
+
+      if (filters.holidayTag) {
+        const filteredExpenses = expenses.filter(
+          expense => filterByDates(expense.date) && hasHolidayTag(expense),
+        );
+        return aggregateDataByDay(filteredExpenses, categories);
+      }
+
+      if (dates?.length === 2)
+        return _.pickBy(data, (_, date) => filterByDates(date));
+      else return data;
+    },
+  );
 };
 
 export const selectStatus = (state: RootState) => state.main.status;

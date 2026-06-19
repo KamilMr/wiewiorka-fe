@@ -12,13 +12,15 @@ import {useAppTheme} from '@/constants/theme';
 
 const TransactionList = () => {
   const [number, setNumber] = useState(30);
-  const params: {category: string; dates: string} = useLocalSearchParams();
+  const params: {category: string; dates: string; holidayTag?: string} =
+    useLocalSearchParams();
   const dates = params.dates.split(',').slice(0, 2);
   const records = useAppSelector(state =>
     selectRecords(state, number, {
       txt: '',
       categories: [params.category],
       dates: [dates[0], dates[1]],
+      holidayTag: params.holidayTag === 'true',
     }),
   );
   const t = useAppTheme();

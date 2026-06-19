@@ -66,12 +66,15 @@ const Summary = () => {
   ]);
   const [axis, setAxis] = useState<[Axis, PickFilter]>(['1-0', '0-0']);
   const [chartDisplay, setChartDisplay] = useState<string>('pie');
+  const [holidayTagFilter, setHolidayTagFilter] = useState(false);
 
   const t = useAppTheme();
 
   // selectors
   const stateCategories: Subcategory[] = useAppSelector(selectCategories);
-  const selected = useAppSelector(selectByTimeRange(filterDates));
+  const selected = useAppSelector(
+    selectByTimeRange(filterDates, {holidayTag: holidayTagFilter}),
+  );
 
   // grouping
   const grouped: GroupedType = groupBy(selected, 'month', ...axis);
@@ -185,6 +188,15 @@ const Summary = () => {
             alignItems: 'center',
           }}
         >
+          <Chip
+            selected={holidayTagFilter}
+            mode={holidayTagFilter ? 'flat' : 'outlined'}
+            showSelectedCheck={false}
+            style={{marginRight: 4}}
+            onPress={() => setHolidayTagFilter(value => !value)}
+          >
+            🏖️ Urlop
+          </Chip>
           <IconButton
             icon="chart-donut"
             onPress={handlePieChange('pie')}
@@ -219,6 +231,7 @@ const Summary = () => {
                 params: {
                   dates,
                   category: category || '',
+                  holidayTag: holidayTagFilter ? 'true' : '',
                 },
               });
               return;
@@ -267,6 +280,7 @@ const Summary = () => {
                 params: {
                   dates,
                   category: category || '',
+                  holidayTag: holidayTagFilter ? 'true' : '',
                 },
               });
               return;
