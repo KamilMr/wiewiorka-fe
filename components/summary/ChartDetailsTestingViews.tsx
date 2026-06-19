@@ -56,6 +56,13 @@ type CategoryTotal = {
 };
 
 const fallbackColors = ['#5D87FF', '#FFB020', '#43A047', '#E53935', '#8E24AA'];
+const MAX_CHART_POINTS = 45;
+
+type ChartBucket = {
+  startDate: string;
+  endDate: string;
+  value: number;
+};
 
 const sumValues = (values?: number[]) =>
   values?.reduce((sum, value) => sum + (Number(value) || 0), 0) || 0;
@@ -118,6 +125,38 @@ const buildDayTotals = (
     };
   });
 };
+
+const buildChartBuckets = (dayTotals: DayTotal[]): ChartBucket[] => {
+  if (dayTotals.length <= MAX_CHART_POINTS) {
+    return dayTotals.map(day => ({
+      startDate: day.date,
+      endDate: day.date,
+      value: day.value,
+    }));
+  }
+
+  const bucketSize = Math.ceil(dayTotals.length / MAX_CHART_POINTS);
+  const buckets: ChartBucket[] = [];
+
+  for (let index = 0; index < dayTotals.length; index += bucketSize) {
+    const chunk = dayTotals.slice(index, index + bucketSize);
+    buckets.push({
+      startDate: chunk[0].date,
+      endDate: chunk[chunk.length - 1].date,
+      value: chunk.reduce((sum, day) => sum + day.value, 0),
+    });
+  }
+
+  return buckets;
+};
+
+const formatBucketLabel = (bucket: ChartBucket) =>
+  bucket.startDate === bucket.endDate
+    ? format(new Date(bucket.startDate), 'dd.MM')
+    : `${format(new Date(bucket.startDate), 'dd.MM')}-${format(
+        new Date(bucket.endDate),
+        'dd.MM',
+      )}`;
 
 const buildCategoryTotals = (
   data: AggregatedData,
@@ -314,9 +353,11 @@ const ChartDetailsTestingViews = ({
     () => getPreviousDateRange(filterDates),
     [filterDates],
   );
-  const previousSelected = useAppSelector(
-    selectByTimeRange(previousDates, {holidayTag: holidayTagFilter}),
+  const previousSelectedSelector = useMemo(
+    () => selectByTimeRange(previousDates, {holidayTag: holidayTagFilter}),
+    [previousDates, holidayTagFilter],
   );
+  const previousSelected = useAppSelector(previousSelectedSelector);
 
   const dayTotals = useMemo(
     () => buildDayTotals(selected, filterDates, filters),
@@ -332,25 +373,26 @@ const ChartDetailsTestingViews = ({
   );
 
   const hasData = dayTotals.some(day => day.value > 0);
-  const maxDayValue = Math.max(...dayTotals.map(day => day.value), 0);
+  const chartBuckets = useMemo(() => buildChartBuckets(dayTotals), [dayTotals]);
+  const maxChartValue = Math.max(...chartBuckets.map(day => day.value), 0);
 
-  const dailyTrendData = dayTotals.map((day, index) => ({
-    value: day.value,
-    label: shouldShowLabel(index, dayTotals.length)
-      ? format(new Date(day.date), 'dd.MM')
+  const dailyTrendData = chartBuckets.map((bucket, index) => ({
+    value: bucket.value,
+    label: shouldShowLabel(index, chartBuckets.length)
+      ? formatBucketLabel(bucket)
       : '',
     labelWidth,
     labelTextStyle: styles.axisLabel,
-    frontColor: isWeekend(new Date(day.date)) ? '#FFB020' : '#5D87FF',
+    frontColor: isWeekend(new Date(bucket.startDate)) ? '#FFB020' : '#5D87FF',
   }));
 
-  const cumulativeData = dayTotals.reduce<{value: number; label: string}[]>(
-    (acc, day, index) => {
+  const cumulativeData = chartBuckets.reduce<{value: number; label: string}[]>(
+    (acc, bucket, index) => {
       const previousValue = acc[index - 1]?.value || 0;
       acc.push({
-        value: previousValue + day.value,
-        label: shouldShowLabel(index, dayTotals.length)
-          ? format(new Date(day.date), 'dd.MM')
+        value: previousValue + bucket.value,
+        label: shouldShowLabel(index, chartBuckets.length)
+          ? formatBucketLabel(bucket)
           : '',
       });
       return acc;
@@ -431,7 +473,7 @@ const ChartDetailsTestingViews = ({
               barData={dailyTrendData}
               {...compactChartProps}
               height={180}
-              maxValue={maxDayValue || 1}
+              maxValue={maxChartValue || 1}
               barWidth={14}
               spacing={10}
               initialSpacing={8}
@@ -494,7 +536,7 @@ const ChartDetailsTestingViews = ({
       </InsightCard>
 
       <InsightCard
-        title={`7. Udział kategorii w czasie (${categoryShareMode === 'month' ? 'miesiące' : 'dni'})`}
+        title={`4. Udział kategorii w czasie (${categoryShareMode === 'month' ? 'miesiące' : 'dni'})`}
         tooltip="Kolory w słupku pokazują udział najważniejszych kategorii w sumie wydatków. Dla krótszego zakresu jeden słupek oznacza dzień. Dla zakresu około dwóch miesięcy lub dłuższego jeden słupek oznacza miesiąc. Szary kolor oznacza pozostałe kategorie."
       >
         {stackData.length ? (

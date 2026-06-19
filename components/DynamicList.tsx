@@ -11,8 +11,6 @@ import {
 import _ from 'lodash';
 import {format as formatDate, isToday, isYesterday, parse} from 'date-fns';
 import {pl} from 'date-fns/locale';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-
 import {IconButton, Text} from '@/components';
 import WarmCard from '@/components/warm/WarmCard';
 import WarmIconChip from '@/components/warm/WarmIconChip';
@@ -30,7 +28,7 @@ interface SelExpense {
   source?: string;
   date: string;
   image?: string;
-  tags?: Array<{id: string; name: string}> | string[];
+  tags?: {id: string; name: string}[] | string[];
 }
 
 interface Props {
@@ -72,7 +70,8 @@ const hexWithAlpha = (hex: string, alpha: number) => {
 const formatGroupLabel = (dateKey: string) => {
   const d = parse(dateKey, 'dd/MM/yyyy', new Date());
   if (isToday(d)) return `Dziś, ${formatDate(d, 'dd MMM', {locale: pl})}`;
-  if (isYesterday(d)) return `Wczoraj, ${formatDate(d, 'dd MMM', {locale: pl})}`;
+  if (isYesterday(d))
+    return `Wczoraj, ${formatDate(d, 'dd MMM', {locale: pl})}`;
   return formatDate(d, 'EEEE, dd MMM', {locale: pl});
 };
 
@@ -101,11 +100,8 @@ export default function DynamicRecordList({
                 : `${formatGroupLabel(dateKey)} • wydano ${formatPrice(
                     records[dateKey].reduce((sum, item) => {
                       if (!item.exp) return sum;
-                      const price =
-                        typeof item.price === 'number'
-                          ? item.price
-                          : parseFloat(String(item.price));
-                      return sum + (isFinite(price) ? price : 0);
+                      const price = Number(item.price);
+                      return sum + (Number.isFinite(price) ? price : 0);
                     }, 0),
                   )}`
             }
@@ -115,7 +111,9 @@ export default function DynamicRecordList({
             {records[dateKey].map((exp, idx) => {
               const isLast = idx === records[dateKey].length - 1;
               const amount = `${exp.exp ? '-' : '+'}${formatPrice(exp.price)}`;
-              const amountColor = exp.exp ? warmColors.danger : warmColors.success;
+              const amountColor = exp.exp
+                ? warmColors.danger
+                : warmColors.success;
               const chipBg = exp.exp
                 ? hexWithAlpha(exp.color || warmColors.primary, 0.22)
                 : warmColors.successBackground;

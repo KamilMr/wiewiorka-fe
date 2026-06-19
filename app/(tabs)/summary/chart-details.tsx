@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {router, useLocalSearchParams} from 'expo-router';
 
 import _ from 'lodash';
@@ -25,6 +25,23 @@ import {EXCLUDED_CAT, formatPrice, shortenText} from '@/common';
 import ChartDetailsTestingViews from '@/components/summary/ChartDetailsTestingViews';
 
 const excludedCategories = EXCLUDED_CAT as number[];
+
+type FilterCategory = {
+  name: string;
+  id: number;
+  type: 'category' | 'group';
+  color: string;
+};
+
+const areSameFilters = (a: FilterCategory[], b: FilterCategory[]) =>
+  a.length === b.length &&
+  a.every(
+    (item, index) =>
+      item.id === b[index]?.id &&
+      item.type === b[index]?.type &&
+      item.name === b[index]?.name &&
+      item.color === b[index]?.color,
+  );
 
 type GroupedValue = number[];
 interface GroupedType {
@@ -84,38 +101,42 @@ const Summary = () => {
 
   // selectors
   const stateCategories: Subcategory[] = useAppSelector(selectCategories);
-  const selected = useAppSelector(
-    selectByTimeRange(filterDates, {holidayTag: holidayTagFilter}),
+  const selectedSelector = useMemo(
+    () => selectByTimeRange(filterDates, {holidayTag: holidayTagFilter}),
+    [filterDates, holidayTagFilter],
   );
+  const selected = useAppSelector(selectedSelector);
 
   // grouping
-  const grouped: GroupedType = groupBy(selected, 'month', ...axis);
+  const grouped: GroupedType = useMemo(
+    () => groupBy(selected, 'month', ...axis),
+    [selected, axis],
+  );
 
   const getCategoryById = (id: number, isSubcategory: boolean = false) => {
     const idField = isSubcategory ? 'id' : 'groupId';
     return stateCategories.find(cat => +cat[idField] === id);
   };
 
-  useEffect(() => {
-    setFilters(
-      currentGroupOrCategory.filter(
-        (c: {id: number}) => !excludedCategories.includes(c.id),
-      ),
-    );
-  }, [axis]);
-
   // get used categories
-  const idsOfCategories: string[] = [
-    ...new Set(
-      _.values(grouped)
-        .map(o => _.entries(o))
-        .flat()
-        .sort(([, va], [, vb]) => vb[0] - va[0])
-        .map(([id, val]) => id),
-    ),
-  ];
-  const idsGroupOrCategory: string[] = idsOfCategories.map(
-    (str: string) => str.split('-')[+axis[0].split('-')[1]],
+  const idsOfCategories: string[] = useMemo(
+    () => [
+      ...new Set(
+        _.values(grouped)
+          .map(o => _.entries(o))
+          .flat()
+          .sort(([, va], [, vb]) => vb[0] - va[0])
+          .map(([id]) => id),
+      ),
+    ],
+    [grouped],
+  );
+  const idsGroupOrCategory: string[] = useMemo(
+    () =>
+      idsOfCategories.map(
+        (str: string) => str.split('-')[+axis[0].split('-')[1]],
+      ),
+    [idsOfCategories, axis],
   );
 
   const getCategoryName = (
@@ -125,35 +146,43 @@ const Summary = () => {
     return getCategoryById(n, idOrIdGroup === 'id');
   };
 
-  const currentGroupOrCategory: {
-    name: string;
-    id: number;
-    type: 'category' | 'group';
-    color: string;
-  }[] = idsGroupOrCategory.map((n: string) => {
-    const idOrIdGroup = axis[0] === '1-1' ? 'id' : 'groupId';
-    const cat = getCategoryName(+n, idOrIdGroup);
+  const currentGroupOrCategory: FilterCategory[] = useMemo(
+    () =>
+      idsGroupOrCategory.map((n: string) => {
+        const idOrIdGroup = axis[0] === '1-1' ? 'id' : 'groupId';
+        const cat = stateCategories.find(c => +c[idOrIdGroup] === +n);
 
-    return {
-      name: cat?.[idOrIdGroup === 'id' ? 'name' : 'groupName'] || 'not found',
-      id: +n,
-      type: idOrIdGroup === 'id' ? 'category' : 'group',
-      color: cat ? cat?.color || '' : '',
-    };
-  });
+        return {
+          name:
+            cat?.[idOrIdGroup === 'id' ? 'name' : 'groupName'] || 'not found',
+          id: +n,
+          type: idOrIdGroup === 'id' ? 'category' : 'group',
+          color: cat ? cat?.color || '' : '',
+        };
+      }),
+    [idsGroupOrCategory, axis, stateCategories],
+  );
+
+  const availableCategories = useMemo(
+    () =>
+      currentGroupOrCategory.filter(c => !excludedCategories.includes(c.id)),
+    [currentGroupOrCategory],
+  );
 
   const handlePieChange = (str: string) => () => setChartDisplay(str);
 
-  const [filters, setFilters] = useState(
-    currentGroupOrCategory.filter(
-      (c: {id: number}) => !excludedCategories.includes(c.id),
-    ),
-  );
+  const [filters, setFilters] = useState<FilterCategory[]>(availableCategories);
+
+  useEffect(() => {
+    setFilters(prev =>
+      areSameFilters(prev, availableCategories) ? prev : availableCategories,
+    );
+  }, [availableCategories]);
 
   const setCat = new Set(filters.map((o: {name: string}) => o.name));
 
   const handleRemoveFilters = () => setFilters([]);
-  const handleResetFilters = () => setFilters(currentGroupOrCategory);
+  const handleResetFilters = () => setFilters(availableCategories);
 
   const pieData = buildPieChart(grouped, setCat, stateCategories);
   const barData = buildBarChart(grouped, setCat, stateCategories);
