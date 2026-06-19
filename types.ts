@@ -134,10 +134,24 @@ export interface SyncOperation {
   nextRetryAt?: number;
 }
 
+export interface SyncLogEntry {
+  id: string;
+  timestamp: number;
+  level: 'info' | 'success' | 'warning' | 'error';
+  message: string;
+  operationId?: string;
+  path?: string[];
+  method?: SyncOperation['method'];
+  status?: SyncOperation['status'];
+  frontendId?: string;
+  error?: string;
+}
+
 export interface SyncSlice {
   pendingOperations: SyncOperation[];
   isSyncing: boolean;
   lastSyncTimestamp: number | null;
   syncErrors: {[operationId: string]: string};
+  syncLogs: SyncLogEntry[];
   shouldReload: boolean;
 }

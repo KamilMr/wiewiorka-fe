@@ -33,6 +33,7 @@ import {
   setSnackbar,
 } from './mainSlice';
 import {
+  addSyncLog,
   addToQueue,
   removeFromQueue,
   setSyncError,
@@ -1110,11 +1111,46 @@ export const genericSync = createAsyncThunk<
         body: data ? JSON.stringify(data) : undefined,
       });
 
-      const result = await response.json();
-      if (result.err) throw result.err;
+      const responseText = await response.text();
+      let result: any = {};
+      try {
+        result = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error(
+          `Invalid JSON response (${response.status}): ${responseText}`,
+        );
+      }
+
+      if (!response.ok || result.err) {
+        const errorPayload =
+          result.err ??
+          result.error ??
+          result.message ??
+          responseText ??
+          response.statusText;
+        const parsedError =
+          typeof errorPayload === 'string'
+            ? errorPayload
+            : JSON.stringify(errorPayload);
+        throw new Error(
+          response.ok ? parsedError : `HTTP ${response.status}: ${parsedError}`,
+        );
+      }
+
+      dispatch(
+        addSyncLog({
+          level: 'success',
+          message: `Sync request succeeded: ${method} ${endpoint}`,
+          operationId,
+          path: ['main', ...path],
+          method,
+          status: 'processing',
+          frontendId,
+        }),
+      );
 
       if (cb) {
-        const [callbackName, param] = cb.split(':');
+        const [callbackName] = cb.split(':');
         if (callbackName === 'fetchIni')
           setTimeout(() => dispatch(fetchIni()), DIFFERED);
 
@@ -1132,7 +1168,8 @@ export const genericSync = createAsyncThunk<
 
       return result.d;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorObj = error instanceof Error ? error : new Error(errorMessage);
 
       // Determine operation type for better Crashlytics filtering

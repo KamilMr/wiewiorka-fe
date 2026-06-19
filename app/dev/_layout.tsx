@@ -35,6 +35,7 @@ export default function DevLayout() {
         <Stack.Screen name="show-reel" options={{title: 'Show Reel'}} />
         <Stack.Screen name="dropdown" options={{title: 'Dropdown'}} />
         <Stack.Screen name="storage" options={{title: 'Storage'}} />
+        <Stack.Screen name="sync-logs" options={{title: 'Sync Logs'}} />
       </Stack>
     </KeyboardView>
   );

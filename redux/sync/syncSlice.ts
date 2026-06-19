@@ -1,9 +1,11 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {SyncSlice, SyncOperation} from '@/types';
+import {SyncSlice, SyncOperation, SyncLogEntry} from '@/types';
 import {makeRandomId} from '@/common';
 import {SYNC_CONFIG} from '@/constants/theme';
 import {RootState} from '../store';
 import {logError, log, setAttribute} from '@/utils/crashlytics';
+
+const MAX_SYNC_LOGS = 100;
 
 const getOperationType = (path: string[]): string => {
   const pathStr = path.join('/').toLowerCase();
@@ -16,12 +18,33 @@ const getOperationType = (path: string[]): string => {
   return 'unknown';
 };
 
+const pushSyncLog = (
+  state: SyncSlice,
+  entry: Omit<SyncLogEntry, 'id' | 'timestamp'> & {timestamp?: number},
+) => {
+  if (!state.syncLogs) state.syncLogs = [];
+
+  state.syncLogs.unshift({
+    id: `log_${makeRandomId(8)}`,
+    timestamp: entry.timestamp ?? Date.now(),
+    ...entry,
+  });
+
+  if (state.syncLogs.length > MAX_SYNC_LOGS) {
+    state.syncLogs.length = MAX_SYNC_LOGS;
+  }
+};
+
+const getOperationSummary = (operation: SyncOperation) =>
+  `${operation.method} ${operation.path.join('/')}`;
+
 const emptyState = (): SyncSlice => ({
   shouldReload: false,
   pendingOperations: [],
   isSyncing: false,
   lastSyncTimestamp: null,
   syncErrors: {},
+  syncLogs: [],
 });
 
 const syncSlice = createSlice({
@@ -54,25 +77,81 @@ const syncSlice = createSlice({
       if (operation.method === 'DELETE') {
         // DELETE and frontendId starts with f_ - remove all items from queue (unsynced item)
         if (operation.frontendId && operation.frontendId.startsWith('f_')) {
+          const removedCount = state.pendingOperations.filter(
+            op => op.frontendId === operation.frontendId,
+          ).length;
+
           state.pendingOperations = state.pendingOperations.filter(
             op => op.frontendId !== operation.frontendId,
           );
+
+          pushSyncLog(state, {
+            level: 'info',
+            message: `Skipped DELETE for unsynced item and removed ${removedCount} queued operation(s)`,
+            operationId: operation.id,
+            path: operation.path,
+            method: operation.method,
+            status: operation.status,
+            frontendId: operation.frontendId,
+          });
           // Don't add DELETE to queue - item was never synced
           return;
         }
+
+        const removedCount = state.pendingOperations.filter(
+          op => op.frontendId === operation.frontendId,
+        ).length;
 
         // DELETE overrides all [POST, PUT, DELETE] -> [DELETE]
         state.pendingOperations = state.pendingOperations.filter(
           op => op.frontendId !== operation.frontendId,
         );
         state.pendingOperations.push(operation);
+
+        pushSyncLog(state, {
+          level: removedCount > 0 ? 'warning' : 'info',
+          message: `Queued ${getOperationSummary(operation)}${
+            removedCount > 0 ? ` and replaced ${removedCount} operation(s)` : ''
+          }`,
+          operationId: operation.id,
+          path: operation.path,
+          method: operation.method,
+          status: operation.status,
+          frontendId: operation.frontendId,
+        });
       } else {
         // POST and PUT go one after another, no changes
         state.pendingOperations.push(operation);
+
+        pushSyncLog(state, {
+          level: 'info',
+          message: `Queued ${getOperationSummary(operation)}`,
+          operationId: operation.id,
+          path: operation.path,
+          method: operation.method,
+          status: operation.status,
+          frontendId: operation.frontendId,
+        });
       }
     },
 
     removeFromQueue: (state, action: PayloadAction<string>) => {
+      const operation = state.pendingOperations.find(
+        op => op.id === action.payload,
+      );
+
+      if (operation) {
+        pushSyncLog(state, {
+          level: 'success',
+          message: `Removed ${getOperationSummary(operation)} from sync queue`,
+          operationId: operation.id,
+          path: operation.path,
+          method: operation.method,
+          status: operation.status,
+          frontendId: operation.frontendId,
+        });
+      }
+
       state.pendingOperations = state.pendingOperations.filter(
         op => op.id !== action.payload,
       );
@@ -81,8 +160,13 @@ const syncSlice = createSlice({
     },
 
     clearQueue: state => {
+      const count = state.pendingOperations.length;
       state.pendingOperations = [];
       state.syncErrors = {};
+      pushSyncLog(state, {
+        level: 'warning',
+        message: `Cleared sync queue (${count} operation(s))`,
+      });
     },
 
     setSyncingStatus: (state, action: PayloadAction<boolean>) => {
@@ -110,6 +194,16 @@ const syncSlice = createSlice({
         operation.status = 'failed';
         operation.nextRetryAt = undefined;
 
+        pushSyncLog(state, {
+          level: 'error',
+          message: `Sync permanently failed after ${operation.retryCount} attempt(s): ${getOperationSummary(operation)}`,
+          operationId: operation.id,
+          path: operation.path,
+          method: operation.method,
+          status: operation.status,
+          frontendId: operation.frontendId,
+        });
+
         // Log permanent sync failure to Crashlytics
         const operationType = getOperationType(operation.path);
         log(`Sync permanently failed: ${operationType} ${operation.method}`);
@@ -132,6 +226,16 @@ const syncSlice = createSlice({
         const delay = SYNC_CONFIG.RETRY_DELAY;
 
         operation.nextRetryAt = Date.now() + delay;
+
+        pushSyncLog(state, {
+          level: 'warning',
+          message: `Sync retry ${operation.retryCount}/${maxRetries} scheduled: ${getOperationSummary(operation)}`,
+          operationId: operation.id,
+          path: operation.path,
+          method: operation.method,
+          status: operation.status,
+          frontendId: operation.frontendId,
+        });
       }
     },
 
@@ -149,6 +253,16 @@ const syncSlice = createSlice({
       operation.status = action.payload.status;
       if (action.payload.status === 'processing')
         operation.lastAttempt = Date.now();
+
+      pushSyncLog(state, {
+        level: 'info',
+        message: `Sync status changed to ${action.payload.status}: ${getOperationSummary(operation)}`,
+        operationId: operation.id,
+        path: operation.path,
+        method: operation.method,
+        status: operation.status,
+        frontendId: operation.frontendId,
+      });
     },
 
     setSyncError: (
@@ -156,10 +270,40 @@ const syncSlice = createSlice({
       action: PayloadAction<{operationId: string; error: string}>,
     ) => {
       state.syncErrors[action.payload.operationId] = action.payload.error;
+
+      const operation = state.pendingOperations.find(
+        op => op.id === action.payload.operationId,
+      );
+
+      pushSyncLog(state, {
+        level: 'error',
+        message: operation
+          ? `Sync error for ${getOperationSummary(operation)}`
+          : 'Sync error',
+        operationId: action.payload.operationId,
+        path: operation?.path,
+        method: operation?.method,
+        status: operation?.status,
+        frontendId: operation?.frontendId,
+        error: action.payload.error,
+      });
     },
 
     clearSyncError: (state, action: PayloadAction<string>) => {
       delete state.syncErrors[action.payload];
+    },
+
+    addSyncLog: (
+      state,
+      action: PayloadAction<
+        Omit<SyncLogEntry, 'id' | 'timestamp'> & {timestamp?: number}
+      >,
+    ) => {
+      pushSyncLog(state, action.payload);
+    },
+
+    clearSyncLogs: state => {
+      state.syncLogs = [];
     },
 
     retryOperation: (state, action: PayloadAction<string>) => {
@@ -173,9 +317,20 @@ const syncSlice = createSlice({
       operation.nextRetryAt = undefined;
       operation.lastAttempt = undefined;
       delete state.syncErrors[action.payload];
+
+      pushSyncLog(state, {
+        level: 'info',
+        message: `Manual retry queued: ${getOperationSummary(operation)}`,
+        operationId: operation.id,
+        path: operation.path,
+        method: operation.method,
+        status: operation.status,
+        frontendId: operation.frontendId,
+      });
     },
 
     retryAllFailed: state => {
+      let count = 0;
       state.pendingOperations.forEach(op => {
         if (op.status === 'failed') {
           op.status = 'pending';
@@ -183,26 +338,56 @@ const syncSlice = createSlice({
           op.nextRetryAt = undefined;
           op.lastAttempt = undefined;
           delete state.syncErrors[op.id];
+          count += 1;
         }
       });
+
+      if (count > 0) {
+        pushSyncLog(state, {
+          level: 'info',
+          message: `Manual retry queued for ${count} failed operation(s)`,
+        });
+      }
     },
 
     discardOperation: (state, action: PayloadAction<string>) => {
-      const operation = state.pendingOperations.find(op => op.id === action.payload);
+      const operation = state.pendingOperations.find(
+        op => op.id === action.payload,
+      );
       if (!operation || operation.status !== 'failed') return;
 
-      state.pendingOperations = state.pendingOperations.filter(op => op.id !== action.payload);
+      state.pendingOperations = state.pendingOperations.filter(
+        op => op.id !== action.payload,
+      );
       delete state.syncErrors[action.payload];
+
+      pushSyncLog(state, {
+        level: 'warning',
+        message: `Discarded failed operation: ${getOperationSummary(operation)}`,
+        operationId: operation.id,
+        path: operation.path,
+        method: operation.method,
+        status: operation.status,
+        frontendId: operation.frontendId,
+      });
     },
 
     discardAllFailed: state => {
-      const failedIds = state.pendingOperations
-        .filter(op => op.status === 'failed')
-        .map(op => op.id);
+      const failedOperations = state.pendingOperations.filter(
+        op => op.status === 'failed',
+      );
+      const failedIds = failedOperations.map(op => op.id);
       state.pendingOperations = state.pendingOperations.filter(
         op => op.status !== 'failed',
       );
       failedIds.forEach(id => delete state.syncErrors[id]);
+
+      if (failedOperations.length > 0) {
+        pushSyncLog(state, {
+          level: 'warning',
+          message: `Discarded ${failedOperations.length} failed operation(s)`,
+        });
+      }
     },
 
     // Dev-only: Add test failed operations
@@ -258,6 +443,16 @@ const syncSlice = createSlice({
       testOperations.forEach(op => {
         state.pendingOperations.push(op);
         state.syncErrors[op.id] = 'Test error: Network request failed';
+        pushSyncLog(state, {
+          level: 'error',
+          message: `Added test failed operation: ${getOperationSummary(op)}`,
+          operationId: op.id,
+          path: op.path,
+          method: op.method,
+          status: op.status,
+          frontendId: op.frontendId,
+          error: state.syncErrors[op.id],
+        });
       });
     },
 
@@ -266,19 +461,24 @@ const syncSlice = createSlice({
 });
 
 export const selectOperations = (state: RootState) =>
-  state.sync.pendingOperations;
+  state.sync.pendingOperations || [];
 
 export const selectFailedOperations = (state: RootState) =>
-  state.sync.pendingOperations.filter(op => op.status === 'failed');
+  (state.sync.pendingOperations || []).filter(op => op.status === 'failed');
 
 export const selectFailedOperationsCount = (state: RootState) =>
-  state.sync.pendingOperations.filter(op => op.status === 'failed').length;
+  (state.sync.pendingOperations || []).filter(op => op.status === 'failed')
+    .length;
+
+export const selectSyncLogs = (state: RootState) => state.sync.syncLogs || [];
 
 export const {
+  addSyncLog,
   addTestFailedOperations,
   addToQueue,
   clearQueue,
   clearSyncError,
+  clearSyncLogs,
   discardAllFailed,
   discardOperation,
   dropSync,

@@ -68,11 +68,21 @@ const migrations = {
       },
     };
   },
+  7: (state: any) => {
+    return {
+      ...state,
+      sync: {
+        ...syncEmptyState(),
+        ...state.sync,
+        syncLogs: state.sync?.syncLogs ?? [],
+      },
+    };
+  },
 };
 
 const persistConfig = {
   key: 'squirrel',
-  version: 6,
+  version: 7,
   storage: AsyncStorage,
   whitelist: ['auth', 'main', 'sync'],
   migrate: createMigrate(migrations, {debug: false}),

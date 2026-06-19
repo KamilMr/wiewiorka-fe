@@ -53,6 +53,15 @@ const DevPage = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={styles.cardItem}
+          onPress={() => router.navigate('/dev/sync-logs')}
+        >
+          <TabBarIcon name="document-text" color={t.colors.primary} />
+          <Text style={[styles.cardText, {color: t.colors.primary}]}>
+            Sync Logs
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.cardItem, {backgroundColor: 'rgba(255,0,0,0.1)'}]}
           onPress={handleAddTestFailedOps}
         >
