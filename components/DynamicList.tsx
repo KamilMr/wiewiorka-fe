@@ -94,7 +94,22 @@ export default function DynamicRecordList({
     <ScrollView onScroll={handleScroll} scrollEnabled={false}>
       {_.keys(records).map(dateKey => (
         <View key={dateKey} style={styles.group}>
-          <WarmSectionHeader label={formatGroupLabel(dateKey)} />
+          <WarmSectionHeader
+            label={
+              records[dateKey].length < 2
+                ? formatGroupLabel(dateKey)
+                : `${formatGroupLabel(dateKey)} • wydano ${formatPrice(
+                    records[dateKey].reduce((sum, item) => {
+                      if (!item.exp) return sum;
+                      const price =
+                        typeof item.price === 'number'
+                          ? item.price
+                          : parseFloat(String(item.price));
+                      return sum + (isFinite(price) ? price : 0);
+                    }, 0),
+                  )}`
+            }
+          />
 
           <WarmCard variant="glass" padded={false}>
             {records[dateKey].map((exp, idx) => {
