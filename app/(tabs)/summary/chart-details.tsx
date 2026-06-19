@@ -2,9 +2,17 @@ import {useEffect, useState} from 'react';
 import {router, useLocalSearchParams} from 'expo-router';
 
 import _ from 'lodash';
-import {Button, IconButton} from 'react-native-paper';
+import {Button, IconButton, Menu as PaperMenu} from 'react-native-paper';
 import {ScrollView, View} from 'react-native';
-import {format, lastDayOfMonth} from 'date-fns';
+import {
+  endOfMonth,
+  endOfYear,
+  format,
+  lastDayOfMonth,
+  startOfMonth,
+  startOfYear,
+  subMonths,
+} from 'date-fns';
 
 import {Axis, PickFilter, decId, groupBy} from '@/utils/aggregateData';
 import {BarChart, Chip, DatePicker, PieChartBar, Text} from '@/components';
@@ -70,6 +78,7 @@ const Summary = () => {
   const [axis, setAxis] = useState<[Axis, PickFilter]>(['1-0', '0-0']);
   const [chartDisplay, setChartDisplay] = useState<string>('pie');
   const [holidayTagFilter, setHolidayTagFilter] = useState(false);
+  const [dateMenuVisible, setDateMenuVisible] = useState(false);
 
   const t = useAppTheme();
 
@@ -167,24 +176,79 @@ const Summary = () => {
     setAxis([ax, ax === '1-0' ? '0-0' : axis[1]]);
   };
 
+  const setDatePreset = (dates: [Date, Date]) => () => {
+    setFilterDates(dates);
+    setDateMenuVisible(false);
+  };
+
+  const today = new Date();
+  const previousMonth = subMonths(today, 1);
+
   return (
     <ScrollView style={{backgroundColor: t.colors.white}}>
-      <DatePicker
-        value={filterDates[0]}
-        label="Start"
-        style={{marginBottom: 8}}
-        onChange={(date = filterDates[0]) =>
-          setFilterDates([date, filterDates[1]])
-        }
-      />
-      <DatePicker
-        value={filterDates[1]}
-        label="Koniec"
-        style={{marginBottom: 8}}
-        onChange={(date = filterDates[1]) =>
-          setFilterDates([filterDates[0], date])
-        }
-      />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          paddingHorizontal: 8,
+          marginBottom: 16,
+        }}
+      >
+        <PaperMenu
+          visible={dateMenuVisible}
+          onDismiss={() => setDateMenuVisible(false)}
+          anchor={
+            <IconButton
+              mode="outlined"
+              icon="calendar-range"
+              size={22}
+              style={{marginTop: 8, marginRight: 4}}
+              onPress={() => setDateMenuVisible(true)}
+            />
+          }
+        >
+          <PaperMenu.Item
+            title="Ten miesiąc"
+            onPress={setDatePreset([startOfMonth(today), endOfMonth(today)])}
+          />
+          <PaperMenu.Item
+            title="Poprzedni miesiąc"
+            onPress={setDatePreset([
+              startOfMonth(previousMonth),
+              endOfMonth(previousMonth),
+            ])}
+          />
+          <PaperMenu.Item
+            title="Ostatnie 6 miesięcy"
+            onPress={setDatePreset([
+              startOfMonth(subMonths(today, 5)),
+              endOfMonth(today),
+            ])}
+          />
+          <PaperMenu.Item
+            title="Ten rok"
+            onPress={setDatePreset([startOfYear(today), endOfYear(today)])}
+          />
+        </PaperMenu>
+        <View style={{flex: 1}}>
+          <DatePicker
+            value={filterDates[0]}
+            label="Start"
+            style={{marginBottom: 8}}
+            onChange={(date = filterDates[0]) =>
+              setFilterDates([date, filterDates[1]])
+            }
+          />
+          <DatePicker
+            value={filterDates[1]}
+            label="Koniec"
+            style={{marginBottom: 8}}
+            onChange={(date = filterDates[1]) =>
+              setFilterDates([filterDates[0], date])
+            }
+          />
+        </View>
+      </View>
       <View style={{alignItems: 'center', marginBottom: 44}}>
         <Text style={{fontSize: 16, fontWeight: 'bold'}}>
           Wydano: {formatPrice(_.sumBy(data, 'value'))}
