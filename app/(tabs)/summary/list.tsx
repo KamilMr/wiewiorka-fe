@@ -40,6 +40,13 @@ const TransactionList = () => {
     };
   }, [navigation]);
 
+  const handleNavigate = (id: number, isExpense: boolean) => () => {
+    router.push({
+      pathname: '/addnew',
+      params: {id, type: isExpense ? 'expense' : 'income'},
+    });
+  };
+
   // Load more items when the scroll reaches the bottom
   const handleScroll = ({
     nativeEvent,
@@ -53,7 +60,11 @@ const TransactionList = () => {
 
   return (
     <View style={{padding: 16, backgroundColor: t.colors.white, flex: 1}}>
-      <DynamicRecordList records={records} handleScroll={handleScroll} />
+      <DynamicRecordList
+        records={records}
+        handleNavigate={handleNavigate}
+        handleScroll={handleScroll}
+      />
     </View>
   );
 };
