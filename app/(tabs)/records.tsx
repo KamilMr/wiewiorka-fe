@@ -131,7 +131,14 @@ const Records = () => {
   const handleNavigate = (id: number, isExpense: boolean) => () => {
     router.push({
       pathname: '/addnew',
-      params: {id, type: isExpense ? 'expense' : 'income'},
+      params: {
+        id,
+        type: isExpense ? 'expense' : 'income',
+        returnTo: '/(tabs)/records',
+        returnCategory: params.category || '',
+        returnDateStart: params.dateStart || '',
+        returnDateEnd: params.dateEnd || '',
+      },
     });
   };
 

@@ -63,7 +63,25 @@ export default function AddNew() {
   const incomeCategories = useAppSelector(selectSources) || [];
   const eurRate = useAppSelector(selectLatestExchangeRate('EUR'));
   const eurBidAskRate = useAppSelector(selectLatestBidAskExchangeRate('EUR'));
-  const {id, type: incomingType = ''} = useLocalSearchParams();
+  const {
+    id = '',
+    type: incomingType = '',
+    returnTo = '',
+    returnDates = '',
+    returnCategory = '',
+    returnHolidayTag = '',
+    returnDateStart = '',
+    returnDateEnd = '',
+  } = useLocalSearchParams<{
+    id?: string;
+    type?: string;
+    returnTo?: string;
+    returnDates?: string;
+    returnCategory?: string;
+    returnHolidayTag?: string;
+    returnDateStart?: string;
+    returnDateEnd?: string;
+  }>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
@@ -231,7 +249,16 @@ export default function AddNew() {
     useCallback(() => {
       // clean up params
       const unsubscribe = navigation.addListener('blur', () => {
-        navigation.setParams({id: undefined, type: undefined});
+        (navigation as any).setParams({
+          id: undefined,
+          type: undefined,
+          returnTo: undefined,
+          returnDates: undefined,
+          returnCategory: undefined,
+          returnHolidayTag: undefined,
+          returnDateStart: undefined,
+          returnDateEnd: undefined,
+        });
         cleanState();
       });
 
@@ -318,11 +345,55 @@ export default function AddNew() {
     return true;
   };
 
-  const handleNavigateBack = () => {
-    setForm(initState(new Date(), expenseCategories));
-    dirty.current = {};
-    router.navigate('/(tabs)/records');
+  const navigateToReturnScreen = () => {
+    if (returnTo === '/summary/list' && returnDates && returnCategory) {
+      router.navigate({
+        pathname: '/summary/list',
+        params: {
+          dates: returnDates,
+          category: returnCategory,
+          holidayTag: returnHolidayTag,
+        },
+      });
+      return;
+    }
+
+    router.navigate({
+      pathname: '/(tabs)/records',
+      params: {
+        category: returnCategory,
+        dateStart: returnDateStart,
+        dateEnd: returnDateEnd,
+      },
+    });
   };
+
+  const handleNavigateBack = () => {
+    cleanState();
+    navigateToReturnScreen();
+  };
+
+  const handleNavigateBackRef = useRef(handleNavigateBack);
+  handleNavigateBackRef.current = handleNavigateBack;
+
+  useFocusEffect(
+    useCallback(() => {
+      const parentNavigation = navigation.getParent();
+
+      parentNavigation?.setOptions({
+        headerLeft: () => (
+          <IconButton
+            icon="arrow-left"
+            onPress={() => handleNavigateBackRef.current()}
+          />
+        ),
+      });
+
+      return () => {
+        parentNavigation?.setOptions({headerLeft: undefined});
+      };
+    }, [navigation]),
+  );
 
   const handleSave = async () => {
     if (type === 'expense' && isSplit) {
@@ -580,9 +651,6 @@ export default function AddNew() {
               Usuń
             </ButtonWithStatus>
           ) : null}
-          <ButtonWithStatus onPress={handleNavigateBack}>
-            Przerwij
-          </ButtonWithStatus>
           <ButtonWithStatus
             ref={buttonRef}
             showLoading
