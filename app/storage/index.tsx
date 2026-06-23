@@ -1,4 +1,4 @@
-import {useRef, useState, useMemo, useCallback} from 'react';
+import {useRef, useState, useMemo, useCallback, useEffect} from 'react';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {View, StyleSheet, FlatList, Pressable} from 'react-native';
 import {Searchbar, Divider, Text, FAB, Badge} from 'react-native-paper';
@@ -28,7 +28,18 @@ export default function StorageScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formKey, setFormKey] = useState(0);
+  const [fabBottom, setFabBottom] = useState<number | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  useEffect(() => {
+    if (fabBottom !== null) return;
+    if (insets.bottom > 0) {
+      setFabBottom(16 + insets.bottom);
+      return;
+    }
+    const timeout = setTimeout(() => setFabBottom(16 + insets.bottom), 250);
+    return () => clearTimeout(timeout);
+  }, [fabBottom, insets.bottom]);
 
   useFocusEffect(
     useCallback(() => {
@@ -154,7 +165,7 @@ const handleAddToShopList = (item: StorageItem) => {
         contentContainerStyle={styles.list}
       />
 
-      <View style={[styles.fabColumn, {bottom: 16 + insets.bottom}]}>
+      {fabBottom !== null && <View style={[styles.fabColumn, {bottom: fabBottom}]}>
         <View>
           <FAB
             icon="cart"
@@ -172,7 +183,7 @@ const handleAddToShopList = (item: StorageItem) => {
           color={t.colors.onPrimary}
           size="medium"
         />
-      </View>
+      </View>}
 
       <BottomSheet
         ref={bottomSheetRef}

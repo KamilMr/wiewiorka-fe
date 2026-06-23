@@ -51,7 +51,18 @@ export default function ShopListScreen() {
   const [deleteItem, setDeleteItem] = useState<EnrichedShopItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [renameChoice, setRenameChoice] = useState<{item: EnrichedShopItem; name: string; quantity: number} | null>(null);
+  const [fabBottom, setFabBottom] = useState<number | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  useEffect(() => {
+    if (fabBottom !== null) return;
+    if (insets.bottom > 0) {
+      setFabBottom(16 + insets.bottom);
+      return;
+    }
+    const timeout = setTimeout(() => setFabBottom(16 + insets.bottom), 250);
+    return () => clearTimeout(timeout);
+  }, [fabBottom, insets.bottom]);
 
   useFocusEffect(
     useCallback(() => {
@@ -320,7 +331,7 @@ export default function ShopListScreen() {
         }
       />
 
-      <View style={[styles.fabColumn, {bottom: 16 + insets.bottom}]}>
+      {fabBottom !== null && <View style={[styles.fabColumn, {bottom: fabBottom}]}>
         <FAB
           icon="format-list-numbered"
           onPress={() => router.back()}
@@ -335,7 +346,7 @@ export default function ShopListScreen() {
           color={t.colors.onPrimary}
           size="medium"
         />
-      </View>
+      </View>}
 
       <BottomSheet
         ref={bottomSheetRef}
