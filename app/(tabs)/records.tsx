@@ -331,6 +331,7 @@ const Records = () => {
             records={records}
             handleNavigate={handleNavigate}
             handleScroll={handleScroll}
+            scrollEnabled={false}
           />
         )}
       </ScrollView>

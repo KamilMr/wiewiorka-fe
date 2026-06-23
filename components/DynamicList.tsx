@@ -44,6 +44,7 @@ interface Props {
   records: {
     [key: string]: SelExpense[];
   };
+  scrollEnabled?: boolean;
 }
 
 const isUnsynced = (id: number | string): boolean => {
@@ -88,9 +89,10 @@ export default function DynamicRecordList({
   records,
   handleScroll = () => {},
   handleNavigate = () => () => {},
+  scrollEnabled = true,
 }: Props) {
   return (
-    <ScrollView onScroll={handleScroll} scrollEnabled={false}>
+    <ScrollView onScroll={handleScroll} scrollEnabled={scrollEnabled}>
       {_.keys(records).map(dateKey => (
         <View key={dateKey} style={styles.group}>
           <WarmSectionHeader
