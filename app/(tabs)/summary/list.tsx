@@ -1,10 +1,10 @@
-import {useState} from 'react';
-import {useLocalSearchParams} from 'expo-router';
+import {useLayoutEffect, useState} from 'react';
+import {router, useLocalSearchParams, useNavigation} from 'expo-router';
 
 import {NativeScrollEvent, NativeSyntheticEvent, View} from 'react-native';
-import _ from 'lodash';
 
 import DynamicRecordList from '@/components/DynamicList';
+import {IconButton} from '@/components';
 import {isCloseToBottom} from '@/common';
 import {selectRecords} from '@/redux/main/selectors';
 import {useAppSelector} from '@/hooks';
@@ -14,6 +14,7 @@ const TransactionList = () => {
   const [number, setNumber] = useState(30);
   const params: {category: string; dates: string; holidayTag?: string} =
     useLocalSearchParams();
+  const navigation = useNavigation();
   const dates = params.dates.split(',').slice(0, 2);
   const records = useAppSelector(state =>
     selectRecords(state, number, {
@@ -24,6 +25,20 @@ const TransactionList = () => {
     }),
   );
   const t = useAppTheme();
+
+  useLayoutEffect(() => {
+    const parentNavigation = navigation.getParent();
+
+    parentNavigation?.setOptions({
+      headerLeft: () => (
+        <IconButton icon="arrow-left" onPress={() => router.back()} />
+      ),
+    });
+
+    return () => {
+      parentNavigation?.setOptions({headerLeft: undefined});
+    };
+  }, [navigation]);
 
   // Load more items when the scroll reaches the bottom
   const handleScroll = ({
