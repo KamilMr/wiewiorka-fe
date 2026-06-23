@@ -5,6 +5,7 @@ import {Button, Card, Chip, Divider, Text} from 'react-native-paper';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {
   clearSyncLogs,
+  discardOperation,
   selectOperations,
   selectSyncLogs,
 } from '@/redux/sync/syncSlice';
@@ -46,9 +47,11 @@ const safeJson = (value: unknown) => {
 const OperationCard = ({
   operation,
   error,
+  onDelete,
 }: {
   operation: SyncOperation;
   error?: string;
+  onDelete: () => void;
 }) => {
   const payload = safeJson(operation.data);
 
@@ -78,6 +81,17 @@ const OperationCard = ({
           <Text variant="bodySmall" style={styles.payload} numberOfLines={8}>
             {payload}
           </Text>
+        )}
+        {operation.status === 'failed' && (
+          <Button
+            compact
+            mode="outlined"
+            textColor="#DC3545"
+            style={styles.deleteButton}
+            onPress={onDelete}
+          >
+            Delete from queue
+          </Button>
         )}
       </Card.Content>
     </Card>
@@ -138,6 +152,7 @@ const SyncLogsPage = () => {
             key={operation.id}
             operation={operation}
             error={syncErrors[operation.id]}
+            onDelete={() => dispatch(discardOperation(operation.id))}
           />
         ))
       )}
@@ -193,6 +208,10 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 6,
     fontFamily: 'monospace',
+  },
+  deleteButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
   },
   divider: {
     marginVertical: 16,

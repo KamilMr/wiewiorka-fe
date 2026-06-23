@@ -1,5 +1,15 @@
 export const CHANGELOG = `# Historia zmian
 
+## [1.0.13] - 2026-06-23
+### Dodano
+- Łatwiejszy powrót z listy transakcji i edycji wpisu
+- Możliwość otwierania szczegółów transakcji bezpośrednio z podsumowania
+- Usuwanie trwale nieudanych operacji z kolejki synchronizacji w widoku deweloperskim
+
+### Naprawiono
+- Przewijanie listy transakcji otwartej z wykresów
+- Skakanie przycisków akcji w spiżarni podczas ładowania ekranu
+
 ## [1.0.12] - 2026-06-19
 ### Dodano
 - Kilka widoków testowych do analizy wykresów
