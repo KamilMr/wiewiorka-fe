@@ -1,5 +1,9 @@
 export const CHANGELOG = `# Historia zmian
 
+## [1.0.14] - 2026-06-26
+### Naprawiono
+- Dodawanie nowych wydatków, które błędnie było rozpoznawane jako edycja istniejącego wpisu
+
 ## [1.0.13] - 2026-06-23
 ### Dodano
 - Łatwiejszy powrót z listy transakcji i edycji wpisu
