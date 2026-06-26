@@ -65,21 +65,31 @@ const Records = () => {
       }));
   }, [params.category, params.dateStart, params.dateEnd]);
 
-  const dateRange: [string, string] | undefined =
-    filters.dateFrom || filters.dateTo
-      ? [
-          filters.dateFrom ? format(filters.dateFrom, 'yyyy-MM-dd') : '1900-01-01',
-          filters.dateTo ? format(filters.dateTo, 'yyyy-MM-dd') : '2100-12-31',
-        ]
-      : undefined;
+  const dateRange: [string, string] | undefined = useMemo(
+    () =>
+      filters.dateFrom || filters.dateTo
+        ? [
+            filters.dateFrom
+              ? format(filters.dateFrom, 'yyyy-MM-dd')
+              : '1900-01-01',
+            filters.dateTo ? format(filters.dateTo, 'yyyy-MM-dd') : '2100-12-31',
+          ]
+        : undefined,
+    [filters.dateFrom, filters.dateTo],
+  );
 
-  const recordsRaw = useAppSelector(state =>
-    selectRecords(state, number, {
+  const recordsSearch = useMemo(
+    () => ({
       txt: searchQuery,
       categories: filters.categories,
       dates: dateRange,
       holidayTag: filters.holidayTag,
     }),
+    [searchQuery, filters.categories, dateRange, filters.holidayTag],
+  );
+
+  const recordsRaw = useAppSelector(state =>
+    selectRecords(state, number, recordsSearch),
   );
 
   const records = useMemo(() => {
