@@ -32,13 +32,15 @@ const handler = {
 
 const useSync = () => {
   const operations = useAppSelector(selectOperations);
+  const token = useAppSelector(state => state.auth.token);
   const dispatch = useAppDispatch();
   const con = useNetInfo();
 
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    if (!con.isConnected) return;
+    if (!token || !con.isConnected) return;
+
     let timerId: ReturnType<typeof setTimeout> | undefined;
 
     if (operations.length === 0) return;
@@ -100,7 +102,7 @@ const useSync = () => {
     return () => {
       clearTimeout(timerId);
     };
-  }, [operations, con.isConnected, dispatch, reload]);
+  }, [operations, token, con.isConnected, dispatch, reload]);
 };
 
 const useDev = () => {

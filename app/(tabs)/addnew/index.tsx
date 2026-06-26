@@ -146,7 +146,7 @@ export default function AddNew() {
   const dirtyTag = useRef<boolean>(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const isPasRecord = isNaN(+id) ? false : true;
+  const isPasRecord = id !== '' && !isNaN(Number(id));
 
   // logic when editing an existing record
   const record = useAppSelector(state =>
