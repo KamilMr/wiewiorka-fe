@@ -1,9 +1,8 @@
 import {formatDate, isAfter, isBefore, isSameDay, parse} from 'date-fns';
 import {NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
 import uniqueId from 'react-native-uuid';
+import {env} from './config/environment';
 import formatDateTz, {timeFormats} from './utils/formatTimeTz';
-
-const URL = process.env.EXPO_PUBLIC_API_URL;
 
 export const CATEGORY_LIST_ADD_EDIT_PATH = 'category-list/:param';
 export const CATS_PATH = 'cats';
@@ -35,7 +34,7 @@ const generateColor = (str: string) => {
 };
 
 const getURL = (p = '') => {
-  return `${URL}/${p}`;
+  return `${env.apiUrl}/${p}`;
 };
 
 const formatPrice = (grosz: number) => {
