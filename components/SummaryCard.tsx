@@ -1,11 +1,13 @@
 import * as React from 'react';
-import {View, StyleSheet, TouchableOpacity} from 'react-native';
+import {Pressable, StyleSheet, View} from 'react-native';
 import {router} from 'expo-router';
-
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import _ from 'lodash';
-import {Avatar, Card, IconButton, Text} from 'react-native-paper';
 
 import {formatPrice} from '@/common';
+import Text from '@/components/CustomText';
+import WarmCard from '@/components/warm/WarmCard';
+import {warmColors, warmRadius} from '@/constants/warmTheme';
 
 type Costs = {
   [key: string]: number;
@@ -20,12 +22,8 @@ export interface SummaryCardProps {
   icon?: string;
 }
 
-const LeftContent = (props: {icon: string}) => (
-  <Avatar.Icon {...props} icon={props.icon} />
-);
-
 const SummaryCard = (props: Omit<SummaryCardProps, 'id'>) => {
-  const {income, outcome, date, costs, icon = ''} = props;
+  const {income, outcome, date, costs} = props;
   // the amount of costs total
   const sumCosts = _.sumBy(_.values(costs));
 
@@ -33,92 +31,158 @@ const SummaryCard = (props: Omit<SummaryCardProps, 'id'>) => {
     router.navigate({pathname: '/summary/chart-details', params: {date}});
 
   return (
-    <Card style={styles.root}>
-      <Card.Title
-        title={date}
-        subtitle={`Saldo: ${formatPrice(income - outcome)}`}
-        left={icon ? () => <LeftContent icon={icon} /> : undefined}
-      />
-      <Card.Content style={{padding: 8}}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: 16,
-          }}
-        >
-          <TouchableOpacity
-            onPress={() =>
-              router.navigate({
-                pathname: '/income-summary',
-                params: {date: date.split('/').reverse().join('-') + '-01'},
-              })
-            }
-            style={styles.buttonContainer}
-          >
-            <View
-              style={[
-                styles.buttonContent,
-                {backgroundColor: 'rgba(0, 255, 0, 0.1)'},
-              ]}
-            >
-              <IconButton icon="arrow-down" iconColor="green" />
-              <View>
-                <Text>Wpłynęło</Text>
-                <Text>
-                  {`${formatPrice(
-                    income - sumCosts < 0 ? 0 : income - sumCosts,
-                  )} `}
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleNavigate(
-              date.split('/').reverse().join('-') + '-01',
-            )}
-            style={styles.buttonContainer}
-          >
-            <View
-              style={[
-                styles.buttonContent,
-                {backgroundColor: 'rgba(255, 0, 0, 0.1)'},
-              ]}
-            >
-              <IconButton icon="arrow-up" iconColor="red" />
-              <View>
-                <Text>Wydano</Text>
-                <Text>{`${formatPrice(outcome - sumCosts)}`}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
+    <WarmCard>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.date}>{date}</Text>
+          <Text style={styles.balanceLabel}>Saldo</Text>
         </View>
-        {/* <View style={{marginTop: 8}}>
-          <Text>Koszta niewliczone:</Text>
-          {_.keys(costs).map((name) => (
-            <Text key={name}>{`${name}: ${formatPrice(costs[name])}`}</Text>
-          ))}
-        </View> */}
-      </Card.Content>
-    </Card>
+        <Text style={styles.balance}>{formatPrice(income - outcome)}</Text>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.amountRow}>
+        <Pressable
+          onPress={() =>
+            router.navigate({
+              pathname: '/income-summary',
+              params: {date: date.split('/').reverse().join('-') + '-01'},
+            })
+          }
+          style={({pressed}) => [
+            styles.amountButton,
+            styles.incomeButton,
+            pressed && styles.pressed,
+          ]}
+        >
+          <View style={[styles.icon, styles.incomeIcon]}>
+            <FontAwesome6
+              name="arrow-down"
+              size={14}
+              color={warmColors.success}
+              iconStyle="solid"
+            />
+          </View>
+          <View style={styles.amountContent}>
+            <Text style={styles.amountLabel}>Wpłynęło</Text>
+            <Text style={[styles.amount, styles.incomeAmount]}>
+              {formatPrice(income - sumCosts < 0 ? 0 : income - sumCosts)}
+            </Text>
+          </View>
+        </Pressable>
+
+        <Pressable
+          onPress={handleNavigate(date.split('/').reverse().join('-') + '-01')}
+          style={({pressed}) => [
+            styles.amountButton,
+            styles.expenseButton,
+            pressed && styles.pressed,
+          ]}
+        >
+          <View style={[styles.icon, styles.expenseIcon]}>
+            <FontAwesome6
+              name="arrow-up"
+              size={14}
+              color={warmColors.danger}
+              iconStyle="solid"
+            />
+          </View>
+          <View style={styles.amountContent}>
+            <Text style={styles.amountLabel}>Wydano</Text>
+            <Text style={[styles.amount, styles.expenseAmount]}>
+              {formatPrice(outcome - sumCosts)}
+            </Text>
+          </View>
+        </Pressable>
+      </View>
+    </WarmCard>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {
-    margin: 8,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  buttonContainer: {
-    borderRadius: 8,
-    overflow: 'hidden',
-    width: '45%',
+  date: {
+    color: warmColors.foreground,
+    fontSize: 17,
+    fontWeight: '700',
   },
-  buttonContent: {
+  balanceLabel: {
+    color: warmColors.mutedForeground,
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  balance: {
+    color: warmColors.foreground,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: warmColors.cardBorder,
+    marginVertical: 16,
+  },
+  amountRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  amountButton: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
-    borderRadius: 8,
+    borderRadius: warmRadius.lg,
+    padding: 12,
+    gap: 8,
+  },
+  incomeButton: {
+    backgroundColor: warmColors.successBackground,
+  },
+  expenseButton: {
+    backgroundColor: warmColors.dangerBackground,
+  },
+  pressed: {
+    opacity: 0.85,
+  },
+  icon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  incomeIcon: {
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+  },
+  expenseIcon: {
+    backgroundColor: 'rgba(225, 29, 72, 0.12)',
+  },
+  amountContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  amountLabel: {
+    color: warmColors.mutedForeground,
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  amount: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  incomeAmount: {
+    color: warmColors.success,
+  },
+  expenseAmount: {
+    color: warmColors.danger,
   },
 });
 

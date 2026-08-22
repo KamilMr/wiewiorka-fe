@@ -1,15 +1,16 @@
 import {useRef} from 'react';
-import {View, Text, StyleSheet, Dimensions} from 'react-native';
+import {StyleSheet, useWindowDimensions, View} from 'react-native';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import {useSharedValue} from 'react-native-reanimated';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import {useAppTheme} from '@/constants/theme';
+
+import Text from '@/components/CustomText';
+import WarmCard from '@/components/warm/WarmCard';
+import {warmColors} from '@/constants/warmTheme';
 import {quotes} from '@/utils/quotes';
 
-const {width: screenWidth} = Dimensions.get('window');
-const CAROUSEL_WIDTH = screenWidth - 32;
-
 const FinancialQuote = () => {
-  const t = useAppTheme();
+  const {width: screenWidth} = useWindowDimensions();
   const ref = useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
   const today = new Date();
@@ -19,21 +20,28 @@ const FinancialQuote = () => {
     <View style={styles.wrapper}>
       <Carousel
         ref={ref}
-        width={CAROUSEL_WIDTH}
-        height={140}
+        width={screenWidth - 32}
+        height={190}
         data={quotes}
         defaultIndex={defaultIndex}
         onProgressChange={progress}
         loop
         renderItem={({item}) => (
-          <View style={styles.container}>
-            <Text style={[styles.quote, {color: t.colors.onBackground}]}>
-              {item.text}
-            </Text>
-            <Text style={[styles.author, {color: t.colors.onBackground}]}>
-              — {item.author}
-            </Text>
-          </View>
+          <WarmCard style={styles.container}>
+            <View style={styles.labelRow}>
+              <View style={styles.icon}>
+                <FontAwesome6
+                  name="quote-left"
+                  size={12}
+                  color={warmColors.primary}
+                  iconStyle="solid"
+                />
+              </View>
+              <Text style={styles.label}>Myśl na dziś</Text>
+            </View>
+            <Text style={styles.quote}>{item.text}</Text>
+            <Text style={styles.author}>— {item.author}</Text>
+          </WarmCard>
         )}
       />
     </View>
@@ -42,38 +50,45 @@ const FinancialQuote = () => {
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginVertical: 8,
+    alignSelf: 'stretch',
   },
   container: {
     flex: 1,
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  icon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: warmColors.accent,
+  },
+  label: {
+    color: warmColors.mutedForeground,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+  },
   quote: {
-    fontSize: 16,
+    color: warmColors.foreground,
+    fontSize: 15,
     fontStyle: 'italic',
-    marginBottom: 8,
-    textAlign: 'center',
+    lineHeight: 21,
   },
   author: {
-    fontSize: 14,
+    color: warmColors.primary,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 10,
     textAlign: 'right',
-  },
-  paginationContainer: {
-    gap: 6,
-    marginTop: 8,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-  },
-  activeDot: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    overflow: 'hidden',
   },
 });
 

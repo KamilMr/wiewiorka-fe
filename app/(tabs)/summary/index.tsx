@@ -1,20 +1,19 @@
 import {useState} from 'react';
-import {ScrollView, View} from 'react-native';
-
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Button, RadioButton} from 'react-native-paper';
 
-import {selectComparison} from '@/redux/main/selectors';
 import {SummaryCard, Text} from '@/components';
-import {useAppSelector} from '@/hooks';
-import {useAppTheme} from '@/constants/theme';
-import {NoData} from '@/components';
 import {SummaryCardProps} from '@/components/SummaryCard';
+import WarmCard from '@/components/warm/WarmCard';
+import WarmPill from '@/components/warm/WarmPill';
+import {warmColors} from '@/constants/warmTheme';
+import {useAppSelector} from '@/hooks';
+import {selectComparison} from '@/redux/main/selectors';
 
 const MONTH = 1;
 const YEAR = 12;
-const MONTH_LABEL = 'miesiac';
-const YEAR_LABEL = 'rok';
+const MONTH_LABEL = 'Miesiąc';
+const YEAR_LABEL = 'Rok';
 
 const Config: React.FC<{
   selection: [number, string][];
@@ -29,46 +28,44 @@ const Config: React.FC<{
   };
 
   return (
-    <View style={{alignItems: 'center', marginBottom: 16}}>
-      {title && <Text variant="titleLarge">{title}</Text>}
-      <RadioButton.Group
-        onValueChange={value => handleChange(value)}
-        value={selection[active][0].toString()}
-      >
-        <View style={{flexDirection: 'row'}}>
-          {selection.map(([f, name], idx) => (
-            <Button
-              key={f}
-              style={{marginRight: 4}}
-              mode={idx === active ? 'contained' : 'outlined'}
-              onPress={() => handleChange(f.toString())}
-            >
-              {name}
-            </Button>
-          ))}
-        </View>
-      </RadioButton.Group>
+    <View style={styles.config}>
+      {title ? <Text style={styles.configTitle}>{title}</Text> : null}
+      <View style={styles.filterRow}>
+        {selection.map(([value, name], index) => (
+          <WarmPill
+            key={value}
+            label={name}
+            active={index === active}
+            onPress={() => handleChange(value.toString())}
+          />
+        ))}
+      </View>
     </View>
   );
 };
 
 const Summary = () => {
   const [filter, setFilter] = useState(MONTH);
-  const summary: SummaryCardProps[] = useAppSelector(state => selectComparison(state, filter));
+  const summary: SummaryCardProps[] = useAppSelector(state =>
+    selectComparison(state, filter),
+  );
   const handleChange = (f: string) => setFilter(+f);
 
-  const t = useAppTheme();
-
   return (
-    <SafeAreaView style={{backgroundColor: t.colors.white}}>
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        style={{
-          backgroundColor: t.colors.white,
-          height: '100%',
-          marginTop: 4 * 4,
-        }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
+        <View>
+          <Text style={styles.title}>Podsumowanie</Text>
+          <Text style={styles.subtitle}>
+            Porównaj przychody i wydatki w wybranym okresie.
+          </Text>
+        </View>
         <Config
+          title="Zakres"
           selection={[
             [MONTH, MONTH_LABEL],
             [YEAR, YEAR_LABEL],
@@ -76,7 +73,12 @@ const Summary = () => {
           onChange={handleChange}
         />
         {!summary.length ? (
-          <NoData />
+          <WarmCard style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Brak danych</Text>
+            <Text style={styles.emptyText}>
+              Dodaj transakcje, aby zobaczyć podsumowanie.
+            </Text>
+          </WarmCard>
         ) : (
           summary.map((sumObj: SummaryCardProps) => (
             <SummaryCard
@@ -88,10 +90,66 @@ const Summary = () => {
             />
           ))
         )}
-        <View style={{height: 80}} />
       </ScrollView>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: warmColors.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    gap: 16,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 96,
+  },
+  title: {
+    color: warmColors.foreground,
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    color: warmColors.mutedForeground,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 4,
+  },
+  config: {
+    gap: 8,
+  },
+  configTitle: {
+    color: warmColors.mutedForeground,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyTitle: {
+    color: warmColors.foreground,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  emptyText: {
+    color: warmColors.mutedForeground,
+    fontSize: 14,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+});
 
 export default Summary;
