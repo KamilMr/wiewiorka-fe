@@ -6,15 +6,14 @@ import SummaryCard_v2 from '@/components/SummaryCardv2';
 import {BudgetCard} from '@/components';
 import {selectBudgets} from '@/redux/main/selectors';
 import {useAppSelector} from '@/hooks';
-import {useAppTheme, sizes} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import formatDateTz, {timeFormats} from '@/utils/formatTimeTz';
 import _ from 'lodash';
 
 const Home = () => {
-  const t = useAppTheme();
   const items = useAppSelector(selectBudgets());
   return (
-    <SafeAreaView style={{backgroundColor: t.colors.white, flex: 1}}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <ScrollView
           style={styles.scrollView}
@@ -34,18 +33,21 @@ const Home = () => {
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: warmColors.background,
+  },
   container: {
     flex: 1,
-    alignItems: 'center',
   },
   scrollView: {
     flex: 1,
-    width: '100%',
-    paddingHorizontal: '5%',
   },
   scrollContent: {
-    gap: sizes.md,
-    paddingBottom: sizes.xl,
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
 });
 
