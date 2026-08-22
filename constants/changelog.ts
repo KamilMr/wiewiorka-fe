@@ -1,5 +1,12 @@
 export const CHANGELOG = `# Historia zmian
 
+## [1.0.15] - 2026-08-22
+### Zmieniono
+- Wprowadzono nowy, cieplejszy wygląd ekranów logowania, rejestracji i resetowania hasła
+- Odświeżono pulpit, podsumowanie oraz widok dodawania transakcji
+- Odświeżono listę transakcji i sposób grupowania wpisów
+- Ujednolicono wygląd ustawień, historii zmian i widoku nieudanych synchronizacji
+
 ## [1.0.14] - 2026-06-26
 ### Naprawiono
 - Dodawanie nowych wydatków, które błędnie było rozpoznawane jako edycja istniejącego wpisu
