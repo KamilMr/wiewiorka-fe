@@ -3,6 +3,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -21,7 +22,7 @@ import WarmPill from '@/components/warm/WarmPill';
 import WarmCard from '@/components/warm/WarmCard';
 import {isCloseToBottom} from '@/common';
 import {selectRecords, selectCategoriesByUsage} from '@/redux/main/selectors';
-import {useAppSelector} from '@/hooks';
+import {useAppSelector, usePullToRefresh} from '@/hooks';
 import {warmColors, warmRadius, warmShadow} from '@/constants/warmTheme';
 
 type RecordType = 'all' | 'income' | 'expense';
@@ -44,6 +45,7 @@ const Records = () => {
     dateTo: null,
     holidayTag: false,
   });
+  const {refreshing, onRefresh} = usePullToRefresh();
 
   const categoriesByUsage = useAppSelector(selectCategoriesByUsage);
   const categoryItems = categoriesByUsage.map(cat => ({
@@ -314,6 +316,14 @@ const Records = () => {
         onScroll={handleScroll}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={warmColors.primary}
+            colors={[warmColors.primary]}
+          />
+        }
       >
         {filters.dateFrom && filters.dateTo && (
           <WarmCard style={styles.summaryCard}>

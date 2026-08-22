@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {RefreshControl, ScrollView, StyleSheet, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {SummaryCard, Text} from '@/components';
@@ -7,7 +7,7 @@ import {SummaryCardProps} from '@/components/SummaryCard';
 import WarmCard from '@/components/warm/WarmCard';
 import WarmPill from '@/components/warm/WarmPill';
 import {warmColors} from '@/constants/warmTheme';
-import {useAppSelector} from '@/hooks';
+import {useAppSelector, usePullToRefresh} from '@/hooks';
 import {selectComparison} from '@/redux/main/selectors';
 
 const MONTH = 1;
@@ -46,6 +46,7 @@ const Config: React.FC<{
 
 const Summary = () => {
   const [filter, setFilter] = useState(MONTH);
+  const {refreshing, onRefresh} = usePullToRefresh();
   const summary: SummaryCardProps[] = useAppSelector(state =>
     selectComparison(state, filter),
   );
@@ -57,6 +58,14 @@ const Summary = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={warmColors.primary}
+            colors={[warmColors.primary]}
+          />
+        }
       >
         <View>
           <Text style={styles.title}>Podsumowanie</Text>
