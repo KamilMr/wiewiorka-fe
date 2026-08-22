@@ -1,13 +1,13 @@
-import {StyleSheet, View, ScrollView} from 'react-native';
-import {Text, Card} from 'react-native-paper';
-import {useAppTheme} from '@/constants/theme';
-import {parseChangelog, ChangelogEntry} from '@/utils/parseChangelog';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {Text} from 'react-native-paper';
+import WarmCard from '@/components/warm/WarmCard';
 import {CHANGELOG} from '@/constants/changelog';
+import {warmColors, warmRadius} from '@/constants/warmTheme';
+import {parseChangelog, ChangelogEntry} from '@/utils/parseChangelog';
 
 const packageJson = require('../package.json');
 
 const Changelog = () => {
-  const t = useAppTheme();
   const currentVersion = packageJson.version;
   const entries = parseChangelog(CHANGELOG);
 
@@ -20,10 +20,7 @@ const Changelog = () => {
 
     return (
       <View style={styles.changeSection}>
-        <Text
-          variant="titleSmall"
-          style={[styles.changeSectionTitle, {color}]}
-        >
+        <Text variant="titleSmall" style={[styles.changeSectionTitle, {color}]}>
           {title}
         </Text>
         {changes.map((change, index) => (
@@ -38,64 +35,62 @@ const Changelog = () => {
     );
   };
 
-  const renderVersionCard = (entry: ChangelogEntry, isCurrentVersion: boolean) => (
-    <Card
+  const renderVersionCard = (
+    entry: ChangelogEntry,
+    isCurrentVersion: boolean,
+  ) => (
+    <WarmCard
       key={entry.version}
-      style={[
-        styles.versionCard,
-        isCurrentVersion && {
-          borderColor: t.colors.accent,
-          borderWidth: 2,
-        },
-      ]}
+      variant="solid"
+      style={
+        isCurrentVersion
+          ? [styles.versionCard, styles.currentVersionCard]
+          : styles.versionCard
+      }
     >
-      <Card.Content>
-        <View style={styles.versionHeader}>
-          <Text
-            variant="titleLarge"
-            style={[styles.versionText, {color: t.colors.primary}]}
-          >
-            Wersja {entry.version}
-          </Text>
-          {isCurrentVersion && (
-            <View
-              style={[
-                styles.currentBadge,
-                {backgroundColor: t.colors.accent},
-              ]}
-            >
-              <Text
-                variant="labelSmall"
-                style={{color: t.colors.onAccent, fontWeight: '600'}}
-              >
-                OBECNE
-              </Text>
-            </View>
-          )}
-        </View>
-        <Text
-          variant="bodySmall"
-          style={[styles.dateText, {color: t.colors.textSecondary}]}
-        >
-          {entry.date}
+      <View style={styles.versionHeader}>
+        <Text variant="titleLarge" style={styles.versionText}>
+          Wersja {entry.version}
         </Text>
+        {isCurrentVersion && (
+          <View style={styles.currentBadge}>
+            <Text variant="labelSmall" style={styles.currentBadgeText}>
+              OBECNE
+            </Text>
+          </View>
+        )}
+      </View>
+      <Text variant="bodySmall" style={styles.dateText}>
+        {entry.date}
+      </Text>
 
-        <View style={styles.changesContainer}>
-          {renderChangeSection('Dodano', entry.changes.added, t.colors.success)}
-          {renderChangeSection('Naprawiono', entry.changes.fixed, t.colors.info)}
-          {renderChangeSection('Zmieniono', entry.changes.changed, t.colors.warning)}
-          {renderChangeSection('Usunięto', entry.changes.removed, t.colors.error)}
-        </View>
-      </Card.Content>
-    </Card>
+      <View style={styles.changesContainer}>
+        {renderChangeSection('Dodano', entry.changes.added, warmColors.success)}
+        {renderChangeSection(
+          'Naprawiono',
+          entry.changes.fixed,
+          warmColors.primary,
+        )}
+        {renderChangeSection(
+          'Zmieniono',
+          entry.changes.changed,
+          warmColors.mutedForeground,
+        )}
+        {renderChangeSection(
+          'Usunięto',
+          entry.changes.removed,
+          warmColors.destructive,
+        )}
+      </View>
+    </WarmCard>
   );
 
   return (
-    <ScrollView
-      style={[styles.container, {backgroundColor: t.colors.background}]}
-    >
+    <ScrollView style={styles.container}>
       <View style={styles.content}>
-        {entries.map(entry => renderVersionCard(entry, entry.version === currentVersion))}
+        {entries.map(entry =>
+          renderVersionCard(entry, entry.version === currentVersion),
+        )}
       </View>
     </ScrollView>
   );
@@ -104,33 +99,42 @@ const Changelog = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: warmColors.background,
   },
   content: {
     padding: 16,
     paddingBottom: 32,
   },
-  title: {
-    marginBottom: 20,
-    fontWeight: '600',
-  },
   versionCard: {
     marginBottom: 16,
   },
+  currentVersionCard: {
+    borderColor: warmColors.primary,
+    borderWidth: 2,
+  },
   versionHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
+    gap: 8,
     marginBottom: 4,
   },
   versionText: {
-    fontWeight: '600',
+    color: warmColors.foreground,
+    fontWeight: '700',
   },
   currentBadge: {
-    marginLeft: 12,
-    paddingHorizontal: 8,
+    backgroundColor: warmColors.accent,
+    borderRadius: warmRadius.pill,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 4,
+  },
+  currentBadgeText: {
+    color: warmColors.foreground,
+    fontWeight: '700',
   },
   dateText: {
+    color: warmColors.mutedForeground,
     marginBottom: 16,
   },
   changesContainer: {
@@ -141,18 +145,20 @@ const styles = StyleSheet.create({
   },
   changeSectionTitle: {
     marginBottom: 6,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   changeItem: {
     flexDirection: 'row',
-    marginBottom: 4,
-    paddingLeft: 8,
+    marginBottom: 6,
+    paddingLeft: 4,
   },
   bullet: {
+    color: warmColors.primary,
     marginRight: 8,
     fontSize: 14,
   },
   changeText: {
+    color: warmColors.foreground,
     flex: 1,
   },
 });
