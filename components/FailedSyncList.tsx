@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
-import {Button, Text, IconButton} from 'react-native-paper';
+import {Button, Icon, Text} from 'react-native-paper';
 
 import WarmCard from '@/components/warm/WarmCard';
 import {warmColors, warmRadius} from '@/constants/warmTheme';
@@ -83,12 +83,7 @@ const FailedSyncItem = ({
       <View style={styles.cardContent}>
         <View style={styles.detailsRow}>
           <View style={styles.iconContainer}>
-            <IconButton
-              icon={icon}
-              size={22}
-              iconColor={warmColors.destructive}
-              style={styles.operationIcon}
-            />
+            <Icon source={icon} size={22} color={warmColors.destructive} />
           </View>
           <View style={styles.infoContainer}>
             <Text variant="titleSmall" style={styles.itemTitle}>
@@ -165,11 +160,7 @@ const FailedSyncList = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerIcon}>
-          <IconButton
-            icon="sync-alert"
-            iconColor={warmColors.destructive}
-            size={20}
-          />
+          <Icon source="sync-alert" color={warmColors.destructive} size={20} />
         </View>
         <View style={styles.headerTitle}>
           <Text variant="titleMedium" style={styles.heading}>
@@ -262,12 +253,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   iconContainer: {
+    width: 44,
+    height: 44,
     marginRight: 10,
-  },
-  operationIcon: {
-    margin: 0,
     borderRadius: warmRadius.md,
     backgroundColor: warmColors.dangerBackground,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoContainer: {
     flex: 1,

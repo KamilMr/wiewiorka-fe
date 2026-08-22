@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, StyleSheet, ScrollView} from 'react-native';
-import {IconButton, Text} from 'react-native-paper';
+import {Icon, Text} from 'react-native-paper';
 import {Stack} from 'expo-router';
 
 import FailedSyncList from '@/components/FailedSyncList';
@@ -29,9 +29,9 @@ const FailedSyncPage = () => {
           <View style={styles.emptyState}>
             <WarmCard variant="solid" style={styles.emptyCard}>
               <View style={styles.emptyIcon}>
-                <IconButton
-                  icon="check-circle-outline"
-                  iconColor={warmColors.success}
+                <Icon
+                  source="check-circle-outline"
+                  color={warmColors.success}
                   size={28}
                 />
               </View>
