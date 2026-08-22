@@ -7,7 +7,7 @@ import {
 } from 'react-redux';
 import type {AppStore, RootState, AppDispatch} from '@/redux/store';
 import {selectOperations} from '@/redux/sync/syncSlice';
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import * as mainThunks from '@/redux/main/thunks';
 import {useNetInfo} from '@react-native-community/netinfo';
 import {printJsonIndent} from '@/common';
@@ -109,6 +109,30 @@ const useDev = () => {
   return useAppSelector(state => state.main.devMode);
 };
 
+const usePullToRefresh = () => {
+  const dispatch = useAppDispatch();
+  const [refreshing, setRefreshing] = useState(false);
+  const isRefreshing = useRef(false);
+
+  const onRefresh = useCallback(async () => {
+    if (isRefreshing.current) return;
+
+    isRefreshing.current = true;
+    setRefreshing(true);
+
+    try {
+      await dispatch(mainThunks.fetchIni()).unwrap();
+    } catch {
+      // fetchIni reports failures through the existing snackbar.
+    } finally {
+      setRefreshing(false);
+      isRefreshing.current = false;
+    }
+  }, [dispatch]);
+
+  return {refreshing, onRefresh};
+};
+
 const PADDING = 20;
 /**
  * Custom hook for sophisticated keyboard avoidance using Reanimated
@@ -205,4 +229,5 @@ export {
   useAppDispatch,
   useAppStore,
   useDev,
+  usePullToRefresh,
 };
