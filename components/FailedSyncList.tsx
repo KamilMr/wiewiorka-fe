@@ -1,6 +1,9 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
-import {Button, Card, Text, IconButton} from 'react-native-paper';
+import {Button, Text, IconButton} from 'react-native-paper';
+
+import WarmCard from '@/components/warm/WarmCard';
+import {warmColors, warmRadius} from '@/constants/warmTheme';
 
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {
@@ -11,7 +14,6 @@ import {
   discardAllFailed,
 } from '@/redux/sync/syncSlice';
 import {SyncOperation} from '@/types';
-import {useAppTheme} from '@/constants/theme';
 
 const getOperationTypeLabel = (path: string[]): string => {
   const pathStr = path.join('/').toLowerCase();
@@ -72,50 +74,67 @@ const FailedSyncItem = ({
   onRetry,
   onDiscard,
 }: FailedSyncItemProps) => {
-  const t = useAppTheme();
   const typeLabel = getOperationTypeLabel(operation.path);
   const icon = getOperationIcon(operation.path);
   const methodLabel = getMethodLabel(operation.method);
 
   return (
-    <Card style={styles.card} mode="outlined">
+    <WarmCard variant="solid" padded={false} style={styles.card}>
       <View style={styles.cardContent}>
-        <View style={styles.iconContainer}>
-          <IconButton icon={icon} size={24} iconColor={t.colors.error} />
-        </View>
-        <View style={styles.infoContainer}>
-          <Text variant="titleSmall" style={{color: t.colors.onSurface}}>
-            {typeLabel}
-          </Text>
-          <Text variant="bodySmall" style={{color: t.colors.onSurfaceVariant}}>
-            {methodLabel} - {formatDate(operation.timestamp)}
-          </Text>
-          {error && (
-            <Text
-              variant="bodySmall"
-              style={{color: t.colors.error, marginTop: 4}}
-              numberOfLines={2}
-            >
-              {error}
+        <View style={styles.detailsRow}>
+          <View style={styles.iconContainer}>
+            <IconButton
+              icon={icon}
+              size={22}
+              iconColor={warmColors.destructive}
+              style={styles.operationIcon}
+            />
+          </View>
+          <View style={styles.infoContainer}>
+            <Text variant="titleSmall" style={styles.itemTitle}>
+              {typeLabel}
             </Text>
-          )}
+            <Text variant="bodySmall" style={styles.itemMeta}>
+              {methodLabel} - {formatDate(operation.timestamp)}
+            </Text>
+            {error && (
+              <Text
+                variant="bodySmall"
+                style={styles.errorText}
+                numberOfLines={2}
+              >
+                {error}
+              </Text>
+            )}
+          </View>
         </View>
         <View style={styles.actionsContainer}>
-          <IconButton
-            icon="refresh"
-            size={20}
-            iconColor={t.colors.primary}
+          <Button
+            mode="contained"
             onPress={onRetry}
-          />
-          <IconButton
-            icon="delete"
-            size={20}
-            iconColor={t.colors.error}
+            icon="refresh"
+            compact
+            buttonColor={warmColors.primary}
+            textColor={warmColors.primaryForeground}
+            style={styles.retryButton}
+            contentStyle={styles.buttonContent}
+          >
+            Ponów
+          </Button>
+          <Button
+            mode="outlined"
             onPress={onDiscard}
-          />
+            icon="delete"
+            compact
+            textColor={warmColors.destructive}
+            style={styles.discardButton}
+            contentStyle={styles.buttonContent}
+          >
+            Usuń
+          </Button>
         </View>
       </View>
-    </Card>
+    </WarmCard>
   );
 };
 
@@ -123,7 +142,6 @@ const FailedSyncList = () => {
   const dispatch = useAppDispatch();
   const failedOperations = useAppSelector(selectFailedOperations);
   const syncErrors = useAppSelector(state => state.sync.syncErrors);
-  const t = useAppTheme();
 
   if (failedOperations.length === 0) return null;
 
@@ -146,10 +164,19 @@ const FailedSyncList = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.headerIcon}>
+          <IconButton
+            icon="sync-alert"
+            iconColor={warmColors.destructive}
+            size={20}
+          />
+        </View>
         <View style={styles.headerTitle}>
-          <IconButton icon="sync-alert" iconColor={t.colors.error} size={20} />
-          <Text variant="titleMedium" style={{color: t.colors.error}}>
+          <Text variant="titleMedium" style={styles.heading}>
             Niezsynchronizowane ({failedOperations.length})
+          </Text>
+          <Text variant="bodySmall" style={styles.headingDescription}>
+            Operacje wymagające Twojej uwagi
           </Text>
         </View>
       </View>
@@ -166,11 +193,14 @@ const FailedSyncList = () => {
 
       <View style={styles.bulkActions}>
         <Button
-          mode="outlined"
+          mode="contained"
           onPress={handleRetryAll}
           icon="refresh"
           compact
-          style={styles.bulkButton}
+          buttonColor={warmColors.primary}
+          textColor={warmColors.primaryForeground}
+          style={[styles.bulkButton, styles.bulkRetryButton]}
+          contentStyle={styles.buttonContent}
         >
           Ponów wszystkie
         </Button>
@@ -179,8 +209,9 @@ const FailedSyncList = () => {
           onPress={handleDiscardAll}
           icon="delete"
           compact
-          textColor={t.colors.error}
-          style={[styles.bulkButton, {borderColor: t.colors.error}]}
+          textColor={warmColors.destructive}
+          style={[styles.bulkButton, styles.bulkDiscardButton]}
+          contentStyle={styles.buttonContent}
         >
           Usuń wszystkie
         </Button>
@@ -191,45 +222,97 @@ const FailedSyncList = () => {
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
     marginBottom: 24,
     paddingHorizontal: 16,
-    width: '100%',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
+  },
+  headerIcon: {
+    width: 44,
+    height: 44,
+    marginRight: 12,
+    borderRadius: warmRadius.pill,
+    backgroundColor: warmColors.dangerBackground,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
+  },
+  heading: {
+    color: warmColors.foreground,
+    fontWeight: '700',
+  },
+  headingDescription: {
+    marginTop: 2,
+    color: warmColors.mutedForeground,
   },
   card: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   cardContent: {
+    padding: 14,
+  },
+  detailsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
+    alignItems: 'flex-start',
   },
   iconContainer: {
-    marginRight: 4,
+    marginRight: 10,
+  },
+  operationIcon: {
+    margin: 0,
+    borderRadius: warmRadius.md,
+    backgroundColor: warmColors.dangerBackground,
   },
   infoContainer: {
     flex: 1,
+    paddingTop: 3,
+  },
+  itemTitle: {
+    color: warmColors.foreground,
+    fontWeight: '700',
+  },
+  itemMeta: {
+    marginTop: 2,
+    color: warmColors.mutedForeground,
+  },
+  errorText: {
+    marginTop: 5,
+    color: warmColors.destructive,
   },
   actionsContainer: {
     flexDirection: 'row',
+    marginTop: 14,
+  },
+  retryButton: {
+    flex: 1,
+    marginRight: 8,
+    borderRadius: warmRadius.lg,
+  },
+  discardButton: {
+    flex: 1,
+    borderColor: warmColors.destructive,
+    borderRadius: warmRadius.lg,
+  },
+  buttonContent: {
+    minHeight: 40,
   },
   bulkActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 4,
   },
   bulkButton: {
-    flex: 1,
-    marginHorizontal: 4,
+    borderRadius: warmRadius.lg,
+  },
+  bulkRetryButton: {
+    marginBottom: 10,
+  },
+  bulkDiscardButton: {
+    borderColor: warmColors.destructive,
   },
 });
 

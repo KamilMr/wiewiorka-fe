@@ -1,15 +1,15 @@
 import React from 'react';
 import {View, StyleSheet, ScrollView} from 'react-native';
-import {Text} from 'react-native-paper';
+import {IconButton, Text} from 'react-native-paper';
 import {Stack} from 'expo-router';
 
 import FailedSyncList from '@/components/FailedSyncList';
+import WarmCard from '@/components/warm/WarmCard';
+import {warmColors, warmRadius} from '@/constants/warmTheme';
 import {useAppSelector} from '@/hooks';
 import {selectFailedOperationsCount} from '@/redux/sync/syncSlice';
-import {useAppTheme} from '@/constants/theme';
 
 const FailedSyncPage = () => {
-  const t = useAppTheme();
   const failedCount = useAppSelector(selectFailedOperationsCount);
 
   return (
@@ -21,14 +21,24 @@ const FailedSyncPage = () => {
         }}
       />
       <ScrollView
-        style={{backgroundColor: t.colors.white}}
+        style={styles.page}
         contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
       >
         {failedCount === 0 ? (
           <View style={styles.emptyState}>
-            <Text variant="bodyLarge" style={{color: t.colors.onSurfaceVariant}}>
-              Brak niezsynchronizowanych operacji
-            </Text>
+            <WarmCard variant="solid" style={styles.emptyCard}>
+              <View style={styles.emptyIcon}>
+                <IconButton
+                  icon="check-circle-outline"
+                  iconColor={warmColors.success}
+                  size={28}
+                />
+              </View>
+              <Text variant="bodyLarge" style={styles.emptyText}>
+                Brak niezsynchronizowanych operacji
+              </Text>
+            </WarmCard>
           </View>
         ) : (
           <FailedSyncList />
@@ -39,15 +49,36 @@ const FailedSyncPage = () => {
 };
 
 const styles = StyleSheet.create({
+  page: {
+    backgroundColor: warmColors.background,
+  },
   container: {
     flexGrow: 1,
-    paddingVertical: 16,
+    paddingVertical: 20,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingVertical: 60,
+  },
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+  },
+  emptyIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 56,
+    height: 56,
+    marginBottom: 14,
+    borderRadius: warmRadius.pill,
+    backgroundColor: warmColors.successBackground,
+  },
+  emptyText: {
+    color: warmColors.mutedForeground,
+    textAlign: 'center',
   },
 });
 
