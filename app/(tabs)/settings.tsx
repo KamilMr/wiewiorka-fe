@@ -1,23 +1,37 @@
-import {Button, ActivityIndicator} from 'react-native-paper';
-import {StyleSheet, View, TouchableOpacity, Text, ScrollView} from 'react-native';
+import {ActivityIndicator} from 'react-native-paper';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  ScrollView,
+} from 'react-native';
 
 import AppVersion from '@/components/AppVersion';
 import {TabBarIcon} from '@/components/navigation/TabBarIcon';
-import {selectFailedOperationsCount} from '@/redux/sync/syncSlice';
+import WarmCard from '@/components/warm/WarmCard';
+import {warmColors, warmRadius} from '@/constants/warmTheme';
+import {useAppDispatch, useAppSelector, useDev} from '@/hooks';
 import {clearDevMode} from '@/redux/main/mainSlice';
-import {logout} from '@/redux/auth/thunks';
-import {router} from 'expo-router';
 import {selectStatus} from '@/redux/main/selectors';
-import {selectOperations} from '@/redux/sync/syncSlice';
-import {useAppDispatch, useAppSelector} from '@/hooks';
-import {useAppTheme} from '@/constants/theme';
-import {useDev} from '@/hooks';
-import {useNetInfo} from '@react-native-community/netinfo';
 import {fetchIni} from '@/redux/main/thunks';
+import {logout} from '@/redux/auth/thunks';
+import {
+  selectFailedOperationsCount,
+  selectOperations,
+} from '@/redux/sync/syncSlice';
+import {router, type Href} from 'expo-router';
+import {useNetInfo} from '@react-native-community/netinfo';
+
+const navigationTiles = [
+  {label: 'Budżet', icon: 'wallet', path: '/budget'},
+  {label: 'Kategorie', icon: 'list', path: '/categories'},
+  {label: 'Długi', icon: 'cash-outline', path: '/debt'},
+  {label: 'Spiżarnia', icon: 'cube', path: '/storage'},
+] as const;
 
 const Settings = () => {
   const dispatch = useAppDispatch();
-  const t = useAppTheme();
   const fetching = useAppSelector(selectStatus);
   const operations = useAppSelector(selectOperations);
   const failedCount = useAppSelector(selectFailedOperationsCount);
@@ -34,221 +48,228 @@ const Settings = () => {
   };
 
   const getReloadIconColor = () => {
-    if (!netInfo.isConnected) return '#666666';
-    if (netInfo.isInternetReachable === false) return '#FFA500';
-    return '#4CAF50';
+    if (!netInfo.isConnected) return warmColors.mutedForeground;
+    if (netInfo.isInternetReachable === false) return warmColors.primary;
+    return warmColors.success;
   };
 
   const handleDevModeToggle = () => {
     dispatch(clearDevMode());
   };
 
-  const handleNavigate = (path: string) => () => router.navigate(path);
+  const handleNavigate = (path: Href) => () => router.navigate(path);
 
   return (
     <ScrollView
-      style={{backgroundColor: t.colors.white}}
+      style={styles.page}
       contentContainerStyle={styles.root}
+      showsVerticalScrollIndicator={false}
     >
       {__DEV__ && failedCount > 0 && (
-        <TouchableOpacity
-          style={styles.failedSyncCard}
-          onPress={handleNavigate('/failed-sync')}
-        >
-          <View style={styles.failedSyncContent}>
-            <TabBarIcon name="sync" color="#FF4444" />
-            <View style={styles.failedSyncText}>
-              <Text style={styles.failedSyncTitle}>Niezsynchronizowane</Text>
-              <Text style={styles.failedSyncSubtitle}>
-                {failedCount} {failedCount === 1 ? 'operacja wymaga' : 'operacji wymaga'} uwagi
-              </Text>
+        <TouchableOpacity onPress={handleNavigate('/failed-sync')}>
+          <WarmCard style={styles.failedSyncCard}>
+            <View style={styles.failedSyncContent}>
+              <TabBarIcon name="sync" color={warmColors.danger} />
+              <View style={styles.failedSyncText}>
+                <Text style={styles.failedSyncTitle}>Niezsynchronizowane</Text>
+                <Text style={styles.failedSyncSubtitle}>
+                  {failedCount}{' '}
+                  {failedCount === 1 ? 'operacja wymaga' : 'operacji wymaga'}{' '}
+                  uwagi
+                </Text>
+              </View>
             </View>
-          </View>
-          <TabBarIcon name="chevron-forward" color="#999" />
+            <TabBarIcon
+              name="chevron-forward"
+              color={warmColors.mutedForeground}
+            />
+          </WarmCard>
         </TouchableOpacity>
       )}
+
       <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={handleNavigate('/budget')}
-        >
-          <TabBarIcon name="wallet" color={t.colors.primary} />
-          <Text style={[styles.tabText, {color: t.colors.primary}]}>
-            Budżet
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={handleNavigate('/categories')}
-        >
-          <TabBarIcon name="list" color={t.colors.primary} />
-          <Text style={[styles.tabText, {color: t.colors.primary}]}>
-            Kategorie
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={handleNavigate('/debt')}
-        >
-          <TabBarIcon name="cash-outline" color={t.colors.primary} />
-          <Text style={[styles.tabText, {color: t.colors.primary}]}>Długi</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={handleNavigate('/storage')}
-        >
-          <TabBarIcon name="cube" color={t.colors.primary} />
-          <Text style={[styles.tabText, {color: t.colors.primary}]}>
-            Spiżarnia
-          </Text>
-        </TouchableOpacity>
+        {navigationTiles.map(({label, icon, path}) => (
+          <TouchableOpacity
+            key={path}
+            style={styles.tileTouchable}
+            onPress={handleNavigate(path)}
+          >
+            <WarmCard style={styles.tabItem}>
+              <TabBarIcon name={icon} color={warmColors.primary} />
+              <Text style={styles.tabText}>{label}</Text>
+            </WarmCard>
+          </TouchableOpacity>
+        ))}
         {devMode && (
           <TouchableOpacity
-            style={styles.tabItem}
+            style={styles.tileTouchable}
             onPress={handleNavigate('/dev')}
           >
-            <TabBarIcon name="bug" color={t.colors.primary} />
-            <Text style={[styles.tabText, {color: t.colors.primary}]}>Dev</Text>
+            <WarmCard style={styles.tabItem}>
+              <TabBarIcon name="bug" color={warmColors.primary} />
+              <Text style={styles.tabText}>Dev</Text>
+            </WarmCard>
           </TouchableOpacity>
         )}
       </View>
-      <View style={styles.reloadContainer}>
+
+      <View style={styles.actions}>
         {fetching === 'idle' ? (
           <TouchableOpacity onPress={handleFetch} style={styles.reloadButton}>
             <View style={styles.iconContainer}>
               <TabBarIcon name="reload" color={getReloadIconColor()} />
-              {operations.length > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}></Text>
-                </View>
-              )}
+              {operations.length > 0 && <View style={styles.badge} />}
             </View>
             <Text style={styles.reloadText}>Synchronizuj</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.reloadButton}>
-            <ActivityIndicator />
+            <ActivityIndicator color={warmColors.primary} />
             <Text style={styles.reloadText}>Synchronizacja...</Text>
           </View>
         )}
+        {devMode && (
+          <TouchableOpacity
+            style={styles.devButton}
+            onPress={handleDevModeToggle}
+          >
+            <TabBarIcon name="bug" color={warmColors.primary} />
+            <Text style={styles.devButtonText}>Wyłącz tryb Dev</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TabBarIcon name="log-out" color={warmColors.primaryForeground} />
+          <Text style={styles.logoutText}>Wyloguj się</Text>
+        </TouchableOpacity>
       </View>
-      {devMode && (
-        <Button
-          icon="bug"
-          mode="outlined"
-          onPress={handleDevModeToggle}
-          style={styles.devButton}
-        >
-          Wyłącz tryb Dev
-        </Button>
-      )}
-      <Button icon="logout" mode="contained" onPress={handleLogout}>
-        Wyloguj się
-      </Button>
       <AppVersion />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  page: {
+    backgroundColor: warmColors.background,
+  },
   root: {
     flexGrow: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 32,
   },
   failedSyncCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 68, 68, 0.1)',
-    marginHorizontal: 16,
     marginBottom: 24,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 68, 68, 0.3)',
-    width: '90%',
+    backgroundColor: warmColors.dangerBackground,
+    borderColor: warmColors.danger,
   },
   failedSyncContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   failedSyncText: {
     marginLeft: 12,
+    flex: 1,
   },
   failedSyncTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FF4444',
+    fontWeight: '700',
+    color: warmColors.destructive,
   },
   failedSyncSubtitle: {
     fontSize: 13,
-    color: '#666',
+    color: warmColors.foreground,
     marginTop: 2,
   },
   tabsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 40,
-    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+    marginBottom: 28,
+  },
+  tileTouchable: {
+    width: '48%',
+    marginBottom: 12,
   },
   tabItem: {
+    minHeight: 112,
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 12,
-    width: '42%',
-    margin: 8,
   },
   tabText: {
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: '500',
+    marginTop: 10,
+    fontSize: 15,
+    fontWeight: '700',
+    color: warmColors.foreground,
   },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '90%',
-    marginBottom: 40,
-  },
-  reloadContainer: {
-    marginBottom: 40,
+  actions: {
+    gap: 12,
   },
   reloadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    justifyContent: 'center',
+    minHeight: 56,
     paddingHorizontal: 20,
+    borderRadius: warmRadius.lg,
+    backgroundColor: warmColors.cardSolid,
+    borderWidth: 1,
+    borderColor: warmColors.border,
   },
   iconContainer: {
     position: 'relative',
-    marginRight: 8,
+    marginRight: 10,
   },
   badge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#FF4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
+    width: 10,
+    height: 10,
+    backgroundColor: warmColors.danger,
+    borderRadius: warmRadius.pill,
+    borderWidth: 2,
+    borderColor: warmColors.cardSolid,
   },
   reloadText: {
     fontSize: 16,
-    color: '#333',
+    fontWeight: '700',
+    color: warmColors.foreground,
   },
   devButton: {
-    marginBottom: 20,
-    borderColor: '#FF6B6B',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+    paddingHorizontal: 20,
+    borderRadius: warmRadius.lg,
+    borderWidth: 1,
+    borderColor: warmColors.primary,
+  },
+  devButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '700',
+    color: warmColors.primary,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+    paddingHorizontal: 20,
+    borderRadius: warmRadius.lg,
+    backgroundColor: warmColors.destructive,
+  },
+  logoutText: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '700',
+    color: warmColors.primaryForeground,
   },
 });
 
