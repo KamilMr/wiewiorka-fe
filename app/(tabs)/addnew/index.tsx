@@ -21,6 +21,7 @@ import {CurrencyPriceInput} from '@/components';
 import {SelectRadioButtons} from '@/components/addnew/SelectRadioButtons';
 import {RemainingAmountDisplay} from '@/components/addnew/RemainingAmountDisplay';
 import {sizes} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {
   addNewExpense,
   deleteExpenseLocal,
@@ -595,7 +596,7 @@ export default function AddNew() {
             </View>
           )}
         </View>
-        <View>
+        <View style={styles.actionControls}>
           {id ? (
             <ButtonWithStatus textColor="red" onPress={handleDelete}>
               Usuń
@@ -618,7 +619,7 @@ export default function AddNew() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: warmColors.background,
     flex: 1,
   },
   scrollView: {
@@ -627,7 +628,12 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: 'space-between',
-    padding: sizes.lg,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 32,
+  },
+  actionControls: {
+    marginTop: 24,
   },
   datePickerContainer: {
     padding: 0,
