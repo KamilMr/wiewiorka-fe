@@ -7,7 +7,6 @@ import {
   useLocalSearchParams,
   useNavigation,
 } from 'expo-router';
-import {formatDate} from 'date-fns';
 import {View, StyleSheet, Alert, TouchableOpacity} from 'react-native';
 import {Button, IconButton, Switch, Text} from 'react-native-paper';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
@@ -41,22 +40,17 @@ import {
   selectLatestExchangeRate,
   selectLatestBidAskExchangeRate,
 } from '@/redux/main/selectors';
-import {Expense} from '@/types';
 import {RateType} from '@/types/nbpTypes';
 import ElementDropdown from '@/components/Dropdown';
-
-const initState = (date = new Date(), categories: any[] = []) => ({
-  description: '',
-  date,
-  price: ['', ''],
-  category: categories[0]?.name,
-});
-
-const initSplitItem = () => ({
-  price: '',
-  category: '',
-  description: '',
-});
+import {
+  createExpensePayload,
+  createIncomePayload,
+  createSplitExpensePayloads,
+  initFormState,
+  initSplitItem,
+  initializeSplitItems,
+  validateAddNewForm,
+} from './addNewFormUtils';
 
 export default function AddNew() {
   const expenseCategories = useAppSelector(selectCategoriesByUsage);
@@ -126,7 +120,7 @@ export default function AddNew() {
       // For EUR to PLN: use ask rate (bank sells EUR)
       rates.EUR_PLN_ask = eurBidAskRate.askRate;
       rates.PLN_EUR_ask = 1 / eurBidAskRate.bidRate;
-      
+
       // For EUR to PLN: use bid rate (bank buys EUR)
       rates.EUR_PLN_bid = eurBidAskRate.bidRate;
       rates.PLN_EUR_bid = 1 / eurBidAskRate.askRate;
@@ -154,7 +148,9 @@ export default function AddNew() {
       ? selectExpense(+id)(state)
       : selectIncome(+id)(state),
   );
-  const [form, setForm] = useState(initState(new Date(), expenseCategories));
+  const [form, setForm] = useState(
+    initFormState(new Date(), expenseCategories),
+  );
 
   const isDataTheSame = () => {
     const formSame = _.isEqual(dirty.current, form);
@@ -163,7 +159,7 @@ export default function AddNew() {
   };
 
   const cleanState = () => {
-    setForm(initState(new Date(), expenseCategories));
+    setForm(initFormState(new Date(), expenseCategories));
     dirty.current = {};
     dirtyTag.current = false;
     setNewCustomIncome(null);
@@ -228,17 +224,18 @@ export default function AddNew() {
       // Set vacation tag checkbox if editing expense with vacation tag
       if (incomingType === 'expense' && 'tags' in record) {
         // Handle both string and object formats during transition
-        const hasVacation = record.tags?.some(tag => {
-          // If tag is a string, compare directly
-          if (typeof tag === 'string') {
-            return tag === 'urlop';
-          }
-          // If tag is an object, compare the name property
-          if (typeof tag === 'object' && tag !== null && 'name' in tag) {
-            return (tag as any).name === 'urlop';
-          }
-          return false;
-        }) || false;
+        const hasVacation =
+          record.tags?.some(tag => {
+            // If tag is a string, compare directly
+            if (typeof tag === 'string') {
+              return tag === 'urlop';
+            }
+            // If tag is an object, compare the name property
+            if (typeof tag === 'object' && tag !== null && 'name' in tag) {
+              return (tag as any).name === 'urlop';
+            }
+            return false;
+          }) || false;
         setHasVacationTag(hasVacation);
         dirtyTag.current = hasVacation;
       }
@@ -292,12 +289,7 @@ export default function AddNew() {
 
   const handleSplitToggle = () => {
     if (!isSplit && form.price[0]) {
-      const totalPrice = parseFloat(form.price[0]);
-      const halfPrice = (totalPrice / 2).toString();
-      setSplitItems([
-        {price: halfPrice, category: form.category, description: ''},
-        {price: halfPrice, category: '', description: ''},
-      ]);
+      setSplitItems(initializeSplitItems(form.price[0], form.category));
     }
     setIsSplit(!isSplit);
   };
@@ -322,28 +314,8 @@ export default function AddNew() {
     }
   };
 
-  const validateForm = () => {
-    if (isSplit && type === 'expense') {
-      // For split items, validate each split item has price and category
-      const hasValidItems = splitItems.every(
-        item => item.price && item.category,
-      );
-      // Check if all money is allocated (no remaining amount)
-      const totalSplitPrice = splitItems.reduce(
-        (sum, item) => sum + (+item.price || 0),
-        0,
-      );
-      const remainingAmount = (+form.price[0] || 0) - totalSplitPrice;
-      return hasValidItems && remainingAmount === 0;
-    }
-
-    // For non-split items, price and category are required
-    if (!form.price[0] || !form.category) {
-      return false;
-    }
-
-    return true;
-  };
+  const validateForm = () =>
+    validateAddNewForm({form, isSplit, splitItems, type});
 
   const navigateToReturnScreen = () => {
     if (returnTo === '/summary/list' && returnDates && returnCategory) {
@@ -398,25 +370,16 @@ export default function AddNew() {
   const handleSave = async () => {
     if (type === 'expense' && isSplit) {
       // Handle split expenses - save multiple expenses
-      const savePromises = splitItems.map(item => {
-        const dataToSave: Pick<
-          Expense,
-          'id' | 'date' | 'price' | 'categoryId' | 'description' | 'tags'
-        > = {
-          id: '',
-          date: formatDate(form.date, 'yyyy-MM-dd'),
-          price: +item.price,
-          categoryId:
-            expenseCategories.find(cat => cat.name === item.category)?.id || 0,
-          tags: hasVacationTag ? ['urlop'] : [],
-        };
-        if (item.description) dataToSave.description = item.description;
-        return dispatch(addNewExpense(dataToSave));
-      });
+      const savePromises = createSplitExpensePayloads({
+        categories: expenseCategories,
+        date: form.date,
+        hasVacationTag,
+        splitItems,
+      }).map(dataToSave => dispatch(addNewExpense(dataToSave)));
 
       try {
         await Promise.all(savePromises);
-        setForm(initState(new Date(), expenseCategories));
+        setForm(initFormState(new Date(), expenseCategories));
         setIsSplit(false);
         setSplitItems([initSplitItem(), initSplitItem()]);
         router.navigate('/(tabs)/records');
@@ -425,27 +388,14 @@ export default function AddNew() {
       // Handle single expense or income
       let dataToSave;
       if (type === 'expense') {
-        const {description, date, price} = form;
-        dataToSave = {
-          id: id ? +id : '',
-          description,
-          date: formatDate(date, 'yyyy-MM-dd'),
-          price: +price[0],
-          categoryId:
-            expenseCategories.find(cat => cat.name === form.category)?.id || 0,
-          tags: hasVacationTag ? ['urlop'] : [],
-        };
-
-        dataToSave = _.omitBy(dataToSave, v => typeof v === 'string' && !v);
+        dataToSave = createExpensePayload({
+          categories: expenseCategories,
+          form,
+          hasVacationTag,
+          id: id as string,
+        });
       } else {
-        dataToSave = {
-          id: id ? +id : '',
-          date: formatDate(form.date, 'yyyy-MM-dd'),
-          price: +form.price[0],
-          source: form.category,
-          vat: 0,
-        };
-        dataToSave = _.omitBy(dataToSave, v => typeof v === 'string' && !v);
+        dataToSave = createIncomePayload({form, id: id as string});
       }
       dispatch(
         type === 'expense'
@@ -456,7 +406,7 @@ export default function AddNew() {
             ? updateIncome(dataToSave)
             : addNewIncome(dataToSave),
       );
-      setForm(initState(new Date(), expenseCategories));
+      setForm(initFormState(new Date(), expenseCategories));
       router.navigate('/(tabs)/records');
     }
   };
