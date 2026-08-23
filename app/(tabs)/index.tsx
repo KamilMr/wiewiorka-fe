@@ -30,6 +30,7 @@ const Home = () => {
           <BudgetCard
             items={_.sortBy(items, ['budgetedName'])}
             date={formatDateTz({pattern: timeFormats.dateOnly2})}
+            incomePlanComparison={incomePlanComparison}
           />
         </ScrollView>
       </View>

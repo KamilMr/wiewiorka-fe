@@ -1,3 +1,5 @@
+import type {MonthlyIncomePlanComparison} from '@/types';
+
 interface AggregatedData {
   [key: string]: {
     [key: string]: number[];
@@ -15,6 +17,7 @@ type BudgetCardItem = {
 type BudgetCardProps = {
   items: BudgetCardItem[];
   date: string;
+  incomePlanComparison: MonthlyIncomePlanComparison;
 };
 
 interface BudgetMainSlice {
