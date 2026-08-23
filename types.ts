@@ -106,7 +106,7 @@ export interface MainSlice {
   expenses: Array<Expense>;
   budgets: Array<MonthlyBudget>;
   incomes: Array<Income>;
-  incomePlans: Array<MonthlyIncomePlan>;
+  incomePlans: MonthlyIncomePlan[];
   debts: Array<Debt>;
   categories: {[key: number]: Category};
   _aggregated: AggregatedData;

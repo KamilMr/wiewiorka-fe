@@ -23,7 +23,10 @@
     "version:patch": "npm version patch -m 'Bump version to %s'"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "moduleNameMapper": {
+      "^immer$": "<rootDir>/node_modules/immer/dist/cjs/index.js"
+    }
   },
   "dependencies": {
     "@date-fns/tz": "^1.4.1",

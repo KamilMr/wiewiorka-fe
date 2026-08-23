@@ -1,4 +1,4 @@
-import {createAsyncThunk} from '@reduxjs/toolkit';
+import {createAsyncThunk, type UnknownAction} from '@reduxjs/toolkit';
 import {RootState} from '../store';
 
 import {getURL, makeNewIdArr, makeRandomId} from '@/common';
@@ -49,7 +49,7 @@ import _, {omit} from 'lodash';
 
 const DIFFERED = 0;
 
-const mainSliceReducers = {
+const mainSliceReducers: Record<string, (payload: any) => UnknownAction> = {
   deleteBudget: deleteBudgetAction,
   addBudgets: addBudgetsAction,
   updateBudget: updateBudgetAction,

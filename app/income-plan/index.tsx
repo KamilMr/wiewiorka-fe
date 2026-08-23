@@ -18,7 +18,7 @@ export default function IncomePlanScreen() {
   return (
     <ScrollView contentContainerStyle={{padding: sizes.xl, gap: sizes.lg}}>
       <Stack.Screen options={{title: 'Planowane przychody'}} />
-      <Text variant="headlineSmall">Plan dochodu netto</Text>
+      <Text variant="titleLarge">Plan dochodu netto</Text>
       <Text>Ustal kwotę, którą planujesz otrzymać w wybranym miesiącu.</Text>
       {eligibleIncomePlanMonths(plans).map(month => {
         const plan = plans.find(item => item.yearMonth === month);

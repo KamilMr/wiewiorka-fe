@@ -2,7 +2,7 @@ import {selectIncomePlanComparison} from '../selectors';
 
 jest.mock('@reduxjs/toolkit', () => ({
   createSelector:
-    (inputs: Array<(...args: any[]) => any>, projector: (...args: any[]) => any) =>
+    (inputs: ((...args: any[]) => any)[], projector: (...args: any[]) => any) =>
     (...args: any[]) =>
       projector(...inputs.map(input => input(...args))),
 }));
