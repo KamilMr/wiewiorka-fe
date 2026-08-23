@@ -69,6 +69,14 @@ export interface ExpenseMore {
 export type Owner = 'house' | 'user';
 export type OwnerId = string | number;
 
+export interface MonthlyIncomePlan {
+  id: string;
+  owner: Owner;
+  ownerId: string;
+  yearMonth: string;
+  amount: number;
+}
+
 export interface Subcategory {
   id: number;
   name: string;
@@ -90,6 +98,7 @@ export interface MainSlice {
   expenses: Array<Expense>;
   budgets: Array<MonthlyBudget>;
   incomes: Array<Income>;
+  incomePlans: Array<MonthlyIncomePlan>;
   debts: Array<Debt>;
   categories: {[key: number]: Category};
   _aggregated: AggregatedData;

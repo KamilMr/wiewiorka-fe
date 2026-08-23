@@ -3,7 +3,7 @@ import {RootState} from '../store';
 
 import {getURL, makeNewIdArr, makeRandomId} from '@/common';
 import {logError, log, setAttribute} from '@/utils/crashlytics';
-import {Expense, Income} from '@/types';
+import {Expense, Income, MonthlyIncomePlan} from '@/types';
 import {
   addBudgets as addBudgetsAction,
   addDebt as addDebtAction,
@@ -20,6 +20,8 @@ import {
   replaceBudget as replaceBudgetAction,
   replaceExpense as replaceExpenseAction,
   replaceIncome as replaceIncomeAction,
+  addIncomePlan as addIncomePlanAction,
+  replaceIncomePlan as replaceIncomePlanAction,
   deleteBudget as deleteBudgetAction,
   removeExpense as removeExpenseAction,
   removeIncome as removeIncomeAction,
@@ -56,7 +58,32 @@ const mainSliceReducers = {
   replaceBudget: replaceBudgetAction,
   replaceExpense: replaceExpenseAction,
   replaceIncome: replaceIncomeAction,
+  replaceIncomePlan: replaceIncomePlanAction,
 };
+
+export const createIncomePlan = createAsyncThunk<
+  void,
+  {yearMonth: string; amount: number},
+  {state: RootState}
+>('incomePlan/create', async (data, {dispatch, getState}) => {
+  const auth = getState().auth;
+  const frontendId = `f_ip-${makeRandomId(12)}`;
+  const plan: MonthlyIncomePlan = {
+    ...data,
+    id: frontendId,
+    owner: auth.houses?.[0] ? 'house' : 'user',
+    ownerId: auth.houses?.[0] || auth.id,
+  };
+  dispatch(addIncomePlanAction(plan));
+  dispatch(addToQueue({
+    path: ['main', 'income-plan'],
+    method: 'POST',
+    handler: 'genericSync',
+    data,
+    cb: 'replaceIncomePlan',
+    frontendId,
+  }));
+});
 
 export interface Budget {
   id?: string;
