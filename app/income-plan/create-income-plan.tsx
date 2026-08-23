@@ -7,7 +7,8 @@ import {eligibleIncomePlanMonths} from '@/utils/monthlyIncomePlanUtils';
 export default function CreateIncomePlanScreen() {
   const {month} = useLocalSearchParams<{month?: string}>();
   const plans = useAppSelector(state => state.main.incomePlans);
-  if (!month || !eligibleIncomePlanMonths(plans).includes(month)) {
+  const alreadyPlanned = plans.some(plan => plan.yearMonth === month);
+  if (!month || alreadyPlanned || !eligibleIncomePlanMonths(plans).includes(month)) {
     return <Redirect href="/income-plan" />;
   }
   return (

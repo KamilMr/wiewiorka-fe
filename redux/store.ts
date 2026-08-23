@@ -82,11 +82,22 @@ const migrations = {
     ...state,
     main: {...state.main, incomePlans: state.main?.incomePlans ?? []},
   }),
+  9: (state: any) => ({
+    ...state,
+    sync: {
+      ...state.sync,
+      pendingOperations: (state.sync?.pendingOperations ?? []).map(
+        (operation: any) => operation.status === 'processing'
+          ? {...operation, status: 'pending'}
+          : operation,
+      ),
+    },
+  }),
 };
 
 const persistConfig = {
   key: 'squirrel',
-  version: 8,
+  version: 9,
   storage: AsyncStorage,
   whitelist: ['auth', 'main', 'sync'],
   migrate: createMigrate(migrations, {debug: false}),

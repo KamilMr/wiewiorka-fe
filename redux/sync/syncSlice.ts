@@ -78,6 +78,28 @@ const syncSlice = createSlice({
       if (operation.method === 'DELETE') {
         // DELETE and frontendId starts with f_ - remove all items from queue (unsynced item)
         if (operation.frontendId && operation.frontendId.startsWith('f_')) {
+          const attemptedCreate = state.pendingOperations.find(
+            op =>
+              op.frontendId === operation.frontendId &&
+              op.method === 'POST' &&
+              op.status !== 'pending',
+          );
+          if (attemptedCreate) {
+            state.pendingOperations = state.pendingOperations.filter(
+              op => op.frontendId !== operation.frontendId || op.id === attemptedCreate.id,
+            );
+            state.pendingOperations.push(operation);
+            pushSyncLog(state, {
+              level: 'info',
+              message: 'Queued DELETE after in-flight create',
+              operationId: operation.id,
+              path: operation.path,
+              method: operation.method,
+              status: operation.status,
+              frontendId: operation.frontendId,
+            });
+            return;
+          }
           const removedCount = state.pendingOperations.filter(
             op => op.frontendId === operation.frontendId,
           ).length;
@@ -158,6 +180,29 @@ const syncSlice = createSlice({
       );
       // Remove associated error if exists
       delete state.syncErrors[action.payload];
+    },
+
+    updateQueuedOperationData: (
+      state,
+      action: PayloadAction<{frontendId: string; data: Record<string, unknown>}>,
+    ) => {
+      const operation = state.pendingOperations.find(
+        op => op.frontendId === action.payload.frontendId && op.method === 'POST',
+      );
+      if (operation) operation.data = {...operation.data, ...action.payload.data};
+    },
+
+    replaceQueuedOperationTarget: (
+      state,
+      action: PayloadAction<{frontendId: string; serverId: string}>,
+    ) => {
+      state.pendingOperations.forEach(operation => {
+        if (operation.frontendId !== action.payload.frontendId) return;
+        operation.frontendId = action.payload.serverId;
+        operation.path = operation.path.map(segment =>
+          segment === action.payload.frontendId ? action.payload.serverId : segment,
+        );
+      });
     },
 
     clearQueue: state => {
@@ -357,10 +402,18 @@ const syncSlice = createSlice({
       );
       if (!operation || operation.status !== 'failed') return;
 
+      const discardedIds = state.pendingOperations
+        .filter(op =>
+          op.id === action.payload ||
+          (operation.method === 'POST' &&
+            operation.frontendId?.startsWith('f_') &&
+            op.frontendId === operation.frontendId),
+        )
+        .map(op => op.id);
       state.pendingOperations = state.pendingOperations.filter(
-        op => op.id !== action.payload,
+        op => !discardedIds.includes(op.id),
       );
-      delete state.syncErrors[action.payload];
+      discardedIds.forEach(id => delete state.syncErrors[id]);
 
       pushSyncLog(state, {
         level: 'warning',
@@ -377,9 +430,14 @@ const syncSlice = createSlice({
       const failedOperations = state.pendingOperations.filter(
         op => op.status === 'failed',
       );
-      const failedIds = failedOperations.map(op => op.id);
+      const failedCreateIds = new Set(failedOperations
+        .filter(op => op.method === 'POST' && op.frontendId?.startsWith('f_'))
+        .map(op => op.frontendId));
+      const failedIds = state.pendingOperations
+        .filter(op => op.status === 'failed' || failedCreateIds.has(op.frontendId))
+        .map(op => op.id);
       state.pendingOperations = state.pendingOperations.filter(
-        op => op.status !== 'failed',
+        op => !failedIds.includes(op.id),
       );
       failedIds.forEach(id => delete state.syncErrors[id]);
 
@@ -485,12 +543,14 @@ export const {
   dropSync,
   incrementRetryCount,
   removeFromQueue,
+  replaceQueuedOperationTarget,
   retryAllFailed,
   retryOperation,
   setLastSyncTimestamp,
   setOperationStatus,
   setSyncError,
   setSyncingStatus,
+  updateQueuedOperationData,
 } = syncSlice.actions;
 
 export {emptyState as syncEmptyState};

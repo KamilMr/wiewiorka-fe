@@ -31,7 +31,7 @@ export default function IncomePlanForm({yearMonth, plan, previousPlan: plans = [
     try {
       if (plan) await dispatch(updateIncomePlan({id: plan.id, amount: payload.amount})).unwrap();
       else await dispatch(createIncomePlan(payload)).unwrap();
-      dispatch(setSnackbar({type: 'success', msg: 'Plan został zapisany'}));
+      dispatch(setSnackbar({type: 'success', msg: 'Plan zapisano na urządzeniu'}));
       router.back();
     } catch (error: any) {
       const duplicate = error?.message === 'income_plan_exists_for_month';
@@ -53,7 +53,7 @@ export default function IncomePlanForm({yearMonth, plan, previousPlan: plans = [
         onPress: async () => {
           if (!plan) return;
           await dispatch(deleteIncomePlan({id: plan.id})).unwrap();
-          dispatch(setSnackbar({type: 'success', msg: 'Plan został usunięty'}));
+          dispatch(setSnackbar({type: 'success', msg: 'Plan usunięto na urządzeniu'}));
           router.back();
         },
       },

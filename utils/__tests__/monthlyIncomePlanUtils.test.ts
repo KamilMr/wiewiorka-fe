@@ -4,8 +4,9 @@ import {
 } from '../monthlyIncomePlanUtils';
 
 describe('monthlyIncomePlanUtils', () => {
-  it('creates canonical local months', () => {
+  it('creates canonical Warsaw months', () => {
     expect(canonicalMonth(new Date(2026, 7, 23))).toBe('2026-08-01');
+    expect(canonicalMonth(new Date('2026-08-31T22:30:00.000Z'))).toBe('2026-09-01');
   });
   it('returns unique current and next months', () => {
     expect(eligibleIncomePlanMonths([], new Date(2026, 7, 23))).toEqual(['2026-08-01', '2026-09-01']);

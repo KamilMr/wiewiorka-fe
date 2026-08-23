@@ -44,15 +44,30 @@ const useSync = () => {
     let timerId: ReturnType<typeof setTimeout> | undefined;
 
     if (operations.length === 0) return;
+    if (operations.some(operation => operation.status === 'processing')) return;
 
     let nextOperation;
 
     let next;
-    if ((next = operations.find(o => o.status === 'pending')))
+    const isBlockedByCreate = (operation: (typeof operations)[number]) =>
+      operation.frontendId?.startsWith('f_') &&
+      operation.method !== 'POST' &&
+      operations.some(candidate =>
+        candidate.frontendId === operation.frontendId &&
+        candidate.method === 'POST',
+      );
+    if ((next = operations.find(o => {
+      if (o.status !== 'pending') return false;
+      return !isBlockedByCreate(o);
+    })))
       nextOperation = next;
     else if (
       (next = operations
-        .filter(o => o.status === 'retrying' && o.nextRetryAt !== undefined)
+        .filter(o =>
+          o.status === 'retrying' &&
+          o.nextRetryAt !== undefined &&
+          !isBlockedByCreate(o),
+        )
         .sort((a, b) => a.nextRetryAt! - b.nextRetryAt!)[0])
     ) {
       const canRun = Date.now() - next.nextRetryAt!;

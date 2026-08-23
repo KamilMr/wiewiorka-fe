@@ -40,9 +40,11 @@ import {
   addSyncLog,
   addToQueue,
   removeFromQueue,
+  replaceQueuedOperationTarget,
   setSyncError,
   incrementRetryCount,
   setOperationStatus,
+  updateQueuedOperationData,
 } from '../sync/syncSlice';
 import {SYNC_CONFIG} from '@/constants/theme';
 import _, {omit} from 'lodash';
@@ -92,8 +94,17 @@ export const updateIncomePlan = createAsyncThunk<
   void,
   {id: string; amount: number},
   {state: RootState}
->('incomePlan/update', async ({id, amount}, {dispatch}) => {
+>('incomePlan/update', async ({id, amount}, {dispatch, getState}) => {
   dispatch(updateIncomePlanAction({id, amount}));
+  if (id.startsWith('f_')) {
+    const pendingCreate = getState().sync.pendingOperations.find(
+      operation => operation.frontendId === id && operation.method === 'POST',
+    );
+    if (pendingCreate && pendingCreate.status !== 'processing') {
+      dispatch(updateQueuedOperationData({frontendId: id, data: {amount}}));
+      return;
+    }
+  }
   dispatch(addToQueue({
     path: ['main', 'income-plan', id],
     method: 'PATCH',
@@ -110,8 +121,15 @@ export const deleteIncomePlan = createAsyncThunk<
   {state: RootState}
 >('incomePlan/delete', async ({id}, {dispatch, getState}) => {
   const pendingOperations = getState().sync.pendingOperations || [];
+  const attemptedCreate = pendingOperations.find(
+    op => op.frontendId === id && op.method === 'POST' && op.status !== 'pending',
+  );
   pendingOperations
-    .filter(op => op.frontendId === id && op.path?.includes('income-plan'))
+    .filter(op =>
+      op.id !== attemptedCreate?.id &&
+      op.frontendId === id &&
+      op.path?.includes('income-plan'),
+    )
     .forEach(op => dispatch(removeFromQueue(op.id)));
 
   dispatch(deleteIncomePlanAction({id}));
@@ -1217,6 +1235,12 @@ export const genericSync = createAsyncThunk<
       );
 
       if (cb) {
+        if (method === 'POST' && frontendId && result.d?.id) {
+          dispatch(replaceQueuedOperationTarget({
+            frontendId,
+            serverId: result.d.id,
+          }));
+        }
         const [callbackName] = cb.split(':');
         if (callbackName === 'fetchIni')
           setTimeout(() => dispatch(fetchIni()), DIFFERED);
