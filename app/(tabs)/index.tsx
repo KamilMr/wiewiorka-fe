@@ -4,14 +4,19 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import FinancialQuote from '@/components/FinancialQuote';
 import SummaryCard_v2 from '@/components/SummaryCardv2';
 import {BudgetCard} from '@/components';
-import {selectBudgets} from '@/redux/main/selectors';
+import {selectBudgets, selectIncomePlanComparison} from '@/redux/main/selectors';
 import {useAppSelector} from '@/hooks';
 import {warmColors} from '@/constants/warmTheme';
 import formatDateTz, {timeFormats} from '@/utils/formatTimeTz';
 import _ from 'lodash';
+import {canonicalMonth} from '@/utils/monthlyIncomePlanUtils';
 
 const Home = () => {
-  const items = useAppSelector(selectBudgets());
+  const currentMonth = canonicalMonth(new Date());
+  const items = useAppSelector(selectBudgets(currentMonth));
+  const incomePlanComparison = useAppSelector(state =>
+    selectIncomePlanComparison(state, currentMonth),
+  );
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -20,7 +25,7 @@ const Home = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <SummaryCard_v2 />
+          <SummaryCard_v2 incomePlanComparison={incomePlanComparison} />
           <FinancialQuote />
           <BudgetCard
             items={_.sortBy(items, ['budgetedName'])}

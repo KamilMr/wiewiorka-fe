@@ -77,6 +77,14 @@ export interface MonthlyIncomePlan {
   amount: number;
 }
 
+export interface MonthlyIncomePlanComparison {
+  plan: MonthlyIncomePlan | null;
+  actualNet: number;
+  remaining: number | null;
+  surplus: number | null;
+  progress: number | null;
+}
+
 export interface Subcategory {
   id: number;
   name: string;
