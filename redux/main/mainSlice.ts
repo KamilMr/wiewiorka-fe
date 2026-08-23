@@ -4,7 +4,7 @@ import _ from 'lodash';
 import {format} from 'date-fns';
 
 import aggregateDataByDay from '../../utils/aggregateData';
-import {MainSlice, Income, Expense, Debt, DebtPayment} from '@/types';
+import {MainSlice, Income, Expense, Debt, DebtPayment, MonthlyIncomePlan} from '@/types';
 import {StoredExchangeRate, StoredBidAskExchangeRate} from '../../types/nbpTypes';
 
 const emptyState = (): MainSlice => ({
@@ -12,6 +12,7 @@ const emptyState = (): MainSlice => ({
   expenses: [],
   budgets: [],
   incomes: [],
+  incomePlans: [],
   debts: [],
   categories: {},
   sources: {},
@@ -84,6 +85,24 @@ const mainSlice = createSlice({
           date: format(inc.date, 'yyyy-MM-dd'),
         })),
       ];
+    },
+    addIncomePlan: (state, action: {payload: MonthlyIncomePlan}) => {
+      state.incomePlans.push(action.payload);
+    },
+    replaceIncomePlan: (state, action) => {
+      const {frontendId, resp} = action.payload;
+      const index = state.incomePlans.findIndex(plan => plan.id === frontendId);
+      if (index !== -1) state.incomePlans[index] = {
+        ...state.incomePlans[index],
+        ...resp,
+      };
+    },
+    updateIncomePlan: (state, action: {payload: {id: string; amount: number}}) => {
+      const plan = state.incomePlans.find(item => item.id === action.payload.id);
+      if (plan) plan.amount = action.payload.amount;
+    },
+    deleteIncomePlan: (state, action: {payload: {id: string}}) => {
+      state.incomePlans = state.incomePlans.filter(item => item.id !== action.payload.id);
     },
     addBudgets: (state, action) => {
       state.budgets = [
@@ -405,6 +424,7 @@ const mainSlice = createSlice({
           date: format(ex.date, 'yyyy-MM-dd'),
         }));
         state.budgets = action.payload.budgets || [];
+        state.incomePlans = action.payload.incomePlans || [];
         state.expenses = expenses;
         state.categories = categories;
         state.incomes = income.map((inc: Income) => ({
@@ -438,9 +458,11 @@ export const {
   addExpense,
   addGroupCategoryAction,
   addIncome,
+  addIncomePlan,
   addSubcategoryAction,
   clearDevMode,
   deleteBudget,
+  deleteIncomePlan,
   deleteGroupCategoryAction,
   deleteSubcategoryAction,
   dropMain,
@@ -453,6 +475,7 @@ export const {
   replaceExpense,
   replaceGroupCategoryAction,
   replaceIncome,
+  replaceIncomePlan,
   replaceSubcategoryAction,
   setDebts,
   setSnackbar,
@@ -463,6 +486,7 @@ export const {
   updateExpense,
   updateGroupCategoryAction,
   updateIncome,
+  updateIncomePlan,
   updateSubcategoryAction,
 } = mainSlice.actions;
 

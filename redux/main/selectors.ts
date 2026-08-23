@@ -5,7 +5,13 @@ import _ from 'lodash';
 import {EXCLUDED_CAT, dh, makeNewIdArr, normalize} from '@/common';
 import aggregateDataByDay from '@/utils/aggregateData';
 import {RootState} from '../store';
-import {Category, Expense, Income, Subcategory} from '@/types';
+import {
+  Category,
+  Expense,
+  Income,
+  MonthlyIncomePlanComparison,
+  Subcategory,
+} from '@/types';
 import {BudgetMainSlice, BudgetCardItem} from '@/utils/types';
 import {SummaryCardProps} from '@/components/SummaryCard';
 
@@ -53,6 +59,35 @@ const filterHolidayTag = (item: Expense | Income, shouldFilter: boolean) => {
 };
 
 export const selectIncomes = (state: RootState) => state.main.incomes;
+export const selectIncomePlans = (state: RootState) => state.main.incomePlans;
+
+export const selectIncomePlanComparison = createSelector(
+  [
+    selectIncomePlans,
+    selectIncomes,
+    (_state: RootState, yearMonth: string) => yearMonth,
+  ],
+  (plans, incomes, yearMonth): MonthlyIncomePlanComparison => {
+    const monthPrefix = yearMonth.slice(0, 7);
+    const plan = plans.find(item => item.yearMonth === yearMonth) ?? null;
+    const actualNet = incomes
+      .filter(item => item.date.slice(0, 7) === monthPrefix)
+      .reduce((sum, item) => sum + item.price - item.price * ((item.vat ?? 0) / 100), 0);
+
+    if (!plan) {
+      return {plan: null, actualNet, remaining: null, surplus: null, progress: null};
+    }
+
+    const difference = plan.amount - actualNet;
+    return {
+      plan,
+      actualNet,
+      remaining: Math.max(difference, 0),
+      surplus: Math.max(-difference, 0),
+      progress: (actualNet / plan.amount) * 100,
+    };
+  },
+);
 
 export const selectCategories = createSelector(
   [state => state.main.categories],

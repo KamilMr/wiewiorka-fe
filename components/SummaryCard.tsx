@@ -8,6 +8,7 @@ import {formatPrice} from '@/common';
 import Text from '@/components/CustomText';
 import WarmCard from '@/components/warm/WarmCard';
 import {warmColors, warmRadius} from '@/constants/warmTheme';
+import {MonthlyIncomePlanComparison} from '@/types';
 
 type Costs = {
   [key: string]: number;
@@ -20,10 +21,11 @@ export interface SummaryCardProps {
   date: string;
   costs: Costs;
   icon?: string;
+  incomePlanComparison?: MonthlyIncomePlanComparison;
 }
 
 const SummaryCard = (props: Omit<SummaryCardProps, 'id'>) => {
-  const {income, outcome, date, costs} = props;
+  const {income, outcome, date, costs, incomePlanComparison} = props;
   // the amount of costs total
   const sumCosts = _.sumBy(_.values(costs));
 
@@ -69,6 +71,30 @@ const SummaryCard = (props: Omit<SummaryCardProps, 'id'>) => {
             <Text style={[styles.amount, styles.incomeAmount]}>
               {formatPrice(income - sumCosts < 0 ? 0 : income - sumCosts)}
             </Text>
+            {incomePlanComparison?.plan && (
+              <View style={styles.planDetails}>
+                <Text style={styles.planAmount}>
+                  {formatPrice(incomePlanComparison.actualNet)} z{' '}
+                  {formatPrice(incomePlanComparison.plan.amount)}
+                </Text>
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {width: `${Math.min(Math.max(incomePlanComparison.progress ?? 0, 0), 100)}%`},
+                    ]}
+                  />
+                </View>
+                <Text style={styles.planStatus}>
+                  {(incomePlanComparison.surplus ?? 0) > 0
+                    ? `Nadwyżka ${formatPrice(incomePlanComparison.surplus ?? 0)}`
+                    : (incomePlanComparison.remaining ?? 0) > 0
+                      ? `Pozostało ${formatPrice(incomePlanComparison.remaining ?? 0)}`
+                      : 'Plan osiągnięty'}
+                  {' · '}{Math.round(incomePlanComparison.progress ?? 0)}%
+                </Text>
+              </View>
+            )}
           </View>
         </Pressable>
 
@@ -180,6 +206,31 @@ const styles = StyleSheet.create({
   },
   incomeAmount: {
     color: warmColors.success,
+  },
+  planDetails: {
+    gap: 4,
+    marginTop: 6,
+  },
+  planAmount: {
+    color: warmColors.foreground,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  progressTrack: {
+    height: 4,
+    overflow: 'hidden',
+    borderRadius: warmRadius.pill,
+    backgroundColor: 'rgba(5, 150, 105, 0.16)',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: warmRadius.pill,
+    backgroundColor: warmColors.success,
+  },
+  planStatus: {
+    color: warmColors.mutedForeground,
+    fontSize: 9,
+    lineHeight: 12,
   },
   expenseAmount: {
     color: warmColors.danger,

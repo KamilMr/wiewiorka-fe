@@ -3,9 +3,11 @@ import {format} from 'date-fns';
 import SummaryCard from '@/components/SummaryCard';
 import {useAppSelector} from '@/hooks';
 import {selectComparison} from '@/redux/main/selectors';
+import {MonthlyIncomePlanComparison} from '@/types';
 
 interface SummaryCard_v2Props {
   date?: string;
+  incomePlanComparison?: MonthlyIncomePlanComparison;
 }
 
 const SummaryCard_v2 = (props: SummaryCard_v2Props) => {
@@ -25,6 +27,7 @@ const SummaryCard_v2 = (props: SummaryCard_v2Props) => {
       outcome={filteredSummary.outcome}
       date={date}
       costs={{}}
+      incomePlanComparison={props.incomePlanComparison}
     />
   );
 };

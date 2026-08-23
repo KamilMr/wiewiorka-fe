@@ -113,6 +113,7 @@ const RootLayout = () => {
                   options={{headerShown: false}}
                 />
                 <Stack.Screen name="budget" options={{headerShown: false}} />
+                <Stack.Screen name="income-plan" options={{headerShown: false}} />
                 <Stack.Screen name="debt" options={{headerShown: false}} />
                 <Stack.Screen
                   name="income-summary"

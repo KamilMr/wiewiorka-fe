@@ -1,9 +1,9 @@
-import {createAsyncThunk} from '@reduxjs/toolkit';
+import {createAsyncThunk, type UnknownAction} from '@reduxjs/toolkit';
 import {RootState} from '../store';
 
 import {getURL, makeNewIdArr, makeRandomId} from '@/common';
 import {logError, log, setAttribute} from '@/utils/crashlytics';
-import {Expense, Income} from '@/types';
+import {Expense, Income, MonthlyIncomePlan} from '@/types';
 import {
   addBudgets as addBudgetsAction,
   addDebt as addDebtAction,
@@ -20,6 +20,10 @@ import {
   replaceBudget as replaceBudgetAction,
   replaceExpense as replaceExpenseAction,
   replaceIncome as replaceIncomeAction,
+  addIncomePlan as addIncomePlanAction,
+  replaceIncomePlan as replaceIncomePlanAction,
+  updateIncomePlan as updateIncomePlanAction,
+  deleteIncomePlan as deleteIncomePlanAction,
   deleteBudget as deleteBudgetAction,
   removeExpense as removeExpenseAction,
   removeIncome as removeIncomeAction,
@@ -36,16 +40,18 @@ import {
   addSyncLog,
   addToQueue,
   removeFromQueue,
+  replaceQueuedOperationTarget,
   setSyncError,
   incrementRetryCount,
   setOperationStatus,
+  updateQueuedOperationData,
 } from '../sync/syncSlice';
 import {SYNC_CONFIG} from '@/constants/theme';
 import _, {omit} from 'lodash';
 
 const DIFFERED = 0;
 
-const mainSliceReducers = {
+const mainSliceReducers: Record<string, (payload: any) => UnknownAction> = {
   deleteBudget: deleteBudgetAction,
   addBudgets: addBudgetsAction,
   updateBudget: updateBudgetAction,
@@ -56,7 +62,86 @@ const mainSliceReducers = {
   replaceBudget: replaceBudgetAction,
   replaceExpense: replaceExpenseAction,
   replaceIncome: replaceIncomeAction,
+  replaceIncomePlan: replaceIncomePlanAction,
+  deleteIncomePlan: deleteIncomePlanAction,
 };
+
+export const createIncomePlan = createAsyncThunk<
+  void,
+  {yearMonth: string; amount: number},
+  {state: RootState}
+>('incomePlan/create', async (data, {dispatch, getState}) => {
+  const auth = getState().auth;
+  const frontendId = `f_ip-${makeRandomId(12)}`;
+  const plan: MonthlyIncomePlan = {
+    ...data,
+    id: frontendId,
+    owner: auth.houses?.[0] ? 'house' : 'user',
+    ownerId: auth.houses?.[0] || auth.id,
+  };
+  dispatch(addIncomePlanAction(plan));
+  dispatch(addToQueue({
+    path: ['main', 'income-plan'],
+    method: 'POST',
+    handler: 'genericSync',
+    data,
+    cb: 'replaceIncomePlan',
+    frontendId,
+  }));
+});
+
+export const updateIncomePlan = createAsyncThunk<
+  void,
+  {id: string; amount: number},
+  {state: RootState}
+>('incomePlan/update', async ({id, amount}, {dispatch, getState}) => {
+  dispatch(updateIncomePlanAction({id, amount}));
+  if (id.startsWith('f_')) {
+    const pendingCreate = getState().sync.pendingOperations.find(
+      operation => operation.frontendId === id && operation.method === 'POST',
+    );
+    if (pendingCreate && pendingCreate.status !== 'processing') {
+      dispatch(updateQueuedOperationData({frontendId: id, data: {amount}}));
+      return;
+    }
+  }
+  dispatch(addToQueue({
+    path: ['main', 'income-plan', id],
+    method: 'PATCH',
+    handler: 'genericSync',
+    data: {amount},
+    cb: 'replaceIncomePlan',
+    frontendId: id,
+  }));
+});
+
+export const deleteIncomePlan = createAsyncThunk<
+  void,
+  {id: string},
+  {state: RootState}
+>('incomePlan/delete', async ({id}, {dispatch, getState}) => {
+  const pendingOperations = getState().sync.pendingOperations || [];
+  const attemptedCreate = pendingOperations.find(
+    op => op.frontendId === id && op.method === 'POST' && op.status !== 'pending',
+  );
+  pendingOperations
+    .filter(op =>
+      op.id !== attemptedCreate?.id &&
+      op.frontendId === id &&
+      op.path?.includes('income-plan'),
+    )
+    .forEach(op => dispatch(removeFromQueue(op.id)));
+
+  dispatch(deleteIncomePlanAction({id}));
+  dispatch(addToQueue({
+    path: ['main', 'income-plan', id],
+    method: 'DELETE',
+    handler: 'genericSync',
+    data: {},
+    cb: 'deleteIncomePlan',
+    frontendId: id,
+  }));
+});
 
 export interface Budget {
   id?: string;
@@ -1150,6 +1235,12 @@ export const genericSync = createAsyncThunk<
       );
 
       if (cb) {
+        if (method === 'POST' && frontendId && result.d?.id) {
+          dispatch(replaceQueuedOperationTarget({
+            frontendId,
+            serverId: result.d.id,
+          }));
+        }
         const [callbackName] = cb.split(':');
         if (callbackName === 'fetchIni')
           setTimeout(() => dispatch(fetchIni()), DIFFERED);
