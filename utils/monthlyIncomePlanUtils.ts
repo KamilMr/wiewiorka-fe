@@ -20,9 +20,16 @@ export const previousCanonicalMonth = (month: string): string => {
   return `${previousYear}-${String(previousMonth).padStart(2, '0')}-01`;
 };
 
-export const eligibleIncomePlanMonths = (now = new Date()): string[] => {
+export const eligibleIncomePlanMonths = (
+  plans: MonthlyIncomePlan[] = [],
+  now = new Date(),
+): string[] => {
   const current = canonicalMonth(now);
-  return Array.from(new Set([current, nextCanonicalMonth(current)]));
+  return Array.from(new Set([
+    current,
+    nextCanonicalMonth(current),
+    ...plans.map(plan => plan.yearMonth),
+  ])).sort();
 };
 
 export const incomePlanPayload = (yearMonth: string, amount: string | number) => {

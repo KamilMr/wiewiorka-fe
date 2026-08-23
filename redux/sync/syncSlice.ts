@@ -10,6 +10,7 @@ const MAX_SYNC_LOGS = 100;
 const getOperationType = (path: string[]): string => {
   const pathStr = path.join('/').toLowerCase();
   if (pathStr.includes('expenses')) return 'expense';
+  if (pathStr.includes('income-plan')) return 'incomePlan';
   if (pathStr.includes('income')) return 'income';
   if (pathStr.includes('budget')) return 'budget';
   if (pathStr.includes('category/group')) return 'categoryGroup';

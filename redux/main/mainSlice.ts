@@ -92,7 +92,17 @@ const mainSlice = createSlice({
     replaceIncomePlan: (state, action) => {
       const {frontendId, resp} = action.payload;
       const index = state.incomePlans.findIndex(plan => plan.id === frontendId);
-      if (index !== -1) state.incomePlans[index] = resp;
+      if (index !== -1) state.incomePlans[index] = {
+        ...state.incomePlans[index],
+        ...resp,
+      };
+    },
+    updateIncomePlan: (state, action: {payload: {id: string; amount: number}}) => {
+      const plan = state.incomePlans.find(item => item.id === action.payload.id);
+      if (plan) plan.amount = action.payload.amount;
+    },
+    deleteIncomePlan: (state, action: {payload: {id: string}}) => {
+      state.incomePlans = state.incomePlans.filter(item => item.id !== action.payload.id);
     },
     addBudgets: (state, action) => {
       state.budgets = [
@@ -452,6 +462,7 @@ export const {
   addSubcategoryAction,
   clearDevMode,
   deleteBudget,
+  deleteIncomePlan,
   deleteGroupCategoryAction,
   deleteSubcategoryAction,
   dropMain,
@@ -475,6 +486,7 @@ export const {
   updateExpense,
   updateGroupCategoryAction,
   updateIncome,
+  updateIncomePlan,
   updateSubcategoryAction,
 } = mainSlice.actions;
 

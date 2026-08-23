@@ -20,13 +20,24 @@ export default function IncomePlanScreen() {
       <Stack.Screen options={{title: 'Planowane przychody'}} />
       <Text variant="headlineSmall">Plan dochodu netto</Text>
       <Text>Ustal kwotę, którą planujesz otrzymać w wybranym miesiącu.</Text>
-      {eligibleIncomePlanMonths().map(month => {
+      {eligibleIncomePlanMonths(plans).map(month => {
         const plan = plans.find(item => item.yearMonth === month);
         return (
           <View key={month} style={{gap: sizes.sm}}>
             <Text variant="titleMedium">{monthLabel(month)}</Text>
             {plan ? (
-              <Text>{Number(plan.amount).toFixed(2)} zł</Text>
+              <>
+                <Text>{Number(plan.amount).toFixed(2)} zł</Text>
+                <Button
+                  mode="outlined"
+                  onPress={() => router.push({
+                    pathname: '/income-plan/update-income-plan',
+                    params: {id: plan.id},
+                  })}
+                >
+                  Edytuj plan
+                </Button>
+              </>
             ) : (
               <Button
                 mode="contained"

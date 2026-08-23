@@ -18,6 +18,7 @@ import {SyncOperation} from '@/types';
 const getOperationTypeLabel = (path: string[]): string => {
   const pathStr = path.join('/').toLowerCase();
   if (pathStr.includes('expenses')) return 'Wydatek';
+  if (pathStr.includes('income-plan')) return 'Planowany przychód';
   if (pathStr.includes('income')) return 'Przychód';
   if (pathStr.includes('budget')) return 'Budżet';
   if (pathStr.includes('category/group')) return 'Grupa kategorii';
@@ -29,6 +30,7 @@ const getOperationTypeLabel = (path: string[]): string => {
 const getOperationIcon = (path: string[]): string => {
   const pathStr = path.join('/').toLowerCase();
   if (pathStr.includes('expenses')) return 'cart-arrow-up';
+  if (pathStr.includes('income-plan')) return 'calendar-cash';
   if (pathStr.includes('income')) return 'cash-plus';
   if (pathStr.includes('budget')) return 'wallet';
   if (pathStr.includes('category')) return 'tag';

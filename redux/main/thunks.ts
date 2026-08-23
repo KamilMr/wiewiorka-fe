@@ -22,6 +22,8 @@ import {
   replaceIncome as replaceIncomeAction,
   addIncomePlan as addIncomePlanAction,
   replaceIncomePlan as replaceIncomePlanAction,
+  updateIncomePlan as updateIncomePlanAction,
+  deleteIncomePlan as deleteIncomePlanAction,
   deleteBudget as deleteBudgetAction,
   removeExpense as removeExpenseAction,
   removeIncome as removeIncomeAction,
@@ -59,6 +61,7 @@ const mainSliceReducers = {
   replaceExpense: replaceExpenseAction,
   replaceIncome: replaceIncomeAction,
   replaceIncomePlan: replaceIncomePlanAction,
+  deleteIncomePlan: deleteIncomePlanAction,
 };
 
 export const createIncomePlan = createAsyncThunk<
@@ -82,6 +85,43 @@ export const createIncomePlan = createAsyncThunk<
     data,
     cb: 'replaceIncomePlan',
     frontendId,
+  }));
+});
+
+export const updateIncomePlan = createAsyncThunk<
+  void,
+  {id: string; amount: number},
+  {state: RootState}
+>('incomePlan/update', async ({id, amount}, {dispatch}) => {
+  dispatch(updateIncomePlanAction({id, amount}));
+  dispatch(addToQueue({
+    path: ['main', 'income-plan', id],
+    method: 'PATCH',
+    handler: 'genericSync',
+    data: {amount},
+    cb: 'replaceIncomePlan',
+    frontendId: id,
+  }));
+});
+
+export const deleteIncomePlan = createAsyncThunk<
+  void,
+  {id: string},
+  {state: RootState}
+>('incomePlan/delete', async ({id}, {dispatch, getState}) => {
+  const pendingOperations = getState().sync.pendingOperations || [];
+  pendingOperations
+    .filter(op => op.frontendId === id && op.path?.includes('income-plan'))
+    .forEach(op => dispatch(removeFromQueue(op.id)));
+
+  dispatch(deleteIncomePlanAction({id}));
+  dispatch(addToQueue({
+    path: ['main', 'income-plan', id],
+    method: 'DELETE',
+    handler: 'genericSync',
+    data: {},
+    cb: 'deleteIncomePlan',
+    frontendId: id,
   }));
 });
 
