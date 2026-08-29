@@ -1,5 +1,4 @@
 import {Pressable, StyleSheet, Text, View} from 'react-native';
-import {Icon} from 'react-native-paper';
 
 import {warmColors, warmRadius} from '@/constants/warmTheme';
 
@@ -8,7 +7,6 @@ type Props = {
   holidaySelected: boolean;
   onGroupingChange: (grouping: 'category' | 'subcategory') => void;
   onHolidayChange: () => void;
-  onBackToCategories?: () => void;
 };
 
 const SummaryGroupingControls = ({
@@ -16,83 +14,66 @@ const SummaryGroupingControls = ({
   holidaySelected,
   onGroupingChange,
   onHolidayChange,
-  onBackToCategories,
 }: Props) => (
-  <View style={styles.container}>
-    <View style={styles.controlsRow}>
-      <View style={styles.segmentedControl}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{selected: !isSubcategory}}
-          onPress={() => onGroupingChange('category')}
-          style={({pressed}) => [
-            styles.segment,
-            !isSubcategory && styles.activeSegment,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text
-            style={[styles.segmentLabel, !isSubcategory && styles.activeLabel]}
-          >
-            Kategorie
-          </Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{selected: isSubcategory}}
-          onPress={() => onGroupingChange('subcategory')}
-          style={({pressed}) => [
-            styles.segment,
-            isSubcategory && styles.activeSegment,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text
-            style={[styles.segmentLabel, isSubcategory && styles.activeLabel]}
-          >
-            Podkategorie
-          </Text>
-        </Pressable>
-      </View>
+  <View style={styles.controlsRow}>
+    <View style={styles.segmentedControl}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Urlop"
-        accessibilityState={{selected: holidaySelected}}
-        onPress={onHolidayChange}
+        accessibilityState={{selected: !isSubcategory}}
+        onPress={() => onGroupingChange('category')}
         style={({pressed}) => [
-          styles.holidayButton,
-          holidaySelected && styles.activeHolidayButton,
+          styles.segment,
+          !isSubcategory && styles.activeSegment,
           pressed && styles.pressed,
         ]}
       >
         <Text
-          style={[
-            styles.holidayLabel,
-            holidaySelected && styles.activeHolidayLabel,
-          ]}
+          style={[styles.segmentLabel, !isSubcategory && styles.activeLabel]}
         >
-          🏖️ Urlop
+          Kategorie
+        </Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{selected: isSubcategory}}
+        onPress={() => onGroupingChange('subcategory')}
+        style={({pressed}) => [
+          styles.segment,
+          isSubcategory && styles.activeSegment,
+          pressed && styles.pressed,
+        ]}
+      >
+        <Text
+          style={[styles.segmentLabel, isSubcategory && styles.activeLabel]}
+        >
+          Podkategorie
         </Text>
       </Pressable>
     </View>
-    {isSubcategory && onBackToCategories ? (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Wróć do kategorii"
-        onPress={onBackToCategories}
-        style={({pressed}) => [styles.backButton, pressed && styles.pressed]}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Urlop"
+      accessibilityState={{selected: holidaySelected}}
+      onPress={onHolidayChange}
+      style={({pressed}) => [
+        styles.holidayButton,
+        holidaySelected && styles.activeHolidayButton,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text
+        style={[
+          styles.holidayLabel,
+          holidaySelected && styles.activeHolidayLabel,
+        ]}
       >
-        <Icon source="arrow-left" size={16} color={warmColors.primary} />
-        <Text style={styles.backLabel}>Wróć do kategorii</Text>
-      </Pressable>
-    ) : null}
+        🏖️ Urlop
+      </Text>
+    </Pressable>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 12,
-  },
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -142,17 +123,6 @@ const styles = StyleSheet.create({
   },
   activeHolidayLabel: {
     color: warmColors.primaryForeground,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  backLabel: {
-    color: warmColors.primary,
-    fontSize: 12,
-    fontWeight: '600',
   },
   pressed: {
     opacity: 0.75,

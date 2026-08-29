@@ -197,7 +197,6 @@ const Summary = () => {
               handleAxisChange(grouping === 'category' ? '1-0' : '1-1')
             }
             onHolidayChange={() => setHolidayTagFilter(value => !value)}
-            onBackToCategories={() => handleAxisChange('1-0')}
           />
         }
         chartTypeControls={
