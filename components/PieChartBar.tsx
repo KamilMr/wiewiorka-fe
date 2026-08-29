@@ -1,14 +1,14 @@
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 
 import {PieChart, PieChartPropsType} from 'react-native-gifted-charts';
+
+import {warmColors} from '@/constants/warmTheme';
 
 import Text from './CustomText';
 
 interface Props {
   title?: string;
 }
-
-import {StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
 const CustomPieChart = (props: Props & PieChartPropsType) => {
   let {data, title = '', ...rest} = props;
   if (!Array.isArray(data) || data.length < 1) {
-    data = [{value: 10, color: '#FFFFFF'}];
+    data = [{value: 10, color: warmColors.muted}];
   }
   return (
     <View style={styles.container}>

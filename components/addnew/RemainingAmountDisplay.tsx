@@ -1,6 +1,7 @@
 import {View} from 'react-native';
 
 import {Text} from '@/components';
+import {formatPrice} from '@/common';
 
 interface RemainingAmountDisplayProps {
   totalPrice: string;
@@ -18,7 +19,7 @@ export const RemainingAmountDisplay = ({
   return (
     <View>
       <Text style={styles.remainingAmountText}>
-        Pozostało do podziału: {remainingAmount} zł
+        Pozostało do podziału: {formatPrice(remainingAmount, {roundUp: false})}
       </Text>
     </View>
   );

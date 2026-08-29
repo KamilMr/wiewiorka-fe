@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {RefreshControl, ScrollView, StyleSheet, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {SummaryCard, Text} from '@/components';
@@ -7,7 +7,7 @@ import {SummaryCardProps} from '@/components/SummaryCard';
 import WarmCard from '@/components/warm/WarmCard';
 import WarmPill from '@/components/warm/WarmPill';
 import {warmColors} from '@/constants/warmTheme';
-import {useAppSelector} from '@/hooks';
+import {useAppSelector, usePullToRefresh} from '@/hooks';
 import {selectComparison} from '@/redux/main/selectors';
 
 const MONTH = 1;
@@ -18,8 +18,7 @@ const YEAR_LABEL = 'Rok';
 const Config: React.FC<{
   selection: [number, string][];
   onChange: (value: string) => void;
-  title?: string;
-}> = ({selection, onChange, title = ''}) => {
+}> = ({selection, onChange}) => {
   const [active, setActive] = useState<number>(0);
 
   const handleChange = (f: string) => {
@@ -28,24 +27,23 @@ const Config: React.FC<{
   };
 
   return (
-    <View style={styles.config}>
-      {title ? <Text style={styles.configTitle}>{title}</Text> : null}
-      <View style={styles.filterRow}>
-        {selection.map(([value, name], index) => (
-          <WarmPill
-            key={value}
-            label={name}
-            active={index === active}
-            onPress={() => handleChange(value.toString())}
-          />
-        ))}
-      </View>
+    <View style={styles.filterRow}>
+      {selection.map(([value, name], index) => (
+        <WarmPill
+          key={value}
+          label={name}
+          active={index === active}
+          onPress={() => handleChange(value.toString())}
+          style={styles.filterButton}
+        />
+      ))}
     </View>
   );
 };
 
 const Summary = () => {
   const [filter, setFilter] = useState(MONTH);
+  const {refreshing, onRefresh} = usePullToRefresh();
   const summary: SummaryCardProps[] = useAppSelector(state =>
     selectComparison(state, filter),
   );
@@ -57,6 +55,14 @@ const Summary = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={warmColors.primary}
+            colors={[warmColors.primary]}
+          />
+        }
       >
         <View>
           <Text style={styles.title}>Podsumowanie</Text>
@@ -121,19 +127,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 4,
   },
-  config: {
-    gap: 8,
-  },
-  configTitle: {
-    color: warmColors.mutedForeground,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
-  },
   filterRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  filterButton: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 10,
   },
   emptyState: {
     alignItems: 'center',

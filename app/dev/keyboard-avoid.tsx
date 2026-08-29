@@ -6,7 +6,7 @@ import {
   Keyboard,
   ScrollView,
 } from 'react-native';
-import {useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {
   KeyboardAwareScrollView,
   useKeyboardHandler,
@@ -15,19 +15,15 @@ import {useAnimatedStyle, useSharedValue} from 'react-native-reanimated';
 import CustomSelect from '@/components/CustomSelect';
 
 const TextF = ({num = 2}) => {
-  const t = useAppTheme();
   return (
     <>
       {[...Array(num).keys()].map((el, idx) => (
         <View style={styles.inputContainer} key={idx}>
-          <Text style={[styles.label, {color: t.colors.text}]}>Name</Text>
+          <Text style={styles.label}>Name</Text>
           <TextInput
-            style={[
-              styles.input,
-              {borderColor: t.colors.border, color: t.colors.text},
-            ]}
+            style={styles.input}
             placeholder="Enter your name"
-            placeholderTextColor={t.colors.text + '80'}
+            placeholderTextColor={warmColors.mutedForeground}
           />
         </View>
       ))}
@@ -80,7 +76,7 @@ const KeyboardAvoidPage = () => {
 
   return (
     <>
-      <KeyboardAwareScrollView>
+      <KeyboardAwareScrollView style={{backgroundColor: warmColors.background}}>
         <View style={{flex: 1}}>
           <TextF num={5} />
           <View style={styles.inputContainer}>
@@ -123,11 +119,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
+    color: warmColors.foreground,
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 8,
   },
   input: {
+    color: warmColors.foreground,
+    borderColor: warmColors.border,
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,

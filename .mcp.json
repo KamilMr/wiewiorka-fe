@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "uxpilot": {
+      "url": "https://mcp.uxpilot.net/mcp",
+      "auth": "bearer",
+      "bearerTokenEnv": "UXPILOT_API_KEY"
+    }
+  }
+}

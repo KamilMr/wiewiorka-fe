@@ -1,18 +1,19 @@
 import React from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View} from 'react-native';
 import {useNetInfo} from '@react-native-community/netinfo';
 import {useAppSelector} from '@/hooks';
 import {selectOperations} from '@/redux/sync/syncSlice';
+import {useAppTheme} from '@/constants/theme';
 
 const StatusIndicator: React.FC = () => {
   const netInfo = useNetInfo();
   const operations = useAppSelector(selectOperations);
+  const t = useAppTheme();
 
   const getStatusDotColor = () => {
-    if (!netInfo.isConnected) return '#666666';
-    if (netInfo.isInternetReachable === false) return '#FFA500';
-    if (operations.length > 0) return '#4CAF50';
-    return '#4CAF50';
+    if (!netInfo.isConnected) return t.colors.mutedForeground;
+    if (netInfo.isInternetReachable === false) return t.colors.chart5;
+    return t.colors.success;
   };
 
   const getStatusDotStyle = () => {
@@ -27,7 +28,7 @@ const StatusIndicator: React.FC = () => {
       return {
         ...baseStyle,
         borderWidth: 2,
-        borderColor: '#FFA500',
+        borderColor: t.colors.chart5,
       };
     }
 
@@ -36,7 +37,5 @@ const StatusIndicator: React.FC = () => {
 
   return <View style={getStatusDotStyle()} />;
 };
-
-const styles = StyleSheet.create({});
 
 export default StatusIndicator;

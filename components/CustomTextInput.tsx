@@ -3,6 +3,7 @@ import {StyleSheet} from 'react-native';
 
 import {TextInput, TextInputProps} from 'react-native-paper';
 import {sizes, useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 
 const CustomTextInput = forwardRef<typeof TextInput, TextInputProps>(
   ({onChangeText, value, style, ...props}, ref) => {
@@ -28,7 +29,7 @@ CustomTextInput.displayName = 'CustomTextInput';
 
 const styles = StyleSheet.create({
   root: {
-    backgroundColor: '#ffffff',
+    backgroundColor: warmColors.background,
     minHeight: 80,
   },
   outline: {

@@ -2,27 +2,39 @@ import {useEffect, useMemo, useState} from 'react';
 import {router, useLocalSearchParams} from 'expo-router';
 
 import _ from 'lodash';
-import {Button, IconButton, Menu as PaperMenu} from 'react-native-paper';
-import {ScrollView, View} from 'react-native';
 import {
-  endOfMonth,
-  endOfYear,
+  type LayoutChangeEvent,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import {
+  addDays,
+  differenceInCalendarDays,
   format,
   lastDayOfMonth,
-  startOfMonth,
-  startOfYear,
-  subMonths,
 } from 'date-fns';
 
 import {Axis, PickFilter, decId, groupBy} from '@/utils/aggregateData';
-import {BarChart, Chip, DatePicker, PieChartBar, Text} from '@/components';
+import {BarChart, PieChartBar, Text} from '@/components';
 import {type Subcategory} from '@/types';
 import {buildBarChart, buildPieChart} from '@/utils/chartBuilder';
 import {selectByTimeRange, selectCategories} from '@/redux/main/selectors';
 import {useAppSelector} from '@/hooks';
 import {useAppTheme} from '@/constants/theme';
 import {EXCLUDED_CAT, formatPrice, shortenText} from '@/common';
+import {warmColors} from '@/constants/warmTheme';
 import ChartDetailsTestingViews from '@/components/summary/ChartDetailsTestingViews';
+import SummaryDateRangeSelector from '@/components/summary/SummaryDateRangeSelector';
+import TotalSpentSummary from '@/components/summary/TotalSpentSummary';
+import SummaryExploreCard from '@/components/summary/SummaryExploreCard';
+import SummaryGroupingControls from '@/components/summary/SummaryGroupingControls';
+import SummaryChartTypeControls from '@/components/summary/SummaryChartTypeControls';
+import SummaryCategoryFilters, {
+  type SummaryCategoryFilterItem,
+} from '@/components/summary/SummaryCategoryFilters';
+import {type AggregatedData} from '@/utils/types';
 
 const excludedCategories = EXCLUDED_CAT as number[];
 
@@ -47,43 +59,150 @@ type GroupedValue = number[];
 interface GroupedType {
   [key: string]: {[key: string]: GroupedValue};
 }
-const GroupCategory = ({
-  axis,
-  onPress,
-}: {
-  axis: [Axis, string];
-  onPress: (axis: Axis) => void;
-}) => {
-  const isCat = axis[0] === '1-1';
-  const handleOnPress = (axis: Axis) => () => {
-    onPress?.(axis);
-  };
-  return (
-    <View>
-      <Button
-        style={{height: 40, width: 140}}
-        mode={'text'}
-        labelStyle={{
-          color: !isCat ? 'blue' : undefined,
-          fontSize: 12,
-        }}
-        onPress={handleOnPress('1-0')}
-      >
-        Kategorie
-      </Button>
-      <Button
-        style={{height: 40, width: 140}}
-        mode={'text'}
-        labelStyle={{
-          color: isCat ? 'blue' : undefined,
-          fontSize: 12,
-        }}
-        onPress={handleOnPress('1-1')}
-      >
-        Podkategorie
-      </Button>
-    </View>
+
+type DayTotal = {
+  date: string;
+  value: number;
+  categories: Record<string, number>;
+};
+
+type CategoryShareBucket = {
+  key: string;
+  label: string;
+  value: number;
+  categories: Record<string, number>;
+};
+
+type CategoryTotal = {
+  id: string;
+  name: string;
+  color: string;
+  value: number;
+};
+
+const fallbackColors = [
+  warmColors.chart1,
+  warmColors.chart2,
+  warmColors.chart3,
+  warmColors.chart4,
+  warmColors.chart5,
+];
+const sumValues = (values?: number[]) =>
+  values?.reduce((sum, value) => sum + (Number(value) || 0), 0) || 0;
+
+const normalizeDateRange = ([start, end]: [Date, Date]): [Date, Date] =>
+  start.getTime() <= end.getTime() ? [start, end] : [end, start];
+
+const shouldIncludeBucket = (bucketId: string, filters: FilterCategory[]) => {
+  if (!filters.length) return false;
+
+  const [groupId, categoryId] = bucketId.split('-').map(Number);
+  return filters.some(filter =>
+    filter.type === 'group' ? filter.id === groupId : filter.id === categoryId,
   );
+};
+
+const buildDayTotals = (
+  data: AggregatedData,
+  dates: [Date, Date],
+  filters: FilterCategory[],
+): DayTotal[] => {
+  const [start, end] = normalizeDateRange(dates);
+  const daysCount = Math.max(0, differenceInCalendarDays(end, start)) + 1;
+
+  return Array.from({length: daysCount}, (_, index) => {
+    const date = format(addDays(start, index), 'yyyy-MM-dd');
+    const categories: Record<string, number> = {};
+
+    Object.entries(data[date] || {}).forEach(([bucketId, values]) => {
+      if (!shouldIncludeBucket(bucketId, filters)) return;
+
+      const [, categoryId] = bucketId.split('-');
+      categories[categoryId] ??= 0;
+      categories[categoryId] += sumValues(values);
+    });
+
+    return {
+      date,
+      categories,
+      value: Object.values(categories).reduce((sum, value) => sum + value, 0),
+    };
+  });
+};
+
+const buildCategoryTotals = (
+  data: AggregatedData,
+  filters: FilterCategory[],
+  categories: Subcategory[],
+): CategoryTotal[] => {
+  const totals: Record<string, number> = {};
+
+  Object.values(data).forEach(dayBuckets => {
+    Object.entries(dayBuckets).forEach(([bucketId, values]) => {
+      if (!shouldIncludeBucket(bucketId, filters)) return;
+
+      const [, categoryId] = bucketId.split('-');
+      totals[categoryId] ??= 0;
+      totals[categoryId] += sumValues(values);
+    });
+  });
+
+  return Object.entries(totals)
+    .map(([id, value], index) => {
+      const category = categories.find(cat => cat.id === Number(id));
+      return {
+        id,
+        value,
+        name: category?.name || `Kategoria ${id}`,
+        color: category?.color || fallbackColors[index % fallbackColors.length],
+      };
+    })
+    .sort((a, b) => b.value - a.value);
+};
+
+const shouldUseMonthlyCategoryShare = (dayTotals: DayTotal[]) => {
+  const monthsCount = new Set(
+    dayTotals.map(day => format(new Date(day.date), 'yyyy-MM')),
+  ).size;
+
+  return monthsCount >= 2 && dayTotals.length >= 56;
+};
+
+const buildCategoryShareBuckets = (
+  dayTotals: DayTotal[],
+  mode: 'day' | 'month',
+): CategoryShareBucket[] => {
+  if (mode === 'day') {
+    return dayTotals.map(day => ({
+      key: day.date,
+      label: format(new Date(day.date), 'dd.MM'),
+      value: day.value,
+      categories: day.categories,
+    }));
+  }
+
+  const monthBuckets = dayTotals.reduce<Record<string, CategoryShareBucket>>(
+    (acc, day) => {
+      const key = format(new Date(day.date), 'yyyy-MM');
+      acc[key] ??= {
+        key,
+        label: format(new Date(`${key}-01`), 'MM.yyyy'),
+        value: 0,
+        categories: {},
+      };
+
+      acc[key].value += day.value;
+      Object.entries(day.categories).forEach(([categoryId, value]) => {
+        acc[key].categories[categoryId] ??= 0;
+        acc[key].categories[categoryId] += value;
+      });
+
+      return acc;
+    },
+    {},
+  );
+
+  return Object.values(monthBuckets).sort((a, b) => a.key.localeCompare(b.key));
 };
 
 const Summary = () => {
@@ -93,11 +212,21 @@ const Summary = () => {
     lastDayOfMonth(date.split('-').length > 2 ? new Date(date) : new Date()),
   ]);
   const [axis, setAxis] = useState<[Axis, PickFilter]>(['1-0', '0-0']);
-  const [chartDisplay, setChartDisplay] = useState<string>('pie');
+  const [chartDisplay, setChartDisplay] = useState<'pie' | 'bar' | 'share'>(
+    'pie',
+  );
   const [holidayTagFilter, setHolidayTagFilter] = useState(false);
-  const [dateMenuVisible, setDateMenuVisible] = useState(false);
+  const [isFilterGrid, setIsFilterGrid] = useState(false);
 
   const t = useAppTheme();
+  const {width} = useWindowDimensions();
+  const [chartBoxWidth, setChartBoxWidth] = useState(0);
+  const yAxisLabelWidth = 54;
+  const chartContainerWidth = chartBoxWidth || Math.max(width - 72, 280);
+  const chartWidth = Math.max(chartContainerWidth - yAxisLabelWidth - 8, 220);
+  const handleChartBoxLayout = (event: LayoutChangeEvent) => {
+    setChartBoxWidth(event.nativeEvent.layout.width);
+  };
 
   // selectors
   const stateCategories: Subcategory[] = useAppSelector(selectCategories);
@@ -169,7 +298,8 @@ const Summary = () => {
     [currentGroupOrCategory],
   );
 
-  const handlePieChange = (str: string) => () => setChartDisplay(str);
+  const handleChartTypeChange = (chartType: 'pie' | 'bar' | 'share') =>
+    setChartDisplay(chartType);
 
   const [filters, setFilters] = useState<FilterCategory[]>(availableCategories);
 
@@ -186,9 +316,50 @@ const Summary = () => {
 
   const pieData = buildPieChart(grouped, setCat, stateCategories);
   const barData = buildBarChart(grouped, setCat, stateCategories);
-  const data = chartDisplay === 'pie' ? pieData : barData;
+  const categoryData = chartDisplay === 'bar' ? barData : pieData;
+  const dayTotals = useMemo(
+    () => buildDayTotals(selected, filterDates, filters),
+    [selected, filterDates, filters],
+  );
+  const topCategories = useMemo(
+    () => buildCategoryTotals(selected, filters, stateCategories).slice(0, 4),
+    [selected, filters, stateCategories],
+  );
+  const categoryShareMode = shouldUseMonthlyCategoryShare(dayTotals)
+    ? 'month'
+    : 'day';
+  const categoryShareBuckets = buildCategoryShareBuckets(
+    dayTotals,
+    categoryShareMode,
+  );
+  const categoryShareLabelWidth = categoryShareMode === 'month' ? 64 : 44;
+  const stackData = categoryShareBuckets
+    .filter(bucket => bucket.value > 0)
+    .map(bucket => {
+      const topIds = new Set(topCategories.map(category => category.id));
+      const otherValue = Object.entries(bucket.categories).reduce(
+        (sum, [categoryId, value]) =>
+          topIds.has(categoryId) ? sum : sum + value,
+        0,
+      );
 
-  const handleFilters = (catId: number) => () => {
+      return {
+        label: bucket.label,
+        labelWidth: categoryShareLabelWidth,
+        labelTextStyle: styles.axisLabel,
+        stacks: [
+          ...topCategories.map(category => ({
+            value: bucket.categories[category.id] || 0,
+            color: category.color,
+          })),
+          ...(otherValue > 0
+            ? [{value: otherValue, color: warmColors.chart2}]
+            : []),
+        ],
+      };
+    });
+
+  const handleFilters = (catId: number) => {
     const categoryToAdd = currentGroupOrCategory.find(f => f.id === catId);
     if (!categoryToAdd) {
       return;
@@ -201,206 +372,200 @@ const Summary = () => {
     setFilters(newState);
   };
 
+  const filterItems: SummaryCategoryFilterItem[] = currentGroupOrCategory
+    .map(category => ({
+      id: category.id,
+      label: category.name,
+      color: category.color,
+      selected: filters.some(filter => filter.name === category.name),
+    }))
+    .sort((a, b) =>
+      a.label.localeCompare(b.label, 'pl', {sensitivity: 'base'}),
+    );
+
   const handleAxisChange = (ax: Axis) => {
     setAxis([ax, ax === '1-0' ? '0-0' : axis[1]]);
   };
 
-  const setDatePreset = (dates: [Date, Date]) => () => {
-    setFilterDates(dates);
-    setDateMenuVisible(false);
-  };
-
-  const today = new Date();
-  const previousMonth = subMonths(today, 1);
-
   return (
-    <ScrollView style={{backgroundColor: t.colors.white}}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          paddingHorizontal: 8,
-          marginBottom: 16,
-        }}
+    <ScrollView style={{backgroundColor: t.colors.background}}>
+      <SummaryDateRangeSelector
+        value={filterDates}
+        onChange={setFilterDates}
+        style={{marginHorizontal: 20, marginTop: 5, marginBottom: 20}}
+      />
+      <TotalSpentSummary
+        amount={_.sumBy(categoryData, 'value')}
+        categoryCount={categoryData.length}
+        categoryType={axis[0] === '1-1' ? 'subcategory' : 'category'}
+        dateRange={filterDates}
+      />
+      <SummaryExploreCard
+        groupingControls={
+          <SummaryGroupingControls
+            isSubcategory={axis[0] === '1-1'}
+            holidaySelected={holidayTagFilter}
+            onGroupingChange={grouping =>
+              handleAxisChange(grouping === 'category' ? '1-0' : '1-1')
+            }
+            onHolidayChange={() => setHolidayTagFilter(value => !value)}
+          />
+        }
+        chartTypeControls={
+          <SummaryChartTypeControls
+            chartType={chartDisplay}
+            onChartTypeChange={handleChartTypeChange}
+          />
+        }
+        categoryFilters={
+          <SummaryCategoryFilters
+            items={filterItems}
+            isGrid={isFilterGrid}
+            showDisplayToggle={filterItems.length > 4}
+            hasFilters={filters.length > 0}
+            onDisplayChange={() => setIsFilterGrid(value => !value)}
+            onItemPress={handleFilters}
+            onClearOrReset={
+              filters.length > 0 ? handleRemoveFilters : handleResetFilters
+            }
+          />
+        }
       >
-        <PaperMenu
-          visible={dateMenuVisible}
-          onDismiss={() => setDateMenuVisible(false)}
-          anchor={
-            <IconButton
-              mode="outlined"
-              icon="calendar-range"
-              size={22}
-              style={{marginTop: 8, marginRight: 4}}
-              onPress={() => setDateMenuVisible(true)}
-            />
-          }
-        >
-          <PaperMenu.Item
-            title="Ten miesiąc"
-            onPress={setDatePreset([startOfMonth(today), endOfMonth(today)])}
-          />
-          <PaperMenu.Item
-            title="Poprzedni miesiąc"
-            onPress={setDatePreset([
-              startOfMonth(previousMonth),
-              endOfMonth(previousMonth),
-            ])}
-          />
-          <PaperMenu.Item
-            title="Ostatnie 6 miesięcy"
-            onPress={setDatePreset([
-              startOfMonth(subMonths(today, 5)),
-              endOfMonth(today),
-            ])}
-          />
-          <PaperMenu.Item
-            title="Ten rok"
-            onPress={setDatePreset([startOfYear(today), endOfYear(today)])}
-          />
-        </PaperMenu>
-        <View style={{flex: 1}}>
-          <DatePicker
-            value={filterDates[0]}
-            label="Start"
-            style={{marginBottom: 8}}
-            onChange={(date = filterDates[0]) =>
-              setFilterDates([date, filterDates[1]])
-            }
-          />
-          <DatePicker
-            value={filterDates[1]}
-            label="Koniec"
-            style={{marginBottom: 8}}
-            onChange={(date = filterDates[1]) =>
-              setFilterDates([filterDates[0], date])
-            }
-          />
-        </View>
-      </View>
-      <View style={{alignItems: 'center', marginBottom: 44}}>
-        <Text style={{fontSize: 16, fontWeight: 'bold'}}>
-          Wydano: {formatPrice(_.sumBy(data, 'value'))}
-        </Text>
-      </View>
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <GroupCategory axis={axis} onPress={handleAxisChange} />
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
-        >
-          <Chip
-            selected={holidayTagFilter}
-            mode={holidayTagFilter ? 'flat' : 'outlined'}
-            showSelectedCheck={false}
-            style={{marginRight: 4}}
-            onPress={() => setHolidayTagFilter(value => !value)}
-          >
-            🏖️ Urlop
-          </Chip>
-          <IconButton
-            icon="chart-donut"
-            onPress={handlePieChange('pie')}
-            iconColor={chartDisplay === 'pie' ? 'blue' : undefined}
-          />
-          <IconButton
-            icon="chart-bar"
-            onPress={handlePieChange('bar')}
-            iconColor={chartDisplay === 'bar' ? 'blue' : undefined}
-          />
-        </View>
-      </View>
-      {chartDisplay === 'pie' ? (
-        <PieChartBar
-          data={pieData}
-          labelsPosition="onBorder"
-          innerRadius={70}
-          strokeWidth={2}
-          strokeColor="white"
-          onPress={(item: {label: string; id: string}) => {
-            if (axis[0] === '1-1') {
-              const dates = filterDates.map(d => format(d, 'yyyy-MM-dd'));
-              let category: string | undefined;
-              const cat: Subcategory | undefined = getCategoryName(
-                +decId(item.id)[1],
-                'id',
-              );
-              if (cat) category = cat.name;
+        {chartDisplay === 'pie' ? (
+          <PieChartBar
+            data={pieData}
+            labelsPosition="onBorder"
+            innerRadius={70}
+            strokeWidth={2}
+            strokeColor={t.colors.card}
+            onPress={(item: {label: string; id: string}) => {
+              if (axis[0] === '1-1') {
+                const dates = filterDates.map(d => format(d, 'yyyy-MM-dd'));
+                let category: string | undefined;
+                const cat: Subcategory | undefined = getCategoryName(
+                  +decId(item.id)[1],
+                  'id',
+                );
+                if (cat) category = cat.name;
 
-              router.navigate({
-                pathname: '/summary/list',
-                params: {
-                  dates,
-                  category: category || '',
-                  holidayTag: holidayTagFilter ? 'true' : '',
-                },
-              });
-              return;
-            }
-            setAxis(['1-1', `${decId(item.id)[0]}-0`]);
-            //else do navigation
-          }}
-          showText
-          centerLabelComponent={() => {
-            return (
-              <View style={{justifyContent: 'center', alignItems: 'center'}}>
-                <Text
-                  style={{fontSize: 12, color: 'black', fontWeight: 'bold'}}
-                >
-                  {formatPrice(_.sumBy(pieData, 'value'))}
-                </Text>
-                {pieData.slice(0, 4).map(({label, value}) => (
+                router.navigate({
+                  pathname: '/summary/list',
+                  params: {
+                    dates,
+                    category: category || '',
+                    holidayTag: holidayTagFilter ? 'true' : '',
+                  },
+                });
+                return;
+              }
+              setAxis(['1-1', `${decId(item.id)[0]}-0`]);
+              //else do navigation
+            }}
+            showText
+            centerLabelComponent={() => {
+              return (
+                <View style={{justifyContent: 'center', alignItems: 'center'}}>
                   <Text
-                    key={label}
                     style={{
-                      fontSize: 10,
-                      color: 'black',
+                      fontSize: 12,
+                      color: t.colors.onBackground,
+                      fontWeight: 'bold',
                     }}
-                  >{`${shortenText(label)}(${formatPrice(value)})`}</Text>
-                ))}
-                <Text style={{fontSize: 10, color: 'black'}}>...więcej</Text>
-              </View>
-            );
-          }}
-        />
-      ) : (
-        <BarChart
-          barData={barData}
-          onPress={(item: {label: string; id: string}) => {
-            if (axis[0] === '1-1') {
-              const dates = filterDates.map(d => format(d, 'yyyy-MM-dd'));
-              let category: string | undefined;
-              const cat: Subcategory | undefined = getCategoryName(
-                +decId(item.id)[1],
-                'id',
+                  >
+                    {formatPrice(_.sumBy(pieData, 'value'))}
+                  </Text>
+                  {pieData.slice(0, 4).map(({label, value}) => (
+                    <Text
+                      key={label}
+                      style={{
+                        fontSize: 10,
+                        color: t.colors.onBackground,
+                      }}
+                    >{`${shortenText(label)}(${formatPrice(value)})`}</Text>
+                  ))}
+                  <Text style={{fontSize: 10, color: t.colors.onBackground}}>
+                    ...więcej
+                  </Text>
+                </View>
               );
-              if (cat) category = cat.name;
-
-              router.navigate({
-                pathname: '/summary/list',
-                params: {
-                  dates,
-                  category: category || '',
-                  holidayTag: holidayTagFilter ? 'true' : '',
-                },
-              });
-              return;
-            }
-            setAxis(['1-1', `${decId(item.id)[0]}-0`]);
-          }}
-        />
-      )}
-      <View style={{alignItems: 'center'}}>
-        {axis[0] === '1-1' ? (
-          <IconButton
-            mode="contained"
-            onPress={() => handleAxisChange('1-0')}
-            icon={'arrow-left-top'}
+            }}
           />
-        ) : null}
-      </View>
+        ) : chartDisplay === 'bar' ? (
+          <BarChart
+            barData={barData}
+            onPress={(item: {label: string; id: string}) => {
+              if (axis[0] === '1-1') {
+                const dates = filterDates.map(d => format(d, 'yyyy-MM-dd'));
+                let category: string | undefined;
+                const cat: Subcategory | undefined = getCategoryName(
+                  +decId(item.id)[1],
+                  'id',
+                );
+                if (cat) category = cat.name;
+
+                router.navigate({
+                  pathname: '/summary/list',
+                  params: {
+                    dates,
+                    category: category || '',
+                    holidayTag: holidayTagFilter ? 'true' : '',
+                  },
+                });
+                return;
+              }
+              setAxis(['1-1', `${decId(item.id)[0]}-0`]);
+            }}
+          />
+        ) : stackData.length ? (
+          <>
+            <View style={styles.chartBox} onLayout={handleChartBoxLayout}>
+              <BarChart
+                barData={[]}
+                stackData={stackData}
+                width={chartWidth}
+                parentWidth={chartContainerWidth}
+                yAxisLabelWidth={yAxisLabelWidth}
+                rulesLength={chartWidth}
+                xAxisLength={chartWidth}
+                endSpacing={16}
+                disableScroll={false}
+                nestedScrollEnabled
+                showScrollIndicator={false}
+                xAxisLabelTextStyle={styles.axisLabel}
+                height={180}
+                barWidth={18}
+                spacing={12}
+                initialSpacing={8}
+                xAxisTextNumberOfLines={1}
+              />
+            </View>
+            <View style={styles.legend}>
+              {topCategories.map(category => (
+                <View key={category.id} style={styles.legendItem}>
+                  <View
+                    style={[
+                      styles.legendDot,
+                      {backgroundColor: category.color},
+                    ]}
+                  />
+                  <Text style={styles.legendText}>{category.name}</Text>
+                </View>
+              ))}
+              <View style={styles.legendItem}>
+                <View
+                  style={[
+                    styles.legendDot,
+                    {backgroundColor: warmColors.chart2},
+                  ]}
+                />
+                <Text style={styles.legendText}>Inne</Text>
+              </View>
+            </View>
+          </>
+        ) : (
+          <Text style={styles.empty}>Brak danych dla wybranych filtrów.</Text>
+        )}
+      </SummaryExploreCard>
 
       <ChartDetailsTestingViews
         selected={selected}
@@ -410,52 +575,44 @@ const Summary = () => {
         holidayTagFilter={holidayTagFilter}
       />
 
-      <View
-        style={{
-          marginTop: 48,
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-        }}
-      >
-        {currentGroupOrCategory.map(c => {
-          const isSelected = !!filters.find(f => f.name === c.name);
-          return (
-            <Chip
-              key={c.id}
-              selectedColor={
-                filters.find(f => f.name === c.name)?.color || '#a6a6a6'
-              }
-              // rippleColor={c.color}
-              mode="outlined"
-              showSelectedCheck={false}
-              icon={undefined}
-              style={{margin: 2, maxWidth: '50%'}}
-              selected={isSelected}
-              onPress={handleFilters(c.id)}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: isSelected ? 600 : 400,
-                  color:
-                    filters.find(f => f.name === c.name)?.color || '#a6a6a6',
-                  textDecorationLine: isSelected ? undefined : 'line-through',
-                }}
-              >
-                {c.name}
-              </Text>
-            </Chip>
-          );
-        })}
-      </View>
-      <Button
-        onPress={filters.length > 0 ? handleRemoveFilters : handleResetFilters}
-      >
-        {filters.length > 0 ? 'Usuń filtry' : 'Zaznacz wszystkie'}
-      </Button>
       <View style={{height: 80}} />
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  chartBox: {
+    maxWidth: '100%',
+    overflow: 'hidden',
+  },
+  axisLabel: {
+    color: warmColors.mutedForeground,
+    fontSize: 10,
+  },
+  legend: {
+    marginTop: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  legendItem: {
+    marginRight: 12,
+    marginBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    marginRight: 4,
+    borderRadius: 5,
+  },
+  legendText: {
+    fontSize: 12,
+    color: warmColors.foreground,
+  },
+  empty: {
+    color: warmColors.mutedForeground,
+  },
+});
 
 export default Summary;

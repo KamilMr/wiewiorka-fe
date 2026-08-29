@@ -1,6 +1,7 @@
 import {useEffect} from 'react';
 import {View} from 'react-native';
 import {Stack, type ErrorBoundaryProps} from 'expo-router';
+import {StatusBar} from 'expo-status-bar';
 import {Provider} from 'react-redux';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {KeyboardProvider} from 'react-native-keyboard-controller';
@@ -13,6 +14,7 @@ import {Provider as PaperProvider} from 'react-native-paper';
 
 import {store, persistor} from '@/redux/store';
 import {paperTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {SnackBar, Text, Button} from '@/components';
 import {useSync, useAppSelector, useAppDispatch} from '@/hooks';
 import {logError, log, setAttribute} from '@/utils/crashlytics';
@@ -66,13 +68,19 @@ export const ErrorBoundary = ({error, retry}: ErrorBoundaryProps) => {
   logError(error, 'RootErrorBoundary');
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: warmColors.background,
+      }}
+    >
       <Text>Coś poszło nie tak</Text>
       <Button onPress={retry}>Spróbuj ponownie</Button>
     </View>
   );
-}
-
+};
 
 const RootLayout = () => {
   const [loaded] = useFonts({
@@ -93,14 +101,25 @@ const RootLayout = () => {
   }
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
+    <GestureHandlerRootView
+      style={{flex: 1, backgroundColor: warmColors.background}}
+    >
+      <StatusBar style="dark" backgroundColor={warmColors.background} />
       <Provider store={store}>
         <PersistGate persistor={persistor}>
           <Sync />
           <SocketConnector />
           <PaperProvider theme={paperTheme}>
             <KeyboardProvider>
-              <Stack initialRouteName="(tabs)">
+              <Stack
+                initialRouteName="(tabs)"
+                screenOptions={{
+                  contentStyle: {backgroundColor: warmColors.background},
+                  headerStyle: {backgroundColor: warmColors.card},
+                  headerTintColor: warmColors.foreground,
+                  headerTitleStyle: {color: warmColors.foreground},
+                }}
+              >
                 <Stack.Screen name="sign-in" options={{headerShown: false}} />
                 <Stack.Screen name="sign-up" options={{headerShown: false}} />
                 <Stack.Screen

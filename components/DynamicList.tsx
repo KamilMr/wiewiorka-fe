@@ -16,6 +16,7 @@ import WarmCard from '@/components/warm/WarmCard';
 import WarmIconChip from '@/components/warm/WarmIconChip';
 import WarmSectionHeader from '@/components/warm/WarmSectionHeader';
 import {warmColors} from '@/constants/warmTheme';
+import {formatPrice} from '@/common';
 
 interface SelExpense {
   id: number | string;
@@ -59,9 +60,9 @@ const hasHoliday = (tags?: SelExpense['tags']) => {
 };
 
 const hexWithAlpha = (hex: string, alpha: number) => {
-  if (!hex) return 'rgba(180, 83, 9, 0.15)';
+  if (!hex) return warmColors.decorPrimary;
   const h = hex.replace('#', '');
-  if (h.length !== 6) return `rgba(180, 83, 9, ${alpha})`;
+  if (h.length !== 6) return warmColors.decorPrimary;
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
@@ -74,15 +75,6 @@ const formatGroupLabel = (dateKey: string) => {
   if (isYesterday(d))
     return `Wczoraj, ${formatDate(d, 'dd MMM', {locale: pl})}`;
   return formatDate(d, 'EEEE, dd MMM', {locale: pl});
-};
-
-const formatPrice = (price: string | number) => {
-  const n = typeof price === 'number' ? price : parseFloat(String(price));
-  if (!isFinite(n)) return String(price);
-  return `${n.toLocaleString('pl-PL', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} zł`;
 };
 
 export default function DynamicRecordList({
@@ -112,7 +104,10 @@ export default function DynamicRecordList({
           <WarmCard variant="glass" padded={false}>
             {records[dateKey].map((exp, idx) => {
               const isLast = idx === records[dateKey].length - 1;
-              const amount = `${exp.exp ? '-' : '+'}${formatPrice(exp.price)}`;
+              const amount = `${exp.exp ? '-' : '+'}${formatPrice(
+                Math.abs(Number(exp.price)),
+                {roundUp: false},
+              )}`;
               const amountColor = exp.exp
                 ? warmColors.danger
                 : warmColors.success;
@@ -152,7 +147,7 @@ export default function DynamicRecordList({
                       <IconButton
                         icon="sync-off"
                         size={14}
-                        iconColor="#FF8C00"
+                        iconColor={warmColors.primary}
                         style={styles.syncIcon}
                       />
                     )}

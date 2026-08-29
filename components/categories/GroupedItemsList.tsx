@@ -13,6 +13,7 @@ import {CircleIcon} from '../Icons';
 import {useAppDispatch} from '@/hooks';
 import {addSubcategoryLocal} from '@/redux/main/thunks';
 import {useState} from 'react';
+import {warmColors} from '@/constants/warmTheme';
 
 const WIDTH_ICON_VIEW = 45;
 
@@ -37,7 +38,7 @@ const GroupedItem = ({
           <IconButton
             icon="cloud-upload-outline"
             size={16}
-            iconColor="#FFA500"
+            iconColor={warmColors.primary}
             disabled
           />
         )}
@@ -80,7 +81,8 @@ const GroupedItemsList = ({
   const [expanded, setExpanded] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const dispatch = useAppDispatch();
-  const isGroupNotSynced = typeof groupId === 'string' && groupId.startsWith('f_g_');
+  const isGroupNotSynced =
+    typeof groupId === 'string' && groupId.startsWith('f_g_');
 
   const handleSave = () => {
     dispatch(
@@ -114,13 +116,15 @@ const GroupedItemsList = ({
           ) : (
             <View style={{width: WIDTH_ICON_VIEW}} />
           )}
-          <View style={{flexDirection: 'row', alignItems: 'center', width: '70%'}}>
+          <View
+            style={{flexDirection: 'row', alignItems: 'center', width: '70%'}}
+          >
             <Text>{`${nameOfGroup} (${items.length})`}</Text>
             {isGroupNotSynced && (
               <IconButton
                 icon="cloud-upload-outline"
                 size={16}
-                iconColor="#FFA500"
+                iconColor={warmColors.primary}
                 disabled
               />
             )}

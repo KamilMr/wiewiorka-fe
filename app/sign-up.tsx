@@ -54,9 +54,10 @@ const Signup = () => {
     data.password.length >= 6 &&
     terms;
 
-  const handleData = (field: 'name' | 'email' | 'password') => (text: string) => {
-    setData(d => ({...d, [field]: text}));
-  };
+  const handleData =
+    (field: 'name' | 'email' | 'password') => (text: string) => {
+      setData(d => ({...d, [field]: text}));
+    };
 
   const handleSave = () => {
     if (!isFormReady) return;
@@ -215,8 +216,7 @@ const Signup = () => {
               style={styles.termsLabelWrap}
             >
               <Text style={styles.termsText}>
-                Akceptuję{' '}
-                <Text style={styles.termsLink}>Regulamin</Text> oraz{' '}
+                Akceptuję <Text style={styles.termsLink}>Regulamin</Text> oraz{' '}
                 <Text style={styles.termsLink}>Politykę prywatności</Text>
               </Text>
             </Pressable>
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.cardBorder,
     padding: 20,
-    shadowColor: '#4a3b33',
+    shadowColor: theme.foreground,
     shadowOpacity: 0.08,
     shadowOffset: {width: 0, height: 4},
     shadowRadius: 12,

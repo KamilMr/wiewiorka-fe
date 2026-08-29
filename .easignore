@@ -1,3 +1,21 @@
-# Override .gitignore for EAS builds
-# Include google-services.json for local builds
+# EAS uses this file instead of .gitignore. Keep generated native projects out
+# so app.config.js remains the source of truth for app identity and version.
+node_modules/
+.env
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+android/
+ios/
+_dev/
+expo-env.d.ts
+
+# Firebase credentials needed by the Android build.
 !google-services.json

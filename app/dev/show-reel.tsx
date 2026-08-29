@@ -37,12 +37,16 @@ const ShowReelPage = () => {
 
   return (
     <SafeScrollContainer
-      style={[styles.root, {backgroundColor: t.colors.white}]}
+      style={[styles.root, {backgroundColor: t.colors.background}]}
     >
       <View>
-        <Text style={styles.title}>Show Reel</Text>
+        <Text style={[styles.title, {color: t.colors.foreground}]}>
+          Show Reel
+        </Text>
 
-        <Text style={styles.content}>Testing Enhanced Price Input</Text>
+        <Text style={[styles.content, {color: t.colors.foreground}]}>
+          Testing Enhanced Price Input
+        </Text>
         <EnhancedPriceInput
           value={priceV2}
           onValueChange={(v): void => {
@@ -55,7 +59,9 @@ const ShowReelPage = () => {
           label="Cena"
         />
 
-        <Text style={[styles.content, {marginTop: 20}]}>
+        <Text
+          style={[styles.content, {color: t.colors.foreground, marginTop: 20}]}
+        >
           Testing Currency Price Input
         </Text>
         <CurrencyPriceInput

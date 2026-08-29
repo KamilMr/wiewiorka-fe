@@ -10,7 +10,7 @@ const NoData = ({text = 'Brak danych'}) => {
         height: 200,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: t.colors.white,
+        backgroundColor: t.colors.surface,
       }}
     >
       <Text variant="titleLarge">{text}</Text>

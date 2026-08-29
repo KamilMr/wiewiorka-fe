@@ -18,6 +18,7 @@ import {
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 import {normalize} from '@/common';
+import {warmColors} from '@/constants/warmTheme';
 
 export type Items = Array<{label: string; value: string}>;
 
@@ -93,7 +94,7 @@ const DropdownComponent = ({
       <Menu
         visible={isVisible}
         onDismiss={handleMenuDismiss}
-        style={{backgroundColor: 'white', width: '80%'}}
+        style={{backgroundColor: warmColors.popover, width: '80%'}}
         contentStyle={{
           maxHeight: 400,
           marginBottom: 10,
@@ -111,7 +112,7 @@ const DropdownComponent = ({
             disabled={disable}
             style={[
               styles.dropdownContainer,
-              isVisible && {borderColor: 'blue'},
+              isVisible && {borderColor: warmColors.ring},
               disable && styles.disabled,
             ]}
           >
@@ -119,7 +120,7 @@ const DropdownComponent = ({
               <View style={styles.dropdownLeft}>
                 <AntDesign
                   style={styles.icon}
-                  color={isVisible ? 'blue' : 'black'}
+                  color={isVisible ? warmColors.ring : warmColors.foreground}
                   name="select1"
                   size={20}
                 />
@@ -130,7 +131,7 @@ const DropdownComponent = ({
               <AntDesign
                 name={isVisible ? 'up' : 'down'}
                 size={16}
-                color={isVisible ? 'blue' : 'black'}
+                color={isVisible ? warmColors.ring : warmColors.foreground}
               />
             </View>
           </TouchableRipple>
@@ -208,7 +209,7 @@ export default DropdownComponent;
 const styles = StyleSheet.create({
   dropdownContainer: {
     height: 50,
-    borderColor: 'gray',
+    borderColor: warmColors.border,
     borderWidth: 0.5,
     borderRadius: 8,
     paddingHorizontal: 8,
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
   },
   label: {
     position: 'absolute',
-    backgroundColor: 'white',
+    backgroundColor: warmColors.background,
     left: 22,
     top: 8,
     zIndex: 999,
@@ -247,16 +248,16 @@ const styles = StyleSheet.create({
   searchContainer: {
     padding: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: warmColors.border,
   },
   scrollableContent: {
     maxHeight: 300,
   },
   searchInput: {
-    backgroundColor: 'white',
+    backgroundColor: warmColors.background,
   },
   noResultsText: {
-    color: '#666',
+    color: warmColors.mutedForeground,
     fontStyle: 'italic',
   },
 });

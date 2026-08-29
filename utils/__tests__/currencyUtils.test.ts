@@ -1,7 +1,18 @@
-import {convertCurrency} from '../currencyUtils';
+import {convertCurrency, formatGrosze} from '../currencyUtils';
 
 const eur = {code: 'EUR', symbol: '€', name: 'Euro'};
 const pln = {code: 'PLN', symbol: 'zł', name: 'Polish złoty'};
+
+describe('formatGrosze', () => {
+  it.each([
+    [200, '2 zł'],
+    [213, '2.13 zł'],
+    [-213, '-2.13 zł'],
+    [123432, '1,234.32 zł'],
+  ])('formats %i grosze as %s', (grosze, expected) => {
+    expect(formatGrosze(grosze)).toBe(expected);
+  });
+});
 
 describe('convertCurrency', () => {
   it('uses a 1:1 rate when both currencies are the same', () => {

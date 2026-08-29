@@ -32,11 +32,15 @@ const DropdownPage = () => {
   ];
 
   return (
-    <View style={[styles.root, {backgroundColor: t.colors.white}]}>
-      <Text style={styles.title}>Dropdown Examples</Text>
+    <View style={[styles.root, {backgroundColor: t.colors.background}]}>
+      <Text style={[styles.title, {color: t.colors.foreground}]}>
+        Dropdown Examples
+      </Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Owoce</Text>
+        <Text style={[styles.sectionTitle, {color: t.colors.foreground}]}>
+          Owoce
+        </Text>
         <Select
           items={mockFruits}
           value={selectedValue}
@@ -45,14 +49,18 @@ const DropdownPage = () => {
           showDivider={true}
         />
         {selectedValue && (
-          <Text style={styles.selectedText}>
+          <Text
+            style={[styles.selectedText, {color: t.colors.mutedForeground}]}
+          >
             Wybrano: {mockFruits.find(f => f.value === selectedValue)?.label}
           </Text>
         )}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Kategorie (Current Select)</Text>
+        <Text style={[styles.sectionTitle, {color: t.colors.foreground}]}>
+          Kategorie (Current Select)
+        </Text>
         <Select
           items={mockCategories}
           value={selectedCategory}
@@ -60,7 +68,9 @@ const DropdownPage = () => {
           placeholder="Wybierz kategorię"
         />
         {selectedCategory && (
-          <Text style={styles.selectedText}>
+          <Text
+            style={[styles.selectedText, {color: t.colors.mutedForeground}]}
+          >
             Wybrano:{' '}
             {mockCategories.find(c => c.value === selectedCategory)?.label}
           </Text>
@@ -68,7 +78,9 @@ const DropdownPage = () => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Kategorie (Element Dropdown)</Text>
+        <Text style={[styles.sectionTitle, {color: t.colors.foreground}]}>
+          Kategorie (Element Dropdown)
+        </Text>
         <ElementDropdown
           items={mockCategories}
           value={selectedCategory}
@@ -76,7 +88,9 @@ const DropdownPage = () => {
           placeholder="Wybierz kategorię"
         />
         {selectedCategory && (
-          <Text style={styles.selectedText}>
+          <Text
+            style={[styles.selectedText, {color: t.colors.mutedForeground}]}
+          >
             Wybrano:{' '}
             {mockCategories.find(c => c.value === selectedCategory)?.label}
           </Text>
@@ -103,12 +117,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 12,
-    color: '#333',
   },
   selectedText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#666',
     fontStyle: 'italic',
   },
 });

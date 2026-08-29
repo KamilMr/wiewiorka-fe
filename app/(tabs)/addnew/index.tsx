@@ -598,7 +598,10 @@ export default function AddNew() {
         </View>
         <View style={styles.actionControls}>
           {id ? (
-            <ButtonWithStatus textColor="red" onPress={handleDelete}>
+            <ButtonWithStatus
+              textColor={warmColors.destructive}
+              onPress={handleDelete}
+            >
               Usuń
             </ButtonWithStatus>
           ) : null}

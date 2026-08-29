@@ -1,7 +1,13 @@
 import {useEffect, useRef} from 'react';
 import {View, StyleSheet, Animated} from 'react-native';
-import {Surface, Divider, Chip, Button as PaperButton} from 'react-native-paper';
+import {
+  Surface,
+  Divider,
+  Chip,
+  Button as PaperButton,
+} from 'react-native-paper';
 import {sizes} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import MultiSelectCategories, {Items} from './MultiSelectCategories';
 import CustomDatePicker from './DatePicker';
 
@@ -57,21 +63,21 @@ const FilterDrawer = ({
         {/* Date Range Section */}
         <View style={[styles.section, {flexDirection: 'row'}]}>
           <View style={{width: '50%', height: 80}}>
-          <CustomDatePicker
-            label="Od"
-            value={filters.dateFrom}
-            onChange={date => onFiltersChange({dateFrom: date || null})}
-            style={styles.datePicker}
-          />
+            <CustomDatePicker
+              label="Od"
+              value={filters.dateFrom}
+              onChange={date => onFiltersChange({dateFrom: date || null})}
+              style={styles.datePicker}
+            />
           </View>
           <View style={styles.dateSpacing} />
           <View style={{width: '50%', height: 80}}>
-          <CustomDatePicker
-            label="Do"
-            value={filters.dateTo}
-            onChange={date => onFiltersChange({dateTo: date || null})}
-            style={styles.datePicker}
-          />
+            <CustomDatePicker
+              label="Do"
+              value={filters.dateTo}
+              onChange={date => onFiltersChange({dateTo: date || null})}
+              style={styles.datePicker}
+            />
           </View>
         </View>
 
@@ -166,6 +172,6 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     flex: 1,
-    borderColor: '#d32f2f',
+    borderColor: warmColors.destructive,
   },
 });

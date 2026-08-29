@@ -12,6 +12,7 @@ import {
 } from 'react-native-paper';
 import {convertCurrency} from '../utils/currencyUtils';
 import {RateType} from '../types/nbpTypes';
+import {warmColors} from '@/constants/warmTheme';
 
 interface Currency {
   code: string;
@@ -317,53 +318,58 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
           )}
 
           {/* Rate Type Selector - only show for EUR/PLN conversions */}
-          {showRateTypeSelector && 
-           (selectedCurrency.code === 'EUR' || targetCurrency.code === 'EUR') && (
-            <View style={styles.rateTypeSection}>
-              <Text style={styles.rateTypeLabel}>Typ kursu:</Text>
-              <Menu
-                visible={showRateTypeMenu}
-                onDismiss={() => setShowRateTypeMenu(false)}
-                anchor={
-                  <Pressable
-                    onPress={() => setShowRateTypeMenu(true)}
-                    disabled={disabled}
-                    style={styles.rateTypeSelector}
-                  >
-                    <Text style={styles.rateTypeText}>
-                      {rateType === 'bid' ? 'Kupno' : rateType === 'ask' ? 'Sprzedaż' : 'Średni'}
-                    </Text>
-                    <Text style={styles.dropdownIcon}>▼</Text>
-                  </Pressable>
-                }
-              >
-                <Menu.Item
-                  onPress={() => {
-                    onRateTypeChange?.('bid');
-                    setShowRateTypeMenu(false);
-                  }}
-                  title="Kupno"
-                  leadingIcon={rateType === 'bid' ? 'check' : undefined}
-                />
-                <Menu.Item
-                  onPress={() => {
-                    onRateTypeChange?.('ask');
-                    setShowRateTypeMenu(false);
-                  }}
-                  title="Sprzedaż"
-                  leadingIcon={rateType === 'ask' ? 'check' : undefined}
-                />
-                <Menu.Item
-                  onPress={() => {
-                    onRateTypeChange?.('mid');
-                    setShowRateTypeMenu(false);
-                  }}
-                  title="Średni"
-                  leadingIcon={rateType === 'mid' ? 'check' : undefined}
-                />
-              </Menu>
-            </View>
-          )}
+          {showRateTypeSelector &&
+            (selectedCurrency.code === 'EUR' ||
+              targetCurrency.code === 'EUR') && (
+              <View style={styles.rateTypeSection}>
+                <Text style={styles.rateTypeLabel}>Typ kursu:</Text>
+                <Menu
+                  visible={showRateTypeMenu}
+                  onDismiss={() => setShowRateTypeMenu(false)}
+                  anchor={
+                    <Pressable
+                      onPress={() => setShowRateTypeMenu(true)}
+                      disabled={disabled}
+                      style={styles.rateTypeSelector}
+                    >
+                      <Text style={styles.rateTypeText}>
+                        {rateType === 'bid'
+                          ? 'Kupno'
+                          : rateType === 'ask'
+                            ? 'Sprzedaż'
+                            : 'Średni'}
+                      </Text>
+                      <Text style={styles.dropdownIcon}>▼</Text>
+                    </Pressable>
+                  }
+                >
+                  <Menu.Item
+                    onPress={() => {
+                      onRateTypeChange?.('bid');
+                      setShowRateTypeMenu(false);
+                    }}
+                    title="Kupno"
+                    leadingIcon={rateType === 'bid' ? 'check' : undefined}
+                  />
+                  <Menu.Item
+                    onPress={() => {
+                      onRateTypeChange?.('ask');
+                      setShowRateTypeMenu(false);
+                    }}
+                    title="Sprzedaż"
+                    leadingIcon={rateType === 'ask' ? 'check' : undefined}
+                  />
+                  <Menu.Item
+                    onPress={() => {
+                      onRateTypeChange?.('mid');
+                      setShowRateTypeMenu(false);
+                    }}
+                    title="Średni"
+                    leadingIcon={rateType === 'mid' ? 'check' : undefined}
+                  />
+                </Menu>
+              </View>
+            )}
         </View>
 
         {/* Calculator Accessory Bar */}
@@ -397,7 +403,9 @@ const CurrencyPriceInput: React.FC<CurrencyPriceInputProps> = ({
               style={[styles.calcButton, styles.calcButtonEquals]}
               onPress={handleCalculationConfirm}
             >
-              <Text style={[styles.calcButtonText, styles.calcButtonEqualsText]}>
+              <Text
+                style={[styles.calcButtonText, styles.calcButtonEqualsText]}
+              >
                 =
               </Text>
             </TouchableOpacity>
@@ -476,8 +484,8 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderColor: warmColors.border,
+    backgroundColor: warmColors.card,
   },
   mainSection: {
     padding: 16,
@@ -505,7 +513,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   currencySelectorPressed: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: warmColors.muted,
   },
   currencySymbol: {
     fontSize: 24,
@@ -514,7 +522,7 @@ const styles = StyleSheet.create({
   },
   dropdownIcon: {
     fontSize: 12,
-    color: '#757575',
+    color: warmColors.mutedForeground,
   },
   conversionSection: {
     flexDirection: 'row',
@@ -527,11 +535,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   conversionButtonPressed: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: warmColors.muted,
   },
   conversionText: {
     fontSize: 16,
-    color: '#757575',
+    color: warmColors.mutedForeground,
   },
   exchangeRateButton: {
     paddingHorizontal: 4,
@@ -547,39 +555,39 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   disabledText: {
-    color: '#BDBDBD',
+    color: warmColors.mutedForeground,
     opacity: 0.6,
   },
   calculatorBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: warmColors.border,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: warmColors.muted,
     gap: 8,
   },
   calcButton: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: warmColors.card,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: warmColors.border,
   },
   calcButtonEquals: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
+    backgroundColor: warmColors.primary,
+    borderColor: warmColors.primary,
   },
   calcButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#424242',
+    color: warmColors.foreground,
   },
   calcButtonEqualsText: {
-    color: '#FFFFFF',
+    color: warmColors.primaryForeground,
   },
   rateTypeSection: {
     flexDirection: 'row',
@@ -588,11 +596,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: warmColors.border,
   },
   rateTypeLabel: {
     fontSize: 14,
-    color: '#757575',
+    color: warmColors.mutedForeground,
   },
   rateTypeSelector: {
     flexDirection: 'row',
@@ -600,7 +608,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: warmColors.muted,
   },
   rateTypeText: {
     fontSize: 14,

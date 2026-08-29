@@ -44,6 +44,10 @@ const SummaryCard = (props: Omit<SummaryCardProps, 'id'>) => {
 
       <View style={styles.amountRow}>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Wpłynęło ${formatPrice(
+            income - sumCosts < 0 ? 0 : income - sumCosts,
+          )}`}
           onPress={() =>
             router.navigate({
               pathname: '/income-summary',
@@ -65,14 +69,20 @@ const SummaryCard = (props: Omit<SummaryCardProps, 'id'>) => {
             />
           </View>
           <View style={styles.amountContent}>
-            <Text style={styles.amountLabel}>Wpłynęło</Text>
-            <Text style={[styles.amount, styles.incomeAmount]}>
+            <Text
+              style={[styles.amount, styles.incomeAmount]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {formatPrice(income - sumCosts < 0 ? 0 : income - sumCosts)}
             </Text>
           </View>
         </Pressable>
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Wydano ${formatPrice(outcome - sumCosts)}`}
           onPress={handleNavigate(date.split('/').reverse().join('-') + '-01')}
           style={({pressed}) => [
             styles.amountButton,
@@ -89,8 +99,12 @@ const SummaryCard = (props: Omit<SummaryCardProps, 'id'>) => {
             />
           </View>
           <View style={styles.amountContent}>
-            <Text style={styles.amountLabel}>Wydano</Text>
-            <Text style={[styles.amount, styles.expenseAmount]}>
+            <Text
+              style={[styles.amount, styles.expenseAmount]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {formatPrice(outcome - sumCosts)}
             </Text>
           </View>
@@ -137,11 +151,11 @@ const styles = StyleSheet.create({
   amountButton: {
     flex: 1,
     minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
+    minHeight: 56,
+    position: 'relative',
+    justifyContent: 'center',
     borderRadius: warmRadius.lg,
     padding: 12,
-    gap: 8,
   },
   incomeButton: {
     backgroundColor: warmColors.successBackground,
@@ -153,6 +167,10 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   icon: {
+    position: 'absolute',
+    top: -10,
+    right: -4,
+    zIndex: 1,
     width: 30,
     height: 30,
     borderRadius: 15,
@@ -166,17 +184,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(225, 29, 72, 0.12)',
   },
   amountContent: {
-    flex: 1,
     minWidth: 0,
-  },
-  amountLabel: {
-    color: warmColors.mutedForeground,
-    fontSize: 11,
-    marginBottom: 2,
   },
   amount: {
     fontSize: 14,
     fontWeight: '700',
+    textAlign: 'center',
   },
   incomeAmount: {
     color: warmColors.success,

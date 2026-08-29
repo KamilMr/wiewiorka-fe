@@ -3,6 +3,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -19,9 +20,9 @@ import {NoData, Text} from '@/components';
 import FilterDrawer, {FilterState} from '@/components/FilterDrawer';
 import WarmPill from '@/components/warm/WarmPill';
 import WarmCard from '@/components/warm/WarmCard';
-import {isCloseToBottom} from '@/common';
+import {formatPrice, isCloseToBottom} from '@/common';
 import {selectRecords, selectCategoriesByUsage} from '@/redux/main/selectors';
-import {useAppSelector} from '@/hooks';
+import {useAppSelector, usePullToRefresh} from '@/hooks';
 import {warmColors, warmRadius, warmShadow} from '@/constants/warmTheme';
 
 type RecordType = 'all' | 'income' | 'expense';
@@ -44,6 +45,7 @@ const Records = () => {
     dateTo: null,
     holidayTag: false,
   });
+  const {refreshing, onRefresh} = usePullToRefresh();
 
   const categoriesByUsage = useAppSelector(selectCategoriesByUsage);
   const categoryItems = categoriesByUsage.map(cat => ({
@@ -72,7 +74,9 @@ const Records = () => {
             filters.dateFrom
               ? format(filters.dateFrom, 'yyyy-MM-dd')
               : '1900-01-01',
-            filters.dateTo ? format(filters.dateTo, 'yyyy-MM-dd') : '2100-12-31',
+            filters.dateTo
+              ? format(filters.dateTo, 'yyyy-MM-dd')
+              : '2100-12-31',
           ]
         : undefined,
     [filters.dateFrom, filters.dateTo],
@@ -121,12 +125,6 @@ const Records = () => {
     });
     return {income, expense, net: income - expense};
   }, [records, filters.dateFrom, filters.dateTo]);
-
-  const formatPLN = (n: number) =>
-    `${n < 0 ? '-' : ''}${Math.abs(n).toLocaleString('pl-PL', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })} zł`;
 
   const handleScroll = ({
     nativeEvent,
@@ -184,7 +182,8 @@ const Records = () => {
     if (filters.dateFrom && filters.dateTo) {
       return `${format(filters.dateFrom, 'dd MMM')} - ${format(filters.dateTo, 'dd MMM')}`;
     }
-    if (filters.dateFrom) return `Od ${format(filters.dateFrom, 'dd MMM yyyy')}`;
+    if (filters.dateFrom)
+      return `Od ${format(filters.dateFrom, 'dd MMM yyyy')}`;
     if (filters.dateTo) return `Do ${format(filters.dateTo, 'dd MMM yyyy')}`;
     return 'Wszystkie daty';
   })();
@@ -314,27 +313,39 @@ const Records = () => {
         onScroll={handleScroll}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={warmColors.primary}
+            colors={[warmColors.primary]}
+          />
+        }
       >
         {filters.dateFrom && filters.dateTo && (
           <WarmCard style={styles.summaryCard}>
             <View style={styles.summaryTopRow}>
               <View>
                 <Text style={styles.summaryLabel}>Saldo netto</Text>
-                <Text style={styles.summaryNet}>{formatPLN(totals.net)}</Text>
+                <Text style={styles.summaryNet}>{formatPrice(totals.net)}</Text>
               </View>
             </View>
             <View style={styles.summaryBottomRow}>
               <View style={styles.summaryCell}>
                 <Text style={styles.summaryCellLabel}>Przychód</Text>
-                <Text style={[styles.summaryCellValue, {color: warmColors.success}]}> 
-                  {formatPLN(totals.income)}
+                <Text
+                  style={[styles.summaryCellValue, {color: warmColors.success}]}
+                >
+                  {formatPrice(totals.income)}
                 </Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryCell}>
                 <Text style={styles.summaryCellLabel}>Wydatek</Text>
-                <Text style={[styles.summaryCellValue, {color: warmColors.danger}]}> 
-                  {formatPLN(totals.expense)}
+                <Text
+                  style={[styles.summaryCellValue, {color: warmColors.danger}]}
+                >
+                  {formatPrice(totals.expense)}
                 </Text>
               </View>
             </View>

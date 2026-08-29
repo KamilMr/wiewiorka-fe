@@ -1,54 +1,38 @@
 import {MD3LightTheme as DefaultTheme, useTheme} from 'react-native-paper';
 
+import {warmColors} from './warmTheme';
+
 export const colorNames = {
-  softLavender: '#E8DEF8',
-  deepMaroon: '#400303',
-  white: '#FFFFFF',
+  softLavender: warmColors.accent,
+  deepMaroon: warmColors.foreground,
+  white: warmColors.primaryForeground,
 };
 
 export const unifiedColors = {
-  // Primary palette - Navy blue
-  primary: '#003366', // Main brand color inspiring trust
-  primaryLight: '#004080', // Lighter navy variant
-  primaryDark: '#002244', // Darker variant for hover/active states
+  // Compatibility aliases for the previous project theme
+  primaryLight: warmColors.accent,
+  primaryDark: warmColors.chart3,
+  accent: warmColors.accent,
+  accentLight: warmColors.secondary,
+  accentDark: warmColors.chart3,
+  warmBeige: warmColors.muted,
 
-  // Accent colors - Amber
-  accent: '#FFBF00', // Accent color symbolizing wealth
-  accentLight: '#FFD633', // Lighter amber
-  accentDark: '#E6AC00', // Darker amber
+  // Existing semantic colors without supplied replacements
+  success: '#28A745',
+  successLight: '#D4EDDA',
+  warning: '#FFC107',
+  warningLight: '#FFF3CD',
+  error: warmColors.destructive,
+  errorLight: warmColors.accent,
+  info: '#17A2B8',
+  infoLight: '#D1ECF1',
+  gold: '#FFD700',
+  warmOrange: warmColors.primary,
 
-  // Background colors
-  background: '#FFFFFF', // White background
-  surface: '#FFFFFF', // White surfaces
-  surfaceVariant: '#F8F9FA', // Light gray for sections
-  warmBeige: '#FAF8F5', // Warm beige for highlights
-
-  // Semantic colors
-  success: '#28A745', // Confirmed transactions and positive balances
-  successLight: '#D4EDDA', // Light background for success
-  warning: '#FFC107', // Budget limit alerts
-  warningLight: '#FFF3CD', // Light background for warnings
-  error: '#DC3545', // Error messages and negative balances
-  errorLight: '#F8D7DA', // Light background for errors
-  info: '#17A2B8', // Financial advice and tips
-  infoLight: '#D1ECF1', // Light background for info
-
-  // Neutral palette
-  textPrimary: '#212529', // Primary text
-  textSecondary: '#6C757D', // Helper text and labels
-  textTertiary: '#ADB5BD', // Separators and inactive elements
-  outline: '#E9ECEF', // Borders and divider lines
-  outlineVariant: '#DEE2E6', // Subtle borders
-
-  // Additional accent colors
-  gold: '#FFD700', // Luxury accent for premium features
-  warmOrange: '#FFA726', // Warm accent for notifications
-
-  // Text colors on surfaces
-  onSurface: '#212529',
-  onSurfaceVariant: '#6C757D',
-  onPrimary: '#FFFFFF',
-  onAccent: '#003366',
+  textPrimary: warmColors.foreground,
+  textSecondary: warmColors.mutedForeground,
+  textTertiary: warmColors.mutedForeground,
+  onAccent: warmColors.accentForeground,
 };
 
 export const typography = {
@@ -99,18 +83,17 @@ export const sizes: Record<
   'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl',
   number
 > = {
-  xs: 1, // New: For fine adjustments
-  sm: SM, // 2
-  md: SM ** 2, // 4
-  lg: SM ** 3, // 8
-  xl: SM ** 4, // 16
-  xxl: SM ** 5, // 32
-  xxxl: SM ** 6, // 64
+  xs: 1,
+  sm: SM,
+  md: SM ** 2,
+  lg: SM ** 3,
+  xl: SM ** 4,
+  xxl: SM ** 5,
+  xxxl: SM ** 6,
 };
 
 export const spacing = {
   ...sizes,
-  // Semantic spacing
   cardPadding: 16,
   sectionGap: 24,
   componentGap: 12,
@@ -134,8 +117,49 @@ export const unifiedTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
+    ...warmColors,
     ...colorNames,
     ...unifiedColors,
+    primary: warmColors.primary,
+    primaryContainer: warmColors.accent,
+    secondary: warmColors.secondary,
+    secondaryContainer: warmColors.muted,
+    tertiary: warmColors.accent,
+    tertiaryContainer: warmColors.accent,
+    surface: warmColors.card,
+    surfaceVariant: warmColors.muted,
+    surfaceDisabled: warmColors.muted,
+    background: warmColors.background,
+    error: warmColors.destructive,
+    errorContainer: warmColors.muted,
+    onPrimary: warmColors.primaryForeground,
+    onPrimaryContainer: warmColors.foreground,
+    onSecondary: warmColors.secondaryForeground,
+    onSecondaryContainer: warmColors.foreground,
+    onTertiary: warmColors.accentForeground,
+    onTertiaryContainer: warmColors.accentForeground,
+    onSurface: warmColors.foreground,
+    onSurfaceVariant: warmColors.mutedForeground,
+    onSurfaceDisabled: warmColors.mutedForeground,
+    onError: warmColors.destructiveForeground,
+    onErrorContainer: warmColors.foreground,
+    onBackground: warmColors.foreground,
+    outline: warmColors.border,
+    outlineVariant: warmColors.input,
+    inverseSurface: warmColors.foreground,
+    inverseOnSurface: warmColors.background,
+    inversePrimary: warmColors.primary,
+    shadow: warmColors.foreground,
+    scrim: warmColors.foreground,
+    backdrop: warmColors.muted,
+    elevation: {
+      level0: warmColors.card,
+      level1: warmColors.card,
+      level2: warmColors.card,
+      level3: warmColors.muted,
+      level4: warmColors.muted,
+      level5: warmColors.accent,
+    },
   },
   spacing,
   typography,
