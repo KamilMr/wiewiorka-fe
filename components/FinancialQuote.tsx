@@ -7,12 +7,24 @@ import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import Text from '@/components/CustomText';
 import WarmCard from '@/components/warm/WarmCard';
 import {warmColors} from '@/constants/warmTheme';
-import {quotes} from '@/utils/quotes';
 
+type Quote = {
+  text: string;
+  author: string;
+};
+
+const quotes: Quote[] = [
+  // Example: {text: 'A financial quote.', author: 'Author'},
+];
+
+/** Displays financial quotes in a swipeable carousel, starting with a quote selected for the current day. */
 const FinancialQuote = () => {
   const {width: screenWidth} = useWindowDimensions();
   const ref = useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
+
+  if (quotes.length === 0) return null;
+
   const today = new Date();
   const defaultIndex = today.getDate() % quotes.length;
 

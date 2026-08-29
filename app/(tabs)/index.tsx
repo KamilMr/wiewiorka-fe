@@ -1,7 +1,6 @@
 import {RefreshControl, ScrollView, View, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-import FinancialQuote from '@/components/FinancialQuote';
 import SummaryCard_v2 from '@/components/SummaryCardv2';
 import {BudgetCard} from '@/components';
 import {selectBudgets} from '@/redux/main/selectors';
@@ -31,7 +30,6 @@ const Home = () => {
           }
         >
           <SummaryCard_v2 />
-          <FinancialQuote />
           <BudgetCard
             items={_.sortBy(items, ['budgetedName'])}
             date={formatDateTz({pattern: timeFormats.dateOnly2})}
