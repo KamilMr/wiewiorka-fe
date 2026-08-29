@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react';
 import {Redirect, Tabs} from 'expo-router';
 import {View, StyleSheet, Text} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {selectToken} from '@/redux/auth/authSlice';
 import {fetchIni} from '@/redux/main/thunks';
@@ -10,6 +11,9 @@ import {sizes} from '@/constants/theme';
 import DevModeToggle from '@/components/DevModeToggle';
 import StatusIndicator from '@/components/StatusIndicator';
 import {selectFailedOperationsCount} from '@/redux/sync/syncSlice';
+
+const DEFAULT_BOTTOM_TAB_BAR_HEIGHT = 49;
+const BOTTOM_TAB_BAR_HEIGHT_SCALE = 1.3;
 
 const SettingsTabIcon = ({color}: {color: string}) => {
   const failedCount = useAppSelector(selectFailedOperationsCount);
@@ -31,6 +35,7 @@ const SettingsTabIcon = ({color}: {color: string}) => {
 export default function TabLayout() {
   const token = useAppSelector(selectToken);
   const dispatch = useAppDispatch();
+  const {bottom: bottomInset} = useSafeAreaInsets();
 
   useEffect(() => {
     if (!token) return;
@@ -45,6 +50,12 @@ export default function TabLayout() {
         headerShown: true,
         headerTitle: '',
         tabBarShowLabel: false,
+        tabBarIconStyle: {flex: 1},
+        tabBarStyle: {
+          height:
+            (DEFAULT_BOTTOM_TAB_BAR_HEIGHT + bottomInset) *
+            BOTTOM_TAB_BAR_HEIGHT_SCALE,
+        },
         headerRightContainerStyle: {paddingRight: sizes.xxl},
         headerRight: () => {
           return (
