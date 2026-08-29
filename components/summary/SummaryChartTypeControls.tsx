@@ -3,7 +3,7 @@ import {Icon} from 'react-native-paper';
 
 import {warmColors, warmRadius} from '@/constants/warmTheme';
 
-type ChartType = 'pie' | 'bar';
+type ChartType = 'pie' | 'bar' | 'share';
 
 type Props = {
   chartType: ChartType;
@@ -13,6 +13,11 @@ type Props = {
 const chartTypes: {id: ChartType; label: string; icon: string}[] = [
   {id: 'pie', label: 'Wykres kołowy', icon: 'chart-donut'},
   {id: 'bar', label: 'Wykres słupkowy', icon: 'chart-bar'},
+  {
+    id: 'share',
+    label: 'Udział kategorii w czasie',
+    icon: 'chart-bar-stacked',
+  },
 ];
 
 const SummaryChartTypeControls = ({chartType, onChartTypeChange}: Props) => (

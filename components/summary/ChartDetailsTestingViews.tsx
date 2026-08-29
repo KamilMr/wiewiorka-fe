@@ -2,17 +2,11 @@
 //TODO to verify these insights with real data before making them permanent.
 
 import {type ReactNode, useMemo, useRef, useState} from 'react';
-import {
-  type LayoutChangeEvent,
-  Pressable,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import {Pressable, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {IconButton, Portal} from 'react-native-paper';
-import {addDays, differenceInCalendarDays, format} from 'date-fns';
+import {addDays, differenceInCalendarDays} from 'date-fns';
 
-import {BarChart, Text} from '@/components';
+import {Text} from '@/components';
 import {formatPrice} from '@/common';
 import {warmColors} from '@/constants/warmTheme';
 import {useAppSelector} from '@/hooks';
@@ -33,19 +27,6 @@ type Props = {
   filters: ChartFilter[];
   categories: Subcategory[];
   holidayTagFilter: boolean;
-};
-
-type DayTotal = {
-  date: string;
-  value: number;
-  categories: Record<string, number>;
-};
-
-type CategoryShareBucket = {
-  key: string;
-  label: string;
-  value: number;
-  categories: Record<string, number>;
 };
 
 type CategoryTotal = {
@@ -96,34 +77,6 @@ const getCategoryMeta = (
   };
 };
 
-const buildDayTotals = (
-  data: AggregatedData,
-  dates: [Date, Date],
-  filters: ChartFilter[],
-): DayTotal[] => {
-  const [start, end] = normalizeDateRange(dates);
-  const daysCount = Math.max(0, differenceInCalendarDays(end, start)) + 1;
-
-  return Array.from({length: daysCount}, (_, index) => {
-    const date = format(addDays(start, index), 'yyyy-MM-dd');
-    const categories: Record<string, number> = {};
-
-    Object.entries(data[date] || {}).forEach(([bucketId, values]) => {
-      if (!shouldIncludeBucket(bucketId, filters)) return;
-
-      const [, categoryId] = bucketId.split('-');
-      categories[categoryId] ??= 0;
-      categories[categoryId] += sumValues(values);
-    });
-
-    return {
-      date,
-      categories,
-      value: Object.values(categories).reduce((sum, value) => sum + value, 0),
-    };
-  });
-};
-
 const buildCategoryTotals = (
   data: AggregatedData,
   filters: ChartFilter[],
@@ -148,51 +101,6 @@ const buildCategoryTotals = (
       ...getCategoryMeta(id, categories, index),
     }))
     .sort((a, b) => b.value - a.value);
-};
-
-const shouldUseMonthlyCategoryShare = (dayTotals: DayTotal[]) => {
-  const monthsCount = new Set(
-    dayTotals.map(day => format(new Date(day.date), 'yyyy-MM')),
-  ).size;
-
-  return monthsCount >= 2 && dayTotals.length >= 56;
-};
-
-const buildCategoryShareBuckets = (
-  dayTotals: DayTotal[],
-  mode: 'day' | 'month',
-): CategoryShareBucket[] => {
-  if (mode === 'day') {
-    return dayTotals.map(day => ({
-      key: day.date,
-      label: format(new Date(day.date), 'dd.MM'),
-      value: day.value,
-      categories: day.categories,
-    }));
-  }
-
-  const monthBuckets = dayTotals.reduce<Record<string, CategoryShareBucket>>(
-    (acc, day) => {
-      const key = format(new Date(day.date), 'yyyy-MM');
-      acc[key] ??= {
-        key,
-        label: format(new Date(`${key}-01`), 'MM.yyyy'),
-        value: 0,
-        categories: {},
-      };
-
-      acc[key].value += day.value;
-      Object.entries(day.categories).forEach(([categoryId, value]) => {
-        acc[key].categories[categoryId] ??= 0;
-        acc[key].categories[categoryId] += value;
-      });
-
-      return acc;
-    },
-    {},
-  );
-
-  return Object.values(monthBuckets).sort((a, b) => a.key.localeCompare(b.key));
 };
 
 type InfoAnchor = {
@@ -291,27 +199,6 @@ const ChartDetailsTestingViews = ({
   categories,
   holidayTagFilter,
 }: Props) => {
-  const {width} = useWindowDimensions();
-  const [chartBoxWidth, setChartBoxWidth] = useState(0);
-  const yAxisLabelWidth = 54;
-  const chartContainerWidth = chartBoxWidth || Math.max(width - 72, 280);
-  const chartWidth = Math.max(chartContainerWidth - yAxisLabelWidth - 8, 220);
-  const labelWidth = 44;
-  const handleChartBoxLayout = (event: LayoutChangeEvent) => {
-    setChartBoxWidth(event.nativeEvent.layout.width);
-  };
-  const compactChartProps = {
-    width: chartWidth,
-    parentWidth: chartContainerWidth,
-    yAxisLabelWidth,
-    rulesLength: chartWidth,
-    xAxisLength: chartWidth,
-    endSpacing: 16,
-    disableScroll: false,
-    nestedScrollEnabled: true,
-    showScrollIndicator: false,
-    xAxisLabelTextStyle: styles.axisLabel,
-  };
   const previousDates = useMemo(
     () => getPreviousDateRange(filterDates),
     [filterDates],
@@ -322,10 +209,6 @@ const ChartDetailsTestingViews = ({
   );
   const previousSelected = useAppSelector(previousSelectedSelector);
 
-  const dayTotals = useMemo(
-    () => buildDayTotals(selected, filterDates, filters),
-    [selected, filterDates, filters],
-  );
   const previousCategoryTotals = useMemo(
     () => buildCategoryTotals(previousSelected, filters, categories),
     [previousSelected, filters, categories],
@@ -362,42 +245,6 @@ const ChartDetailsTestingViews = ({
     .sort((a, b) => b.diff - a.diff)
     .slice(0, 5);
 
-  const topCategories = currentCategoryTotals.slice(0, 4);
-  const categoryShareMode = shouldUseMonthlyCategoryShare(dayTotals)
-    ? 'month'
-    : 'day';
-  const categoryShareBuckets = buildCategoryShareBuckets(
-    dayTotals,
-    categoryShareMode,
-  );
-  const categoryShareLabelWidth =
-    categoryShareMode === 'month' ? 64 : labelWidth;
-  const stackData = categoryShareBuckets
-    .filter(bucket => bucket.value > 0)
-    .map(bucket => {
-      const topIds = new Set(topCategories.map(category => category.id));
-      const otherValue = Object.entries(bucket.categories).reduce(
-        (sum, [categoryId, value]) =>
-          topIds.has(categoryId) ? sum : sum + value,
-        0,
-      );
-
-      return {
-        label: bucket.label,
-        labelWidth: categoryShareLabelWidth,
-        labelTextStyle: styles.axisLabel,
-        stacks: [
-          ...topCategories.map(category => ({
-            value: bucket.categories[category.id] || 0,
-            color: category.color,
-          })),
-          ...(otherValue > 0
-            ? [{value: otherValue, color: warmColors.chart2}]
-            : []),
-        ],
-      };
-    });
-
   return (
     <View style={styles.container}>
       <InsightCard
@@ -426,52 +273,6 @@ const ChartDetailsTestingViews = ({
           <EmptyInsight />
         )}
       </InsightCard>
-
-      <InsightCard
-        title={`2. Udział kategorii w czasie (${categoryShareMode === 'month' ? 'miesiące' : 'dni'})`}
-        tooltip="Kolory w słupku pokazują udział najważniejszych kategorii w sumie wydatków. Dla krótszego zakresu jeden słupek oznacza dzień. Dla zakresu około dwóch miesięcy lub dłuższego jeden słupek oznacza miesiąc. Szary kolor oznacza pozostałe kategorie."
-      >
-        {stackData.length ? (
-          <>
-            <View style={styles.chartBox} onLayout={handleChartBoxLayout}>
-              <BarChart
-                barData={[]}
-                stackData={stackData}
-                {...compactChartProps}
-                height={180}
-                barWidth={18}
-                spacing={12}
-                initialSpacing={8}
-                xAxisTextNumberOfLines={1}
-              />
-            </View>
-            <View style={styles.legend}>
-              {topCategories.map(category => (
-                <View key={category.id} style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      {backgroundColor: category.color},
-                    ]}
-                  />
-                  <Text style={styles.legendText}>{category.name}</Text>
-                </View>
-              ))}
-              <View style={styles.legendItem}>
-                <View
-                  style={[
-                    styles.legendDot,
-                    {backgroundColor: warmColors.chart2},
-                  ]}
-                />
-                <Text style={styles.legendText}>Inne</Text>
-              </View>
-            </View>
-          </>
-        ) : (
-          <EmptyInsight />
-        )}
-      </InsightCard>
     </View>
   );
 };
@@ -488,10 +289,6 @@ const styles = StyleSheet.create({
     backgroundColor: warmColors.card,
     borderWidth: 1,
     borderColor: warmColors.border,
-    overflow: 'hidden',
-  },
-  chartBox: {
-    maxWidth: '100%',
     overflow: 'hidden',
   },
   titleRow: {
@@ -534,10 +331,6 @@ const styles = StyleSheet.create({
   empty: {
     color: warmColors.mutedForeground,
   },
-  axisLabel: {
-    color: warmColors.mutedForeground,
-    fontSize: 10,
-  },
   comparisonRow: {
     paddingVertical: 8,
     borderBottomWidth: 1,
@@ -564,27 +357,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     color: warmColors.mutedForeground,
     fontSize: 12,
-  },
-  legend: {
-    marginTop: 12,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  legendItem: {
-    marginRight: 12,
-    marginBottom: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    marginRight: 4,
-    borderRadius: 5,
-  },
-  legendText: {
-    fontSize: 12,
-    color: warmColors.foreground,
   },
 });
 
