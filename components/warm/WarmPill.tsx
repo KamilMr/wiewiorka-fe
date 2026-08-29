@@ -1,5 +1,11 @@
 import React from 'react';
-import {Pressable, StyleSheet, View} from 'react-native';
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import {Text} from '@/components';
 import {warmColors, warmRadius, warmShadow} from '@/constants/warmTheme';
 
@@ -8,6 +14,7 @@ interface Props {
   active?: boolean;
   onPress?: () => void;
   dotColor?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function WarmPill({
@@ -15,6 +22,7 @@ export default function WarmPill({
   active = false,
   onPress,
   dotColor,
+  style,
 }: Props) {
   return (
     <Pressable
@@ -23,6 +31,7 @@ export default function WarmPill({
         styles.base,
         active ? styles.active : styles.inactive,
         pressed && styles.pressed,
+        style,
       ]}
     >
       {dotColor ? (

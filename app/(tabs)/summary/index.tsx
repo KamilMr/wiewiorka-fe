@@ -18,8 +18,7 @@ const YEAR_LABEL = 'Rok';
 const Config: React.FC<{
   selection: [number, string][];
   onChange: (value: string) => void;
-  title?: string;
-}> = ({selection, onChange, title = ''}) => {
+}> = ({selection, onChange}) => {
   const [active, setActive] = useState<number>(0);
 
   const handleChange = (f: string) => {
@@ -28,18 +27,16 @@ const Config: React.FC<{
   };
 
   return (
-    <View style={styles.config}>
-      {title ? <Text style={styles.configTitle}>{title}</Text> : null}
-      <View style={styles.filterRow}>
-        {selection.map(([value, name], index) => (
-          <WarmPill
-            key={value}
-            label={name}
-            active={index === active}
-            onPress={() => handleChange(value.toString())}
-          />
-        ))}
-      </View>
+    <View style={styles.filterRow}>
+      {selection.map(([value, name], index) => (
+        <WarmPill
+          key={value}
+          label={name}
+          active={index === active}
+          onPress={() => handleChange(value.toString())}
+          style={styles.filterButton}
+        />
+      ))}
     </View>
   );
 };
@@ -74,7 +71,6 @@ const Summary = () => {
           </Text>
         </View>
         <Config
-          title="Zakres"
           selection={[
             [MONTH, MONTH_LABEL],
             [YEAR, YEAR_LABEL],
@@ -130,19 +126,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 4,
   },
-  config: {
-    gap: 8,
-  },
-  configTitle: {
-    color: warmColors.mutedForeground,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
-  },
   filterRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  filterButton: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 10,
   },
   emptyState: {
     alignItems: 'center',
