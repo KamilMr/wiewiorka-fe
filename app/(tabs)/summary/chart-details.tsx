@@ -372,14 +372,16 @@ const Summary = () => {
     setFilters(newState);
   };
 
-  const filterItems: SummaryCategoryFilterItem[] = currentGroupOrCategory.map(
-    category => ({
+  const filterItems: SummaryCategoryFilterItem[] = currentGroupOrCategory
+    .map(category => ({
       id: category.id,
       label: category.name,
       color: category.color,
       selected: filters.some(filter => filter.name === category.name),
-    }),
-  );
+    }))
+    .sort((a, b) =>
+      a.label.localeCompare(b.label, 'pl', {sensitivity: 'base'}),
+    );
 
   const handleAxisChange = (ax: Axis) => {
     setAxis([ax, ax === '1-0' ? '0-0' : axis[1]]);
