@@ -11,25 +11,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 import {Text} from '@/components';
-
-const theme = {
-  background: '#fdfbf7',
-  foreground: '#4a3b33',
-  card: 'rgba(248, 244, 238, 0.7)',
-  cardBorder: 'rgba(228, 217, 188, 0.5)',
-  primary: '#b45309',
-  primaryForeground: '#ffffff',
-  muted: '#f1e9da',
-  mutedForeground: '#78716c',
-  border: '#e4d9bc',
-  inputBackground: '#fdfbf7',
-  successBg: 'rgba(220, 252, 231, 0.6)',
-  successBorder: 'rgba(34, 197, 94, 0.3)',
-  successIconBg: '#dcfce7',
-  successIconColor: '#16a34a',
-  decorPrimary: 'rgba(180, 83, 9, 0.08)',
-  decorSecondary: 'rgba(228, 192, 144, 0.25)',
-};
+import {warmColors as theme} from '@/constants/warmTheme';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -86,7 +68,7 @@ const ForgotPassword = () => {
               <FontAwesome6
                 name="check"
                 size={14}
-                color={theme.successIconColor}
+                color={theme.success}
                 iconStyle="solid"
               />
             </View>
@@ -129,7 +111,10 @@ const ForgotPassword = () => {
               style={({pressed}) => [
                 styles.submitBtn,
                 (!isFormReady || submitting) && styles.submitBtnDisabled,
-                pressed && isFormReady && !submitting && styles.submitBtnPressed,
+                pressed &&
+                  isFormReady &&
+                  !submitting &&
+                  styles.submitBtnPressed,
               ]}
             >
               <Text style={styles.submitBtnText}>
@@ -192,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: '#4a3b33',
+    shadowColor: theme.foreground,
     shadowOpacity: 0.08,
     shadowOffset: {width: 0, height: 2},
     shadowRadius: 4,
@@ -215,9 +200,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.card,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: theme.cardBorder,
+    borderColor: theme.border,
     padding: 20,
-    shadowColor: '#4a3b33',
+    shadowColor: theme.foreground,
     shadowOpacity: 0.08,
     shadowOffset: {width: 0, height: 4},
     shadowRadius: 12,
@@ -236,7 +221,7 @@ const styles = StyleSheet.create({
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.inputBackground,
+    backgroundColor: theme.background,
     borderWidth: 1,
     borderColor: theme.border,
     borderRadius: 12,
@@ -279,9 +264,9 @@ const styles = StyleSheet.create({
   successBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: theme.successBg,
+    backgroundColor: theme.successBackground,
     borderWidth: 1,
-    borderColor: theme.successBorder,
+    borderColor: theme.success,
     borderRadius: 16,
     padding: 16,
     gap: 12,
@@ -290,7 +275,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: theme.successIconBg,
+    backgroundColor: theme.successBackground,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,

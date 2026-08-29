@@ -5,6 +5,7 @@ import {router} from 'expo-router';
 
 import {Text, TextInput} from '@/components';
 import {sizes, useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectDebtsWithSummary} from '@/redux/main/selectors';
 import {fetchDebts, addDebtThunk} from '@/redux/main/thunks';
@@ -80,7 +81,12 @@ export default function DebtListScreen() {
                 <View style={styles.cardHeader}>
                   <Text style={styles.personName}>{debt.personName}</Text>
                   {debt.isPaid && (
-                    <View style={[styles.paidBadge, {backgroundColor: t.colors.primary}]}>
+                    <View
+                      style={[
+                        styles.paidBadge,
+                        {backgroundColor: t.colors.primary},
+                      ]}
+                    >
                       <Text style={styles.paidBadgeText}>Spłacony</Text>
                     </View>
                   )}
@@ -90,7 +96,11 @@ export default function DebtListScreen() {
                   <Caption>Kwota: {formatGrosze(debt.totalAmount)}</Caption>
                   <Caption>Spłacono: {formatGrosze(debt.paidAmount)}</Caption>
                 </View>
-                <Caption style={{color: debt.isPaid ? t.colors.primary : t.colors.error}}>
+                <Caption
+                  style={{
+                    color: debt.isPaid ? t.colors.primary : t.colors.error,
+                  }}
+                >
                   Pozostało: {formatGrosze(debt.remainingAmount)}
                 </Caption>
               </Card.Content>
@@ -103,26 +113,34 @@ export default function DebtListScreen() {
         icon="plus"
         label="Dodaj dług"
         style={[styles.fab, {backgroundColor: t.colors.primary}]}
-        color="white"
+        color={t.colors.onPrimary}
         onPress={() => setAddDebtVisible(true)}
       />
 
       <Portal>
-        <Dialog visible={addDebtVisible} onDismiss={handleCancel} style={styles.dialog}>
+        <Dialog
+          visible={addDebtVisible}
+          onDismiss={handleCancel}
+          style={styles.dialog}
+        >
           <Dialog.Title>Nowy dług</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label="Imię osoby *"
               mode="outlined"
               value={newDebt.personName}
-              onChangeText={text => setNewDebt(prev => ({...prev, personName: text}))}
+              onChangeText={text =>
+                setNewDebt(prev => ({...prev, personName: text}))
+              }
               autoFocus
             />
             <TextInput
               label="Kwota (zł) *"
               mode="outlined"
               value={newDebt.totalAmount}
-              onChangeText={text => setNewDebt(prev => ({...prev, totalAmount: text}))}
+              onChangeText={text =>
+                setNewDebt(prev => ({...prev, totalAmount: text}))
+              }
               keyboardType="numeric"
               style={{marginTop: sizes.md}}
             />
@@ -130,13 +148,19 @@ export default function DebtListScreen() {
               label="Opis (opcjonalnie)"
               mode="outlined"
               value={newDebt.description}
-              onChangeText={text => setNewDebt(prev => ({...prev, description: text}))}
+              onChangeText={text =>
+                setNewDebt(prev => ({...prev, description: text}))
+              }
               style={{marginTop: sizes.md}}
             />
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={handleCancel}>Anuluj</Button>
-            <Button onPress={handleAddDebt} loading={loading} disabled={loading}>
+            <Button
+              onPress={handleAddDebt}
+              loading={loading}
+              disabled={loading}
+            >
               Dodaj
             </Button>
           </Dialog.Actions>
@@ -158,7 +182,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: sizes.xl,
-    color: '#666',
+    color: warmColors.mutedForeground,
   },
   debtCard: {
     marginVertical: sizes.md,
@@ -179,7 +203,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   paidBadgeText: {
-    color: 'white',
+    color: warmColors.primaryForeground,
     fontSize: 12,
     fontWeight: '500',
   },

@@ -20,6 +20,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 
 import {normalize} from '@/common';
 import {sizes} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 
 export type Items = Array<{label: string; value: string}>;
 
@@ -66,8 +67,7 @@ const MultiSelectCategories = ({
   }, [isVisible]);
 
   const handleToggleItem = (itemValue: string) => {
-    if (value.includes(itemValue))
-      onChange(value.filter(v => v !== itemValue));
+    if (value.includes(itemValue)) onChange(value.filter(v => v !== itemValue));
     else onChange([...value, itemValue]);
   };
 
@@ -94,7 +94,7 @@ const MultiSelectCategories = ({
         <Menu
           visible={isVisible}
           onDismiss={handleMenuDismiss}
-          style={{backgroundColor: 'white', width: '80%'}}
+          style={{backgroundColor: warmColors.popover, width: '80%'}}
           contentStyle={{
             maxHeight: 400,
             marginBottom: 10,
@@ -109,27 +109,25 @@ const MultiSelectCategories = ({
               }}
               style={[
                 styles.dropdownContainer,
-                isVisible && {borderColor: 'blue'},
+                isVisible && {borderColor: warmColors.ring},
               ]}
             >
               <View style={styles.dropdownContent}>
                 <View style={styles.dropdownLeft}>
                   <AntDesign
                     style={styles.icon}
-                    color={isVisible ? 'blue' : 'black'}
+                    color={isVisible ? warmColors.ring : warmColors.foreground}
                     name="select1"
                     size={20}
                   />
                   <Text style={styles.dropdownText}>
-                    {value.length > 0
-                      ? `Wybrano ${value.length}`
-                      : placeholder}
+                    {value.length > 0 ? `Wybrano ${value.length}` : placeholder}
                   </Text>
                 </View>
                 <AntDesign
                   name={isVisible ? 'up' : 'down'}
                   size={16}
-                  color={isVisible ? 'blue' : 'black'}
+                  color={isVisible ? warmColors.ring : warmColors.foreground}
                 />
               </View>
             </TouchableRipple>
@@ -149,7 +147,10 @@ const MultiSelectCategories = ({
               left={<TextInput.Icon icon="magnify" />}
               right={
                 searchQuery ? (
-                  <TextInput.Icon icon="close" onPress={handleCleanSearchQuery} />
+                  <TextInput.Icon
+                    icon="close"
+                    onPress={handleCleanSearchQuery}
+                  />
                 ) : null
               }
             />
@@ -169,14 +170,18 @@ const MultiSelectCategories = ({
                 key={`first-${index}`}
                 onPress={() => handleToggleItem(item.value)}
                 title={item.label}
-                leadingIcon={value.includes(item.value) ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                leadingIcon={
+                  value.includes(item.value)
+                    ? 'checkbox-marked'
+                    : 'checkbox-blank-outline'
+                }
               />
             ))}
 
             {/* Divider if there are rest items */}
-            {restItems.length > 0 && showDivider && searchQuery.length === 0 && (
-              <Divider style={{height: 2}} />
-            )}
+            {restItems.length > 0 &&
+              showDivider &&
+              searchQuery.length === 0 && <Divider style={{height: 2}} />}
 
             {/* Rest of the items */}
             {restItems.map((item, index) => (
@@ -184,7 +189,11 @@ const MultiSelectCategories = ({
                 key={`rest-${index}`}
                 onPress={() => handleToggleItem(item.value)}
                 title={item.label}
-                leadingIcon={value.includes(item.value) ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                leadingIcon={
+                  value.includes(item.value)
+                    ? 'checkbox-marked'
+                    : 'checkbox-blank-outline'
+                }
               />
             ))}
 
@@ -223,7 +232,7 @@ export default MultiSelectCategories;
 const styles = StyleSheet.create({
   dropdownContainer: {
     height: 50,
-    borderColor: 'gray',
+    borderColor: warmColors.border,
     borderWidth: 0.5,
     borderRadius: 8,
     paddingHorizontal: 8,
@@ -250,16 +259,16 @@ const styles = StyleSheet.create({
   searchContainer: {
     padding: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: warmColors.border,
   },
   scrollableContent: {
     maxHeight: 300,
   },
   searchInput: {
-    backgroundColor: 'white',
+    backgroundColor: warmColors.background,
   },
   noResultsText: {
-    color: '#666',
+    color: warmColors.mutedForeground,
     fontStyle: 'italic',
   },
   chipsContainer: {

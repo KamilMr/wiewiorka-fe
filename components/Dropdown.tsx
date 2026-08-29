@@ -4,6 +4,7 @@ import {Dropdown} from 'react-native-element-dropdown';
 import {DropdownProps} from 'react-native-element-dropdown/lib/typescript/components/Dropdown/model';
 import {useGradualAnimation} from '@/hooks';
 import {sizes, useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 
 export type Items = Array<{label: string; value: string}>;
 
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.8,
     minHeight: 80,
     borderRadius: sizes.sm,
-    backgroundColor: '#ffffff',
+    backgroundColor: warmColors.background,
     paddingVertical: sizes.sm,
     paddingHorizontal: sizes.md,
     justifyContent: 'center',
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   },
   label: {
     position: 'absolute',
-    backgroundColor: '#ffffff',
+    backgroundColor: warmColors.background,
     left: 22,
     top: 8,
     zIndex: 999,
@@ -157,11 +158,11 @@ const styles = StyleSheet.create({
     minHeight: 56,
     fontSize: 20,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: warmColors.border,
     borderRadius: sizes.sm,
     paddingHorizontal: sizes.md,
     margin: sizes.sm,
-    backgroundColor: '#ffffff',
+    backgroundColor: warmColors.background,
   },
 });
 

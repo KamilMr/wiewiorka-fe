@@ -9,6 +9,7 @@ import {generateColor, formatPrice} from '@/common';
 import {selectIncomes} from '@/redux/main/selectors';
 import {selectMe} from '@/redux/auth/authSlice';
 import {useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 
 interface Income {
   date: string;
@@ -79,7 +80,7 @@ const IncomeSummary = () => {
             <PieChartBar
               data={incomeData}
               showText
-              textColor={'black'}
+              textColor={t.colors.onBackground}
               textSize={12}
               radius={70}
             />
@@ -105,7 +106,7 @@ const IncomeSummary = () => {
                       <IconButton
                         icon="information-outline"
                         size={16}
-                        iconColor="rgba(0, 0, 0, 0.5)"
+                        iconColor={t.colors.onSurfaceVariant}
                       />
                     </Tooltip>
                   </View>
@@ -201,12 +202,12 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 4,
     borderRadius: 8,
-    backgroundColor: 'white',
+    backgroundColor: warmColors.card,
   },
   currentUserItem: {
     borderWidth: 1,
-    borderColor: 'rgba(103, 80, 164, 0.08)',
-    backgroundColor: 'rgba(103, 80, 164, 0.08)',
+    borderColor: warmColors.decorPrimary,
+    backgroundColor: warmColors.decorPrimary,
   },
 });
 

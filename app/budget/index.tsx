@@ -1,6 +1,7 @@
 import {Button, Text, Select} from '@/components';
 import {formatPrice} from '@/common';
 import {sizes} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {useAppSelector, useAppDispatch} from '@/hooks';
 import {selectBudgets} from '@/redux/main/selectors';
 import {updateBudgetItem, deleteBudget} from '@/redux/main/thunks';
@@ -298,7 +299,11 @@ const BudgetList = () => {
 export default function Page({}: BudgetProps) {
   return (
     <KeyboardAvoidingView
-      style={{flex: 1, backgroundColor: 'white', paddingBottom: 80}}
+      style={{
+        flex: 1,
+        backgroundColor: warmColors.background,
+        paddingBottom: 80,
+      }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <BudgetList />

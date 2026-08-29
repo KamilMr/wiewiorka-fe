@@ -5,6 +5,7 @@ import {IconButton} from 'react-native-paper';
 import DropdownComponent from './Dropdown';
 import TextInput from './CustomTextInput';
 import {sizes, useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 
 interface PriceAndCategoryProps {
   item: {price: string; category: string; description?: string};
@@ -126,12 +127,12 @@ const PriceAndCategory = ({
 const styles = StyleSheet.create({
   root: {
     position: 'relative',
-    backgroundColor: 'white',
+    backgroundColor: warmColors.card,
     padding: sizes.xl,
     marginVertical: sizes.md,
     borderRadius: sizes.sm,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: warmColors.foreground,
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: sizes.md,

@@ -9,6 +9,7 @@ import Reanimated, {
   runOnJS,
 } from 'react-native-reanimated';
 import {Icon} from 'react-native-paper';
+import {warmColors} from '@/constants/warmTheme';
 
 interface SwipeToDeleteProps {
   children: React.ReactNode;
@@ -40,20 +41,32 @@ const DeleteAction = ({
 
     return {
       opacity: interpolate(dragX, [0, halfWidth * 0.3, halfWidth], [0, 0.9, 1]),
-      transform: [{scale: interpolate(dragX, [0, halfWidth], [0.5, 1], 'clamp')}],
+      transform: [
+        {scale: interpolate(dragX, [0, halfWidth], [0.5, 1], 'clamp')},
+      ],
     };
   });
 
   return (
-    <Pressable onPress={onDelete} style={[styles.rightAction, {width: halfWidth}]}>
+    <Pressable
+      onPress={onDelete}
+      style={[styles.rightAction, {width: halfWidth}]}
+    >
       <Reanimated.View style={[styles.buttonContainer, animatedStyle]}>
-        <Icon source="trash-can" color="white" size={28} />
+        <Icon
+          source="trash-can"
+          color={warmColors.destructiveForeground}
+          size={28}
+        />
       </Reanimated.View>
     </Pressable>
   );
 };
 
-export default function SwipeToDelete({children, onDelete}: SwipeToDeleteProps) {
+export default function SwipeToDelete({
+  children,
+  onDelete,
+}: SwipeToDeleteProps) {
   const [containerWidth, setContainerWidth] = useState(300);
   const swipeableRef = useRef<any>(null);
   const hasTriggeredDelete = useSharedValue(false);
@@ -66,7 +79,10 @@ export default function SwipeToDelete({children, onDelete}: SwipeToDeleteProps) 
     onDelete();
   }, [onDelete]);
 
-  const renderRightActions = (_progress: SharedValue<number>, translation: SharedValue<number>) => (
+  const renderRightActions = (
+    _progress: SharedValue<number>,
+    translation: SharedValue<number>,
+  ) => (
     <DeleteAction
       translation={translation}
       halfWidth={halfWidth}
@@ -104,7 +120,7 @@ export default function SwipeToDelete({children, onDelete}: SwipeToDeleteProps) 
 
 const styles = StyleSheet.create({
   rightAction: {
-    backgroundColor: '#d32f2f',
+    backgroundColor: warmColors.destructive,
     justifyContent: 'center',
     alignItems: 'center',
   },

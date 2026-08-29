@@ -13,6 +13,7 @@ import {useAppDispatch} from '@/hooks';
 import {uploadFile} from '@/redux/main/thunks';
 import FullWidthImage from './FullImage';
 import Modal from './CustomModal';
+import {warmColors} from '@/constants/warmTheme';
 
 const isPDF = ({url = ''}: {url: string}) =>
   getExtension(url).toLowerCase() === 'pdf';
@@ -36,7 +37,7 @@ const ImageThumbnail = ({
     <TouchableRipple style={styles.touchBtn} onPress={onPress}>
       {isPdf ? (
         <View style={styles.updBtn}>
-          <Icon size={80} source="file-pdf-box" color="blue" />
+          <Icon size={80} source="file-pdf-box" color={warmColors.primary} />
         </View>
       ) : (
         <Image style={styles.image} source={{uri: image.url}} />
@@ -59,9 +60,13 @@ const UploadButton = ({
       disabled={disabled}
     >
       {disabled ? (
-        <ActivityIndicator size={40} animating color="blue" />
+        <ActivityIndicator size={40} animating color={warmColors.primary} />
       ) : (
-        <Icon size={48} source="file-upload-outline" color="blue" />
+        <Icon
+          size={48}
+          source="file-upload-outline"
+          color={warmColors.primary}
+        />
       )}
     </TouchableRipple>
   );

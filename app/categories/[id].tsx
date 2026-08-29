@@ -173,13 +173,13 @@ export default function OneCategory() {
   }));
 
   return (
-    <ScrollView style={{height: '100%', backgroundColor: t.colors.white}}>
+    <ScrollView style={{height: '100%', backgroundColor: t.colors.background}}>
       <View
         style={{
           padding: sizes.lg,
           marginTop: sizes.xxl,
           height: '100%',
-          backgroundColor: t.colors.white,
+          backgroundColor: t.colors.background,
         }}
       >
         <View

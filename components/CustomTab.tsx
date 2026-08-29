@@ -6,6 +6,7 @@ import {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {TabBarIcon} from './navigation/TabBarIcon';
 import Menu from './Menu';
 import {Button} from 'react-native-paper';
+import {warmColors} from '@/constants/warmTheme';
 
 type IconProp = {
   isFocus: boolean;
@@ -122,11 +123,19 @@ const MyTabBar = ({
                   onLongPress={onLongPress(index)}
                 >
                   {icons[route.name]?.({
-                    color: isFocused ? '#673ab7' : '#222',
+                    color: isFocused
+                      ? warmColors.primary
+                      : warmColors.foreground,
                     isFocus: isFocused,
                   })}
                   {showLabel && (
-                    <Text style={{color: isFocused ? '#673ab7' : '#222'}}>
+                    <Text
+                      style={{
+                        color: isFocused
+                          ? warmColors.primary
+                          : warmColors.foreground,
+                      }}
+                    >
                       {label}
                     </Text>
                   )}
@@ -147,10 +156,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: warmColors.card,
     paddingVertical: 5,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: warmColors.foreground,
     shadowOffset: {width: 0, height: 20},
     shadowRadius: 10,
     shadowOpacity: 0.1,

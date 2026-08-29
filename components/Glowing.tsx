@@ -1,10 +1,11 @@
 import React, {useEffect, useRef} from 'react';
 import {StyleSheet, Animated} from 'react-native';
+import {warmColors} from '@/constants/warmTheme';
 
 const Glow = ({
   children,
   isGlowing,
-  glowColor = '#fff',
+  glowColor = warmColors.primaryForeground,
 }: {
   children: React.ReactNode;
   isGlowing: boolean;

@@ -66,7 +66,7 @@ const TransactionList = () => {
   };
 
   return (
-    <View style={{padding: 16, backgroundColor: t.colors.white, flex: 1}}>
+    <View style={{padding: 16, backgroundColor: t.colors.background, flex: 1}}>
       <DynamicRecordList
         records={records}
         handleNavigate={handleNavigate}

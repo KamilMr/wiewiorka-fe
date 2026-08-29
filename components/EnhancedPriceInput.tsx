@@ -14,6 +14,7 @@ import {SelectRadioButtons} from '@/components/addnew/SelectRadioButtons';
 import Text from '@/components/CustomText';
 import {printJsonIndent} from '@/common';
 import {sizes, useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {setSnackbar} from '@/redux/main/mainSlice';
 
 interface RenderExchangeRateProps {
@@ -273,7 +274,7 @@ export const EnhancedPriceInput: React.FC<EnhancedPriceInputProps> = ({
                 underlineColor="transparent"
                 underlineColorAndroid={'transparent'}
                 activeUnderlineColor="transparent"
-                cursorColor="black"
+                cursorColor={warmColors.foreground}
               />
             </View>
 
@@ -330,7 +331,7 @@ export const EnhancedPriceInput: React.FC<EnhancedPriceInputProps> = ({
                     underlineColor="transparent"
                     underlineColorAndroid={'transparent'}
                     activeUnderlineColor="transparent"
-                    cursorColor="black"
+                    cursorColor={warmColors.foreground}
                   />
                   <View>
                     <Text style={styles.symbolText}>{currentSymbol}</Text>
@@ -353,10 +354,10 @@ export const EnhancedPriceInput: React.FC<EnhancedPriceInputProps> = ({
                     mode="flat"
                     readOnly={!swap ? true : false}
                     underlineColor="transparent"
-                    underlineColorAndroid={'white'}
+                    underlineColorAndroid={warmColors.background}
                     activeUnderlineColor="transparent"
                     style={styles.rightInput}
-                    cursorColor="black"
+                    cursorColor={warmColors.foreground}
                   />
                   <View>
                     <Text style={styles.symbolText}>{displayTargetSymbol}</Text>
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
   normalInputContainer: {
     borderWidth: 1,
     borderRadius: sizes.sm,
-    backgroundColor: '#ffffff',
+    backgroundColor: warmColors.background,
     paddingVertical: sizes.sm,
     paddingHorizontal: sizes.md,
     minHeight: 56,
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
   },
   rateText: {
     fontSize: 12,
-    color: '#666',
+    color: warmColors.mutedForeground,
     textDecorationLine: 'underline',
   },
   rateEditContainer: {
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     paddingVertical: sizes.sm,
     paddingHorizontal: sizes.sm,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: warmColors.muted,
     borderRadius: sizes.sm,
   },
   inputWithSymbol: {
@@ -524,13 +525,13 @@ const styles = StyleSheet.create({
   symbolText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: warmColors.mutedForeground,
   },
   calculatorSection: {
     marginLeft: sizes.sm,
   },
   okButton: {
     margin: 0,
-    backgroundColor: '#4CAF50',
+    backgroundColor: warmColors.success,
   },
 });

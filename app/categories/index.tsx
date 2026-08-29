@@ -146,7 +146,7 @@ export default function MainView() {
 
   return (
     <KeyboardView style={styles.container}>
-      <View style={[styles.content, {backgroundColor: t.colors.white}]}>
+      <View style={[styles.content, {backgroundColor: t.colors.background}]}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {!mainCategories.length ? (
             <NoData text="Edytuj aby dodać kategorię" />
@@ -170,7 +170,7 @@ export default function MainView() {
           <FAB
             icon="plus"
             label="Dodaj kategorię"
-            color="white"
+            color={t.colors.onPrimary}
             style={[styles.fab, {backgroundColor: t.colors.primary}]}
             onPress={() => setAddDialogVisible(true)}
           />

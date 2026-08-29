@@ -1,14 +1,34 @@
 import {useState} from 'react';
-import {View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import {useLocalSearchParams} from 'expo-router';
-import {Card, FAB, Portal, Dialog, Button, Caption, Divider, Surface} from 'react-native-paper';
+import {
+  Card,
+  FAB,
+  Portal,
+  Dialog,
+  Button,
+  Caption,
+  Divider,
+  Surface,
+} from 'react-native-paper';
 import {format} from 'date-fns';
 
 import {Text, TextInput, DatePicker, SwipeToDelete} from '@/components';
 import {sizes, useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectDebtById} from '@/redux/main/selectors';
-import {addDebtPaymentThunk, deleteDebtPaymentThunk, updateDebtPaymentThunk} from '@/redux/main/thunks';
+import {
+  addDebtPaymentThunk,
+  deleteDebtPaymentThunk,
+  updateDebtPaymentThunk,
+} from '@/redux/main/thunks';
 import {DebtPayment} from '@/types';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {formatGrosze, parseZlotyToGrosze} from '@/utils/currencyUtils';
@@ -19,13 +39,25 @@ type PaymentDialogProps = {
   onSubmit: () => void;
   loading: boolean;
   payment: {amount: string; date: Date; note: string};
-  setPayment: React.Dispatch<React.SetStateAction<{amount: string; date: Date; note: string}>>;
+  setPayment: React.Dispatch<
+    React.SetStateAction<{amount: string; date: Date; note: string}>
+  >;
   mode: 'add' | 'edit';
 };
 
-const PaymentDialog = ({visible, onDismiss, onSubmit, loading, payment, setPayment, mode}: PaymentDialogProps) => (
+const PaymentDialog = ({
+  visible,
+  onDismiss,
+  onSubmit,
+  loading,
+  payment,
+  setPayment,
+  mode,
+}: PaymentDialogProps) => (
   <Dialog visible={visible} onDismiss={onDismiss} style={styles.dialog}>
-    <Dialog.Title>{mode === 'add' ? 'Nowa wpłata' : 'Edytuj wpłatę'}</Dialog.Title>
+    <Dialog.Title>
+      {mode === 'add' ? 'Nowa wpłata' : 'Edytuj wpłatę'}
+    </Dialog.Title>
     <Dialog.Content>
       <TextInput
         label="Kwota (zł) *"
@@ -35,10 +67,18 @@ const PaymentDialog = ({visible, onDismiss, onSubmit, loading, payment, setPayme
         keyboardType="numeric"
         autoFocus={mode === 'add'}
       />
-      <View style={{marginTop: sizes.lg, minHeight: 80, backgroundColor: 'white'}}>
+      <View
+        style={{
+          marginTop: sizes.lg,
+          minHeight: 80,
+          backgroundColor: warmColors.background,
+        }}
+      >
         <DatePicker
           value={payment.date}
-          onChange={date => setPayment(prev => ({...prev, date: date || new Date()}))}
+          onChange={date =>
+            setPayment(prev => ({...prev, date: date || new Date()}))
+          }
           label="Data"
         />
       </View>
@@ -68,7 +108,9 @@ export default function DebtDetailsScreen() {
 
   const [addPaymentVisible, setAddPaymentVisible] = useState(false);
   const [editPaymentVisible, setEditPaymentVisible] = useState(false);
-  const [editingPayment, setEditingPayment] = useState<DebtPayment | null>(null);
+  const [editingPayment, setEditingPayment] = useState<DebtPayment | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [newPayment, setNewPayment] = useState({
     amount: '',
@@ -176,7 +218,7 @@ export default function DebtDetailsScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{flex: 1, backgroundColor: 'white'}}
+      style={{flex: 1, backgroundColor: warmColors.background}}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.container}>
@@ -186,24 +228,40 @@ export default function DebtDetailsScreen() {
               <View style={styles.cardHeader}>
                 <Text style={styles.personName}>{debt.personName}</Text>
                 {isPaid && (
-                  <View style={[styles.paidBadge, {backgroundColor: t.colors.primary}]}>
+                  <View
+                    style={[
+                      styles.paidBadge,
+                      {backgroundColor: t.colors.primary},
+                    ]}
+                  >
                     <Text style={styles.paidBadgeText}>Spłacony</Text>
                   </View>
                 )}
               </View>
-              {debt.description && <Caption style={styles.description}>{debt.description}</Caption>}
+              {debt.description && (
+                <Caption style={styles.description}>{debt.description}</Caption>
+              )}
               <Divider style={styles.divider} />
               <View style={styles.summaryRow}>
                 <Text>Całkowita kwota:</Text>
-                <Text style={styles.amount}>{formatGrosze(debt.totalAmount)}</Text>
+                <Text style={styles.amount}>
+                  {formatGrosze(debt.totalAmount)}
+                </Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text>Spłacono:</Text>
-                <Text style={[styles.amount, {color: t.colors.primary}]}>{formatGrosze(paidAmount)}</Text>
+                <Text style={[styles.amount, {color: t.colors.primary}]}>
+                  {formatGrosze(paidAmount)}
+                </Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text>Pozostało:</Text>
-                <Text style={[styles.amount, {color: isPaid ? t.colors.primary : t.colors.error}]}>
+                <Text
+                  style={[
+                    styles.amount,
+                    {color: isPaid ? t.colors.primary : t.colors.error},
+                  ]}
+                >
                   {formatGrosze(remainingAmount)}
                 </Text>
               </View>
@@ -220,17 +278,29 @@ export default function DebtDetailsScreen() {
                 key={payment.id}
                 onDelete={async () => {
                   try {
-                    await dispatch(deleteDebtPaymentThunk({debtId: id, paymentId: payment.id})).unwrap();
+                    await dispatch(
+                      deleteDebtPaymentThunk({
+                        debtId: id,
+                        paymentId: payment.id,
+                      }),
+                    ).unwrap();
                   } catch (error) {
                     dispatch(setSnackbar({msg: String(error), type: 'error'}));
                   }
                 }}
               >
-                <Card style={styles.paymentCard} onPress={() => handleOpenEditPayment(payment)}>
+                <Card
+                  style={styles.paymentCard}
+                  onPress={() => handleOpenEditPayment(payment)}
+                >
                   <Card.Content>
                     <View style={styles.paymentRow}>
-                      <Text>{format(new Date(payment.date), 'dd/MM/yyyy')}</Text>
-                      <Text style={styles.paymentAmount}>{formatGrosze(payment.amount)}</Text>
+                      <Text>
+                        {format(new Date(payment.date), 'dd/MM/yyyy')}
+                      </Text>
+                      <Text style={styles.paymentAmount}>
+                        {formatGrosze(payment.amount)}
+                      </Text>
                     </View>
                     {payment.note && <Caption>{payment.note}</Caption>}
                   </Card.Content>
@@ -243,7 +313,7 @@ export default function DebtDetailsScreen() {
         <FAB
           icon="plus"
           label="Dodaj wpłatę"
-          color="white"
+          color={t.colors.onPrimary}
           style={[styles.fab, {backgroundColor: t.colors.primary}]}
           onPress={() => setAddPaymentVisible(true)}
         />
@@ -300,7 +370,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   paidBadgeText: {
-    color: 'white',
+    color: warmColors.primaryForeground,
     fontSize: 12,
     fontWeight: '500',
   },
