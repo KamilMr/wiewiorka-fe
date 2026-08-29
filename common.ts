@@ -37,11 +37,46 @@ const getURL = (p = '') => {
   return `${env.apiUrl}/${p}`;
 };
 
-const formatPrice = (grosz: number) => {
-  if (!grosz) return '0.00 zł';
-  if (typeof grosz === 'string') return grosz;
-  const zloty = grosz;
-  return `${zloty.toFixed(2)} zł`;
+export type FormatPriceOptions = {
+  roundUp?: false | 'zloty' | 'thousand';
+};
+
+const integerPriceFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 0,
+});
+
+const roundToNearest = (number: number, factor: number = 1) =>
+  Math.sign(number) *
+  Math.round(
+    (Math.abs(number) + Number.EPSILON * Math.max(1, Math.abs(number))) *
+      factor,
+  );
+
+const formatPrice = (
+  value: number,
+  {roundUp = 'zloty'}: FormatPriceOptions = {},
+): string => {
+  if (!Number.isFinite(value)) return '0 zł';
+
+  if (roundUp === 'thousand') {
+    return `${integerPriceFormatter.format(
+      roundToNearest(value / 1000),
+    )} tys. zł`;
+  }
+
+  if (roundUp === false) {
+    const roundedCents = roundToNearest(value, 100);
+    const sign = roundedCents < 0 ? '-' : '';
+    const absoluteCents = Math.abs(roundedCents);
+    const zloty = Math.floor(absoluteCents / 100);
+    const grosze = absoluteCents % 100;
+
+    return `${sign}${integerPriceFormatter.format(zloty)}${
+      grosze ? `.${grosze.toString().padStart(2, '0')}` : ''
+    } zł`;
+  }
+
+  return `${integerPriceFormatter.format(roundToNearest(value))} zł`;
 };
 
 const makeNewIdArr = (number: number) => {
