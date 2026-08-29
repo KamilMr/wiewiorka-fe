@@ -1,4 +1,5 @@
 import {Button, Text, Select} from '@/components';
+import {formatPrice} from '@/common';
 import {sizes} from '@/constants/theme';
 import {useAppSelector, useAppDispatch} from '@/hooks';
 import {selectBudgets} from '@/redux/main/selectors';
@@ -215,8 +216,8 @@ const BasicList = ({date}: {date: string}) => {
                         />
                       ) : (
                         <Caption style={styles.allocatedText}>
-                          Ulokowano: {item.allocated} zł | Wydano:{' '}
-                          {Math.floor(item.amount)} zł
+                          Ulokowano: {formatPrice(item.allocated)} | Wydano:{' '}
+                          {formatPrice(item.amount)}
                         </Caption>
                       )}
                     </View>

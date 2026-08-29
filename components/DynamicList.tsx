@@ -16,6 +16,7 @@ import WarmCard from '@/components/warm/WarmCard';
 import WarmIconChip from '@/components/warm/WarmIconChip';
 import WarmSectionHeader from '@/components/warm/WarmSectionHeader';
 import {warmColors} from '@/constants/warmTheme';
+import {formatPrice} from '@/common';
 
 interface SelExpense {
   id: number | string;
@@ -76,15 +77,6 @@ const formatGroupLabel = (dateKey: string) => {
   return formatDate(d, 'EEEE, dd MMM', {locale: pl});
 };
 
-const formatPrice = (price: string | number) => {
-  const n = typeof price === 'number' ? price : parseFloat(String(price));
-  if (!isFinite(n)) return String(price);
-  return `${n.toLocaleString('pl-PL', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} zł`;
-};
-
 export default function DynamicRecordList({
   records,
   handleScroll = () => {},
@@ -105,6 +97,7 @@ export default function DynamicRecordList({
                       const price = Number(item.price);
                       return sum + (Number.isFinite(price) ? price : 0);
                     }, 0),
+                    {roundUp: false},
                   )}`
             }
           />
@@ -112,7 +105,10 @@ export default function DynamicRecordList({
           <WarmCard variant="glass" padded={false}>
             {records[dateKey].map((exp, idx) => {
               const isLast = idx === records[dateKey].length - 1;
-              const amount = `${exp.exp ? '-' : '+'}${formatPrice(exp.price)}`;
+              const amount = `${exp.exp ? '-' : '+'}${formatPrice(
+                Number(exp.price),
+                {roundUp: false},
+              )}`;
               const amountColor = exp.exp
                 ? warmColors.danger
                 : warmColors.success;
