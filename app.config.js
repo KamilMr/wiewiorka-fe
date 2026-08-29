@@ -22,16 +22,16 @@ module.exports = {
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "myapp",
-    userInterfaceStyle: "automatic",
+    userInterfaceStyle: "light",
     splash: {
       image: "./assets/images/splash.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#fdfbf7"
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#fdfbf7"
       },
       package: getPackageName(),
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",

@@ -8,6 +8,7 @@ import {fetchIni} from '@/redux/main/thunks';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {TabBarIcon} from '@/components/navigation/TabBarIcon';
 import {sizes} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import DevModeToggle from '@/components/DevModeToggle';
 import StatusIndicator from '@/components/StatusIndicator';
 import {selectFailedOperationsCount} from '@/redux/sync/syncSlice';
@@ -51,11 +52,18 @@ export default function TabLayout() {
         headerTitle: '',
         tabBarShowLabel: false,
         tabBarIconStyle: {flex: 1},
+        tabBarActiveTintColor: warmColors.sidebarPrimary,
+        tabBarInactiveTintColor: warmColors.mutedForeground,
         tabBarStyle: {
           height:
             (DEFAULT_BOTTOM_TAB_BAR_HEIGHT + bottomInset) *
             BOTTOM_TAB_BAR_HEIGHT_SCALE,
+          backgroundColor: warmColors.sidebar,
+          borderTopColor: warmColors.sidebarBorder,
         },
+        headerStyle: {backgroundColor: warmColors.sidebar},
+        headerTintColor: warmColors.sidebarForeground,
+        headerTitleStyle: {color: warmColors.sidebarForeground},
         headerRightContainerStyle: {paddingRight: sizes.xxl},
         headerRight: () => {
           return (
@@ -115,7 +123,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -8,
-    backgroundColor: '#FF4444',
+    backgroundColor: warmColors.destructive,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -124,7 +132,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: 'white',
+    color: warmColors.destructiveForeground,
     fontSize: 10,
     fontWeight: 'bold',
   },

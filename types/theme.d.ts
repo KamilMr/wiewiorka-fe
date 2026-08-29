@@ -2,47 +2,62 @@ import {MD3Theme} from 'react-native-paper';
 
 declare module 'react-native-paper' {
   interface MD3Colors {
-    // Primary palette - Navy blue
-    primary: string;
+    // Warm palette roles
+    foreground: string;
+    card: string;
+    cardForeground: string;
+    popover: string;
+    popoverForeground: string;
+    primaryForeground: string;
+    secondaryForeground: string;
+    muted: string;
+    mutedForeground: string;
+    accent: string;
+    accentForeground: string;
+    destructive: string;
+    destructiveForeground: string;
+    border: string;
+    input: string;
+    ring: string;
+    chart1: string;
+    chart2: string;
+    chart3: string;
+    chart4: string;
+    chart5: string;
+    sidebar: string;
+    sidebarForeground: string;
+    sidebarPrimary: string;
+    sidebarPrimaryForeground: string;
+    sidebarAccent: string;
+    sidebarAccentForeground: string;
+    sidebarBorder: string;
+    sidebarRing: string;
+    cardSolid: string;
+    cardBorder: string;
+    inputBackground: string;
+    danger: string;
+    dangerBackground: string;
+    decorPrimary: string;
+    decorSecondary: string;
+
+    // Compatibility aliases
     primaryLight: string;
     primaryDark: string;
-
-    // Accent colors - Amber
-    accent: string;
     accentLight: string;
     accentDark: string;
-
-    // Background colors - Beige system
-    background: string;
-    surface: string;
-    surfaceVariant: string;
     warmBeige: string;
-
-    // Semantic colors
     success: string;
     successLight: string;
     warning: string;
     warningLight: string;
-    error: string;
     errorLight: string;
     info: string;
     infoLight: string;
-
-    // Neutral palette
+    gold: string;
+    warmOrange: string;
     textPrimary: string;
     textSecondary: string;
     textTertiary: string;
-    outline: string;
-    outlineVariant: string;
-
-    // Additional accent colors
-    gold: string;
-    warmOrange: string;
-
-    // Text colors on surfaces
-    onSurface: string;
-    onSurfaceVariant: string;
-    onPrimary: string;
     onAccent: string;
   }
 
