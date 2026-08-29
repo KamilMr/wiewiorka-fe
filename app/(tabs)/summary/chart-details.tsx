@@ -21,6 +21,7 @@ import {buildBarChart, buildPieChart} from '@/utils/chartBuilder';
 import {selectByTimeRange, selectCategories} from '@/redux/main/selectors';
 import {useAppSelector} from '@/hooks';
 import {useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {EXCLUDED_CAT, formatPrice, shortenText} from '@/common';
 import ChartDetailsTestingViews from '@/components/summary/ChartDetailsTestingViews';
 
@@ -64,7 +65,7 @@ const GroupCategory = ({
         style={{height: 40, width: 140}}
         mode={'text'}
         labelStyle={{
-          color: !isCat ? 'blue' : undefined,
+          color: !isCat ? warmColors.primary : undefined,
           fontSize: 12,
         }}
         onPress={handleOnPress('1-0')}
@@ -75,7 +76,7 @@ const GroupCategory = ({
         style={{height: 40, width: 140}}
         mode={'text'}
         labelStyle={{
-          color: isCat ? 'blue' : undefined,
+          color: isCat ? warmColors.primary : undefined,
           fontSize: 12,
         }}
         onPress={handleOnPress('1-1')}
@@ -214,7 +215,7 @@ const Summary = () => {
   const previousMonth = subMonths(today, 1);
 
   return (
-    <ScrollView style={{backgroundColor: t.colors.white}}>
+    <ScrollView style={{backgroundColor: t.colors.background}}>
       <View
         style={{
           flexDirection: 'row',
@@ -303,12 +304,12 @@ const Summary = () => {
           <IconButton
             icon="chart-donut"
             onPress={handlePieChange('pie')}
-            iconColor={chartDisplay === 'pie' ? 'blue' : undefined}
+            iconColor={chartDisplay === 'pie' ? t.colors.primary : undefined}
           />
           <IconButton
             icon="chart-bar"
             onPress={handlePieChange('bar')}
-            iconColor={chartDisplay === 'bar' ? 'blue' : undefined}
+            iconColor={chartDisplay === 'bar' ? t.colors.primary : undefined}
           />
         </View>
       </View>
@@ -318,7 +319,7 @@ const Summary = () => {
           labelsPosition="onBorder"
           innerRadius={70}
           strokeWidth={2}
-          strokeColor="white"
+          strokeColor={t.colors.card}
           onPress={(item: {label: string; id: string}) => {
             if (axis[0] === '1-1') {
               const dates = filterDates.map(d => format(d, 'yyyy-MM-dd'));
@@ -347,7 +348,11 @@ const Summary = () => {
             return (
               <View style={{justifyContent: 'center', alignItems: 'center'}}>
                 <Text
-                  style={{fontSize: 12, color: 'black', fontWeight: 'bold'}}
+                  style={{
+                    fontSize: 12,
+                    color: t.colors.onBackground,
+                    fontWeight: 'bold',
+                  }}
                 >
                   {formatPrice(_.sumBy(pieData, 'value'))}
                 </Text>
@@ -356,11 +361,13 @@ const Summary = () => {
                     key={label}
                     style={{
                       fontSize: 10,
-                      color: 'black',
+                      color: t.colors.onBackground,
                     }}
                   >{`${shortenText(label)}(${formatPrice(value)})`}</Text>
                 ))}
-                <Text style={{fontSize: 10, color: 'black'}}>...więcej</Text>
+                <Text style={{fontSize: 10, color: t.colors.onBackground}}>
+                  ...więcej
+                </Text>
               </View>
             );
           }}
@@ -423,7 +430,8 @@ const Summary = () => {
             <Chip
               key={c.id}
               selectedColor={
-                filters.find(f => f.name === c.name)?.color || '#a6a6a6'
+                filters.find(f => f.name === c.name)?.color ||
+                t.colors.mutedForeground
               }
               // rippleColor={c.color}
               mode="outlined"
@@ -438,7 +446,8 @@ const Summary = () => {
                   fontSize: 14,
                   fontWeight: isSelected ? 600 : 400,
                   color:
-                    filters.find(f => f.name === c.name)?.color || '#a6a6a6',
+                    filters.find(f => f.name === c.name)?.color ||
+                    t.colors.mutedForeground,
                   textDecorationLine: isSelected ? undefined : 'line-through',
                 }}
               >

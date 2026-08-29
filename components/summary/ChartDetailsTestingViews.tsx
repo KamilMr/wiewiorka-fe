@@ -15,6 +15,7 @@ import {LineChart} from 'react-native-gifted-charts';
 
 import {BarChart, Text} from '@/components';
 import {formatPrice} from '@/common';
+import {warmColors} from '@/constants/warmTheme';
 import {useAppSelector} from '@/hooks';
 import {selectByTimeRange} from '@/redux/main/selectors';
 import {type Subcategory} from '@/types';
@@ -55,7 +56,13 @@ type CategoryTotal = {
   value: number;
 };
 
-const fallbackColors = ['#5D87FF', '#FFB020', '#43A047', '#E53935', '#8E24AA'];
+const fallbackColors = [
+  warmColors.chart1,
+  warmColors.chart2,
+  warmColors.chart3,
+  warmColors.chart4,
+  warmColors.chart5,
+];
 const MAX_CHART_POINTS = 45;
 
 type ChartBucket = {
@@ -274,7 +281,7 @@ const InfoPopup = ({text}: {text: string}) => {
           icon="information-outline"
           size={18}
           style={styles.infoIcon}
-          iconColor="#3157A4"
+          iconColor={warmColors.primary}
           onPress={handlePress}
         />
       </View>
@@ -383,7 +390,9 @@ const ChartDetailsTestingViews = ({
       : '',
     labelWidth,
     labelTextStyle: styles.axisLabel,
-    frontColor: isWeekend(new Date(bucket.startDate)) ? '#FFB020' : '#5D87FF',
+    frontColor: isWeekend(new Date(bucket.startDate))
+      ? warmColors.chart5
+      : warmColors.chart1,
   }));
 
   const cumulativeData = chartBuckets.reduce<{value: number; label: string}[]>(
@@ -456,7 +465,9 @@ const ChartDetailsTestingViews = ({
             value: bucket.categories[category.id] || 0,
             color: category.color,
           })),
-          ...(otherValue > 0 ? [{value: otherValue, color: '#BDBDBD'}] : []),
+          ...(otherValue > 0
+            ? [{value: otherValue, color: warmColors.chart2}]
+            : []),
         ],
       };
     });
@@ -465,7 +476,7 @@ const ChartDetailsTestingViews = ({
     <View style={styles.container}>
       <InsightCard
         title="1. Dzienny trend wydatków"
-        tooltip="Każdy słupek pokazuje sumę wydatków z jednego dnia. Im wyższy słupek, tym droższy dzień. Pomarańczowy kolor oznacza weekend, a niebieski dzień roboczy."
+        tooltip="Każdy słupek pokazuje sumę wydatków z jednego dnia. Im wyższy słupek, tym droższy dzień. Złoty kolor oznacza weekend, a brązowy dzień roboczy."
       >
         {hasData ? (
           <View style={styles.chartBox} onLayout={handleChartBoxLayout}>
@@ -495,7 +506,7 @@ const ChartDetailsTestingViews = ({
               data={cumulativeData}
               {...compactChartProps}
               height={180}
-              color="#43A047"
+              color={warmColors.chart3}
               thickness={3}
               curved
               hideDataPoints={dayTotals.length > 20}
@@ -567,7 +578,10 @@ const ChartDetailsTestingViews = ({
               ))}
               <View style={styles.legendItem}>
                 <View
-                  style={[styles.legendDot, {backgroundColor: '#BDBDBD'}]}
+                  style={[
+                    styles.legendDot,
+                    {backgroundColor: warmColors.chart2},
+                  ]}
                 />
                 <Text style={styles.legendText}>Inne</Text>
               </View>
@@ -590,9 +604,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: warmColors.card,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: warmColors.border,
     overflow: 'hidden',
   },
   chartBox: {
@@ -624,29 +638,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#20252B',
-    shadowColor: '#000000',
+    backgroundColor: warmColors.popover,
+    shadowColor: warmColors.foreground,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 6,
   },
   infoPopupText: {
-    color: '#FFFFFF',
+    color: warmColors.popoverForeground,
     fontSize: 13,
     lineHeight: 18,
   },
   empty: {
-    color: '#777777',
+    color: warmColors.mutedForeground,
   },
   axisLabel: {
-    color: '#777777',
+    color: warmColors.mutedForeground,
     fontSize: 10,
   },
   comparisonRow: {
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: warmColors.border,
   },
   comparisonHeader: {
     flexDirection: 'row',
@@ -658,16 +672,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   positive: {
-    color: '#E53935',
+    color: warmColors.destructive,
     fontWeight: '700',
   },
   negative: {
-    color: '#43A047',
+    color: warmColors.success,
     fontWeight: '700',
   },
   comparisonDetails: {
     marginTop: 2,
-    color: '#777777',
+    color: warmColors.mutedForeground,
     fontSize: 12,
   },
   legend: {
@@ -689,7 +703,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: '#555555',
+    color: warmColors.foreground,
   },
 });
 
