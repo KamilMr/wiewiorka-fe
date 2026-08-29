@@ -1,18 +1,13 @@
+import {formatPrice} from '../common';
 import {RateType} from '../types/nbpTypes';
 
 /**
- * Formats amount in grosze to Polish currency string
+ * Formats an amount in grosze using the unified Polish currency display.
  * @param grosze - Amount in grosze (100 gr = 1 zł)
- * @returns Formatted string like '2 zł' or '2 zł 13 gr'
+ * @returns Formatted string like '2 zł' or '2.13 zł'
  */
-export const formatGrosze = (grosze: number): string => {
-  const zl = Math.floor(Math.abs(grosze) / 100);
-  const gr = Math.abs(grosze) % 100;
-  const sign = grosze < 0 ? '-' : '';
-
-  if (gr === 0) return `${sign}${zl} zł`;
-  return `${sign}${zl} zł ${gr} gr`;
-};
+export const formatGrosze = (grosze: number): string =>
+  formatPrice(grosze / 100, {roundUp: false});
 
 /**
  * Parses user input in złoty to grosze (integer)
