@@ -133,7 +133,7 @@ const IncomeSummary = () => {
               >
                 <Text>{`${item.date}: ${item.source} - ${
                   item.owner
-                }: ${formatPrice(item.price)}`}</Text>
+                }: ${formatPrice(item.price, {roundUp: false})}`}</Text>
               </View>
             )}
           />

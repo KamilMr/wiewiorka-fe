@@ -97,7 +97,6 @@ export default function DynamicRecordList({
                       const price = Number(item.price);
                       return sum + (Number.isFinite(price) ? price : 0);
                     }, 0),
-                    {roundUp: false},
                   )}`
             }
           />
@@ -106,7 +105,7 @@ export default function DynamicRecordList({
             {records[dateKey].map((exp, idx) => {
               const isLast = idx === records[dateKey].length - 1;
               const amount = `${exp.exp ? '-' : '+'}${formatPrice(
-                Number(exp.price),
+                Math.abs(Number(exp.price)),
                 {roundUp: false},
               )}`;
               const amountColor = exp.exp

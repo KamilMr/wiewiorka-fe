@@ -327,9 +327,7 @@ const Records = () => {
             <View style={styles.summaryTopRow}>
               <View>
                 <Text style={styles.summaryLabel}>Saldo netto</Text>
-                <Text style={styles.summaryNet}>
-                  {formatPrice(totals.net, {roundUp: false})}
-                </Text>
+                <Text style={styles.summaryNet}>{formatPrice(totals.net)}</Text>
               </View>
             </View>
             <View style={styles.summaryBottomRow}>
@@ -338,7 +336,7 @@ const Records = () => {
                 <Text
                   style={[styles.summaryCellValue, {color: warmColors.success}]}
                 >
-                  {formatPrice(totals.income, {roundUp: false})}
+                  {formatPrice(totals.income)}
                 </Text>
               </View>
               <View style={styles.summaryDivider} />
@@ -347,7 +345,7 @@ const Records = () => {
                 <Text
                   style={[styles.summaryCellValue, {color: warmColors.danger}]}
                 >
-                  {formatPrice(totals.expense, {roundUp: false})}
+                  {formatPrice(totals.expense)}
                 </Text>
               </View>
             </View>
