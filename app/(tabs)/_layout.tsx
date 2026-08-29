@@ -1,139 +1,54 @@
 import React, {useEffect} from 'react';
 import {Redirect, Tabs} from 'expo-router';
-import {View, StyleSheet, Text} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {selectToken} from '@/redux/auth/authSlice';
-import {fetchIni} from '@/redux/main/thunks';
-import {useAppDispatch, useAppSelector} from '@/hooks';
-import {TabBarIcon} from '@/components/navigation/TabBarIcon';
+import {BottomTabBar} from '@/components/navigation/BottomTabBar';
 import {sizes} from '@/constants/theme';
 import {warmColors} from '@/constants/warmTheme';
 import DevModeToggle from '@/components/DevModeToggle';
 import StatusIndicator from '@/components/StatusIndicator';
-import {selectFailedOperationsCount} from '@/redux/sync/syncSlice';
-
-const DEFAULT_BOTTOM_TAB_BAR_HEIGHT = 49;
-const BOTTOM_TAB_BAR_HEIGHT_SCALE = 1.3;
-
-const SettingsTabIcon = ({color}: {color: string}) => {
-  const failedCount = useAppSelector(selectFailedOperationsCount);
-
-  return (
-    <View>
-      <TabBarIcon name="settings" color={color} />
-      {failedCount > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {failedCount > 9 ? '9+' : failedCount}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-};
+import {useAppDispatch, useAppSelector} from '@/hooks';
+import {selectToken} from '@/redux/auth/authSlice';
+import {fetchIni} from '@/redux/main/thunks';
 
 export default function TabLayout() {
   const token = useAppSelector(selectToken);
   const dispatch = useAppDispatch();
-  const {bottom: bottomInset} = useSafeAreaInsets();
 
   useEffect(() => {
     if (!token) return;
     dispatch(fetchIni());
-  }, [dispatch]);
+  }, [dispatch, token]);
 
   if (!token) return <Redirect href="/sign-in" />;
 
   return (
     <Tabs
+      tabBar={props => <BottomTabBar {...props} />}
       screenOptions={{
         headerShown: true,
         headerTitle: '',
-        tabBarShowLabel: false,
-        tabBarIconStyle: {flex: 1},
-        tabBarActiveTintColor: warmColors.sidebarPrimary,
-        tabBarInactiveTintColor: warmColors.mutedForeground,
-        tabBarStyle: {
-          height:
-            (DEFAULT_BOTTOM_TAB_BAR_HEIGHT + bottomInset) *
-            BOTTOM_TAB_BAR_HEIGHT_SCALE,
-          backgroundColor: warmColors.sidebar,
-          borderTopColor: warmColors.sidebarBorder,
-        },
         headerStyle: {backgroundColor: warmColors.sidebar},
         headerTintColor: warmColors.sidebarForeground,
         headerTitleStyle: {color: warmColors.sidebarForeground},
         headerRightContainerStyle: {paddingRight: sizes.xxl},
-        headerRight: () => {
-          return (
-            <DevModeToggle>
-              <StatusIndicator />
-            </DevModeToggle>
-          );
-        },
+        headerRight: () => (
+          <DevModeToggle>
+            <StatusIndicator />
+          </DevModeToggle>
+        ),
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          tabBarIcon: ({color}) => <TabBarIcon name="home" color={color} />,
-          title: 'Stron główna',
-        }}
-      />
+      <Tabs.Screen name="index" options={{title: 'Strona główna'}} />
       <Tabs.Screen
         name="records"
-        options={{
-          tabBarShowLabel: false,
-          tabBarIcon: ({color}) => <TabBarIcon name="cash" color={color} />,
-          title: 'Wydatki/Wpływy',
-          headerShown: true,
-        }}
+        options={{title: 'Wydatki/Wpływy', headerShown: true}}
       />
-      <Tabs.Screen
-        name="addnew"
-        options={{
-          tabBarIcon: ({color}) => <TabBarIcon name="add" color={color} />,
-          title: 'Dodaj',
-        }}
-      />
+      <Tabs.Screen name="addnew" options={{title: 'Dodaj'}} />
       <Tabs.Screen
         name="summary"
-        options={{
-          tabBarIcon: ({color}) => (
-            <TabBarIcon name="bar-chart" color={color} />
-          ),
-          title: 'Podsumowanie',
-          headerShown: true,
-        }}
+        options={{title: 'Podsumowanie', headerShown: true}}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          tabBarIcon: ({color}) => <SettingsTabIcon color={color} />,
-          title: 'Ustawienia',
-        }}
-      />
+      <Tabs.Screen name="settings" options={{title: 'Ustawienia'}} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -8,
-    backgroundColor: warmColors.destructive,
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    color: warmColors.destructiveForeground,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-});
