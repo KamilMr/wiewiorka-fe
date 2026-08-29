@@ -17,6 +17,7 @@ import {warmColors} from '@/constants/warmTheme';
 import {EXCLUDED_CAT, formatPrice, shortenText} from '@/common';
 import ChartDetailsTestingViews from '@/components/summary/ChartDetailsTestingViews';
 import SummaryDateRangeSelector from '@/components/summary/SummaryDateRangeSelector';
+import TotalSpentSummary from '@/components/summary/TotalSpentSummary';
 
 const excludedCategories = EXCLUDED_CAT as number[];
 
@@ -205,11 +206,12 @@ const Summary = () => {
         onChange={setFilterDates}
         style={{marginHorizontal: 20, marginTop: 5, marginBottom: 20}}
       />
-      <View style={{alignItems: 'center', marginBottom: 44}}>
-        <Text style={{fontSize: 16, fontWeight: 'bold'}}>
-          Wydano: {formatPrice(_.sumBy(data, 'value'))}
-        </Text>
-      </View>
+      <TotalSpentSummary
+        amount={_.sumBy(data, 'value')}
+        categoryCount={data.length}
+        categoryType={axis[0] === '1-1' ? 'subcategory' : 'category'}
+        dateRange={filterDates}
+      />
       <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
         <GroupCategory axis={axis} onPress={handleAxisChange} />
         <View
