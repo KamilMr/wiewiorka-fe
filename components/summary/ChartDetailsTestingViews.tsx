@@ -10,8 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import {IconButton, Portal} from 'react-native-paper';
-import {addDays, differenceInCalendarDays, format, isWeekend} from 'date-fns';
-import {LineChart} from 'react-native-gifted-charts';
+import {addDays, differenceInCalendarDays, format} from 'date-fns';
 
 import {BarChart, Text} from '@/components';
 import {formatPrice} from '@/common';
@@ -63,14 +62,6 @@ const fallbackColors = [
   warmColors.chart4,
   warmColors.chart5,
 ];
-const MAX_CHART_POINTS = 45;
-
-type ChartBucket = {
-  startDate: string;
-  endDate: string;
-  value: number;
-};
-
 const sumValues = (values?: number[]) =>
   values?.reduce((sum, value) => sum + (Number(value) || 0), 0) || 0;
 
@@ -133,38 +124,6 @@ const buildDayTotals = (
   });
 };
 
-const buildChartBuckets = (dayTotals: DayTotal[]): ChartBucket[] => {
-  if (dayTotals.length <= MAX_CHART_POINTS) {
-    return dayTotals.map(day => ({
-      startDate: day.date,
-      endDate: day.date,
-      value: day.value,
-    }));
-  }
-
-  const bucketSize = Math.ceil(dayTotals.length / MAX_CHART_POINTS);
-  const buckets: ChartBucket[] = [];
-
-  for (let index = 0; index < dayTotals.length; index += bucketSize) {
-    const chunk = dayTotals.slice(index, index + bucketSize);
-    buckets.push({
-      startDate: chunk[0].date,
-      endDate: chunk[chunk.length - 1].date,
-      value: chunk.reduce((sum, day) => sum + day.value, 0),
-    });
-  }
-
-  return buckets;
-};
-
-const formatBucketLabel = (bucket: ChartBucket) =>
-  bucket.startDate === bucket.endDate
-    ? format(new Date(bucket.startDate), 'dd.MM')
-    : `${format(new Date(bucket.startDate), 'dd.MM')}-${format(
-        new Date(bucket.endDate),
-        'dd.MM',
-      )}`;
-
 const buildCategoryTotals = (
   data: AggregatedData,
   filters: ChartFilter[],
@@ -190,9 +149,6 @@ const buildCategoryTotals = (
     }))
     .sort((a, b) => b.value - a.value);
 };
-
-const shouldShowLabel = (index: number, length: number) =>
-  length <= 10 || index === 0 || index === length - 1 || index % 5 === 0;
 
 const shouldUseMonthlyCategoryShare = (dayTotals: DayTotal[]) => {
   const monthsCount = new Set(
@@ -379,36 +335,6 @@ const ChartDetailsTestingViews = ({
     [selected, filters, categories],
   );
 
-  const hasData = dayTotals.some(day => day.value > 0);
-  const chartBuckets = useMemo(() => buildChartBuckets(dayTotals), [dayTotals]);
-  const maxChartValue = Math.max(...chartBuckets.map(day => day.value), 0);
-
-  const dailyTrendData = chartBuckets.map((bucket, index) => ({
-    value: bucket.value,
-    label: shouldShowLabel(index, chartBuckets.length)
-      ? formatBucketLabel(bucket)
-      : '',
-    labelWidth,
-    labelTextStyle: styles.axisLabel,
-    frontColor: isWeekend(new Date(bucket.startDate))
-      ? warmColors.chart5
-      : warmColors.chart1,
-  }));
-
-  const cumulativeData = chartBuckets.reduce<{value: number; label: string}[]>(
-    (acc, bucket, index) => {
-      const previousValue = acc[index - 1]?.value || 0;
-      acc.push({
-        value: previousValue + bucket.value,
-        label: shouldShowLabel(index, chartBuckets.length)
-          ? formatBucketLabel(bucket)
-          : '',
-      });
-      return acc;
-    },
-    [],
-  );
-
   const previousTotalsById = Object.fromEntries(
     previousCategoryTotals.map(category => [category.id, category.value]),
   );
@@ -475,52 +401,7 @@ const ChartDetailsTestingViews = ({
   return (
     <View style={styles.container}>
       <InsightCard
-        title="1. Dzienny trend wydatków"
-        tooltip="Każdy słupek pokazuje sumę wydatków z jednego dnia. Im wyższy słupek, tym droższy dzień. Złoty kolor oznacza weekend, a brązowy dzień roboczy."
-      >
-        {hasData ? (
-          <View style={styles.chartBox} onLayout={handleChartBoxLayout}>
-            <BarChart
-              barData={dailyTrendData}
-              {...compactChartProps}
-              height={180}
-              maxValue={maxChartValue || 1}
-              barWidth={14}
-              spacing={10}
-              initialSpacing={8}
-              xAxisTextNumberOfLines={1}
-            />
-          </View>
-        ) : (
-          <EmptyInsight />
-        )}
-      </InsightCard>
-
-      <InsightCard
-        title="2. Wydatki narastająco"
-        tooltip="Linia pokazuje, ile łącznie wydano od początku wybranego zakresu. Gdy linia rośnie stromo, oznacza to szybsze tempo wydawania pieniędzy."
-      >
-        {hasData ? (
-          <View style={styles.chartBox} onLayout={handleChartBoxLayout}>
-            <LineChart
-              data={cumulativeData}
-              {...compactChartProps}
-              height={180}
-              color={warmColors.chart3}
-              thickness={3}
-              curved
-              hideDataPoints={dayTotals.length > 20}
-              xAxisLabelTextStyle={styles.axisLabel}
-              yAxisTextStyle={styles.axisLabel}
-            />
-          </View>
-        ) : (
-          <EmptyInsight />
-        )}
-      </InsightCard>
-
-      <InsightCard
-        title="3. Kategorie vs poprzedni okres"
+        title="1. Kategorie vs poprzedni okres"
         tooltip="Lista porównuje wybrany zakres z poprzednim okresem o tej samej długości. Czerwony plus oznacza wzrost wydatków, a zielona wartość oznacza spadek."
       >
         {comparisonRows.length ? (
@@ -547,7 +428,7 @@ const ChartDetailsTestingViews = ({
       </InsightCard>
 
       <InsightCard
-        title={`4. Udział kategorii w czasie (${categoryShareMode === 'month' ? 'miesiące' : 'dni'})`}
+        title={`2. Udział kategorii w czasie (${categoryShareMode === 'month' ? 'miesiące' : 'dni'})`}
         tooltip="Kolory w słupku pokazują udział najważniejszych kategorii w sumie wydatków. Dla krótszego zakresu jeden słupek oznacza dzień. Dla zakresu około dwóch miesięcy lub dłuższego jeden słupek oznacza miesiąc. Szary kolor oznacza pozostałe kategorie."
       >
         {stackData.length ? (
