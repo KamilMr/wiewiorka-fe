@@ -71,6 +71,7 @@ const Summary = () => {
           </Text>
         </View>
         <Config
+          title="Zakres"
           selection={[
             [MONTH, MONTH_LABEL],
             [YEAR, YEAR_LABEL],
