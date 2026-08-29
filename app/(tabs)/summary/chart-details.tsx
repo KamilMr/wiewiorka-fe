@@ -409,14 +409,6 @@ const Summary = () => {
         ) : null}
       </View>
 
-      <ChartDetailsTestingViews
-        selected={selected}
-        filterDates={filterDates}
-        filters={filters}
-        categories={stateCategories}
-        holidayTagFilter={holidayTagFilter}
-      />
-
       <View
         style={{
           marginTop: 48,
@@ -462,6 +454,15 @@ const Summary = () => {
       >
         {filters.length > 0 ? 'Usuń filtry' : 'Zaznacz wszystkie'}
       </Button>
+
+      <ChartDetailsTestingViews
+        selected={selected}
+        filterDates={filterDates}
+        filters={filters}
+        categories={stateCategories}
+        holidayTagFilter={holidayTagFilter}
+      />
+
       <View style={{height: 80}} />
     </ScrollView>
   );
