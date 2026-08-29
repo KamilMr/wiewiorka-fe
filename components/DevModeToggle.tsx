@@ -1,18 +1,12 @@
 import React, {useState, useRef} from 'react';
 import {usePathname} from 'expo-router';
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Modal,
-  Dimensions,
-} from 'react-native';
+import {View, TouchableOpacity, Text, StyleSheet, Modal} from 'react-native';
 
-import {useAppDispatch} from '@/hooks';
+import {useAppDispatch, useDev} from '@/hooks';
 import {toggleDevMode, setSnackbar, clearDevMode} from '@/redux/main/mainSlice';
-import {useDev} from '@/hooks';
 import {TabBarIcon} from '@/components/navigation/TabBarIcon';
+import {useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 
 interface DevModeToggleProps {
   children: React.ReactNode;
@@ -22,6 +16,7 @@ const DevModeToggle: React.FC<DevModeToggleProps> = ({children}) => {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
   const devMode = useDev();
+  const t = useAppTheme();
 
   const [tapCount, setTapCount] = useState(0);
   const firstTapTime = useRef<number | null>(null);
@@ -96,9 +91,13 @@ const DevModeToggle: React.FC<DevModeToggleProps> = ({children}) => {
           <TouchableOpacity
             ref={devBadgeRef}
             onPress={handleDevBadgePress}
-            style={styles.devBadge}
+            style={[styles.devBadge, {backgroundColor: t.colors.destructive}]}
           >
-            <Text style={styles.devText}>DEV</Text>
+            <Text
+              style={[styles.devText, {color: t.colors.destructiveForeground}]}
+            >
+              DEV
+            </Text>
           </TouchableOpacity>
         )}
         {children}
@@ -118,15 +117,22 @@ const DevModeToggle: React.FC<DevModeToggleProps> = ({children}) => {
           <View
             style={[
               styles.contextMenu,
-              {top: menuPosition.y, left: menuPosition.x},
+              {
+                backgroundColor: t.colors.popover,
+                shadowColor: t.colors.foreground,
+                top: menuPosition.y,
+                left: menuPosition.x,
+              },
             ]}
           >
             <TouchableOpacity
               style={styles.menuItem}
               onPress={handleExitDevMode}
             >
-              <TabBarIcon name="exit" color="#239" size={16} />
-              <Text style={styles.menuItemText}>Wyłącz</Text>
+              <TabBarIcon name="exit" color={t.colors.primary} size={16} />
+              <Text style={[styles.menuItemText, {color: t.colors.foreground}]}>
+                Wyłącz
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -143,27 +149,23 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   devBadge: {
-    backgroundColor: '#FF6B6B',
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginRight: 8,
   },
   devText: {
-    color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: warmColors.decorPrimary,
   },
   contextMenu: {
     position: 'absolute',
-    backgroundColor: 'white',
     borderRadius: 8,
     elevation: 8,
-    shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -178,7 +180,6 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 14,
-    color: '#333',
     fontWeight: '500',
     marginLeft: 8,
   },

@@ -2,6 +2,7 @@ import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
 import {router} from 'expo-router';
 import {TabBarIcon} from '@/components/navigation/TabBarIcon';
 import {useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {useAppDispatch} from '@/hooks';
 import {addTestFailedOperations} from '@/redux/sync/syncSlice';
 
@@ -14,7 +15,7 @@ const DevPage = () => {
   };
 
   return (
-    <View style={[styles.root, {backgroundColor: t.colors.white}]}>
+    <View style={[styles.root, {backgroundColor: t.colors.background}]}>
       <View style={styles.cardsContainer}>
         <TouchableOpacity
           style={styles.cardItem}
@@ -62,11 +63,14 @@ const DevPage = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.cardItem, {backgroundColor: 'rgba(255,0,0,0.1)'}]}
+          style={[
+            styles.cardItem,
+            {backgroundColor: warmColors.dangerBackground},
+          ]}
           onPress={handleAddTestFailedOps}
         >
-          <TabBarIcon name="sync" color="#FF4444" />
-          <Text style={[styles.cardText, {color: '#FF4444'}]}>
+          <TabBarIcon name="sync" color={t.colors.destructive} />
+          <Text style={[styles.cardText, {color: t.colors.destructive}]}>
             Add Failed Sync
           </Text>
         </TouchableOpacity>
@@ -88,7 +92,7 @@ const styles = StyleSheet.create({
   cardItem: {
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: warmColors.muted,
     borderRadius: 12,
     width: '45%',
     minHeight: 100,

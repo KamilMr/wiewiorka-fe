@@ -9,7 +9,7 @@ import {
   selectOperations,
   selectSyncLogs,
 } from '@/redux/sync/syncSlice';
-import {useAppTheme} from '@/constants/theme';
+import {warmColors} from '@/constants/warmTheme';
 import {SyncLogEntry, SyncOperation} from '@/types';
 
 const formatDate = (timestamp: number) =>
@@ -24,13 +24,13 @@ const formatDate = (timestamp: number) =>
 const levelColor = (level: SyncLogEntry['level']) => {
   switch (level) {
     case 'success':
-      return '#28A745';
+      return warmColors.success;
     case 'warning':
-      return '#FFA500';
+      return warmColors.chart5;
     case 'error':
-      return '#DC3545';
+      return warmColors.destructive;
     default:
-      return '#17A2B8';
+      return warmColors.primary;
   }
 };
 
@@ -86,7 +86,7 @@ const OperationCard = ({
           <Button
             compact
             mode="outlined"
-            textColor="#DC3545"
+            textColor={warmColors.destructive}
             style={styles.deleteButton}
             onPress={onDelete}
           >
@@ -124,7 +124,6 @@ const LogRow = ({log}: {log: SyncLogEntry}) => (
 );
 
 const SyncLogsPage = () => {
-  const t = useAppTheme();
   const dispatch = useAppDispatch();
   const operations = useAppSelector(selectOperations);
   const logs = useAppSelector(selectSyncLogs);
@@ -132,7 +131,7 @@ const SyncLogsPage = () => {
 
   return (
     <ScrollView
-      style={{backgroundColor: t.colors.white}}
+      style={{backgroundColor: warmColors.background}}
       contentContainerStyle={styles.container}
     >
       <View style={styles.header}>
@@ -199,11 +198,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   errorText: {
-    color: '#DC3545',
+    color: warmColors.destructive,
     marginTop: 6,
   },
   payload: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: warmColors.muted,
     marginTop: 8,
     padding: 8,
     borderRadius: 6,
@@ -220,7 +219,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: warmColors.border,
   },
   levelDot: {
     width: 10,
@@ -234,10 +233,10 @@ const styles = StyleSheet.create({
   },
   metaText: {
     marginTop: 4,
-    color: '#666',
+    color: warmColors.mutedForeground,
   },
   emptyText: {
-    color: '#666',
+    color: warmColors.mutedForeground,
     marginVertical: 12,
   },
 });
