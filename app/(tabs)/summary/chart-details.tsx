@@ -313,6 +313,53 @@ const Summary = () => {
           />
         </View>
       </View>
+
+      <View
+        style={{
+          marginTop: 48,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+        }}
+      >
+        {currentGroupOrCategory.map(c => {
+          const isSelected = !!filters.find(f => f.name === c.name);
+          return (
+            <Chip
+              key={c.id}
+              selectedColor={
+                filters.find(f => f.name === c.name)?.color ||
+                t.colors.mutedForeground
+              }
+              // rippleColor={c.color}
+              mode="outlined"
+              showSelectedCheck={false}
+              icon={undefined}
+              style={{margin: 2, maxWidth: '50%'}}
+              selected={isSelected}
+              onPress={handleFilters(c.id)}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: isSelected ? 600 : 400,
+                  color:
+                    filters.find(f => f.name === c.name)?.color ||
+                    t.colors.mutedForeground,
+                  textDecorationLine: isSelected ? undefined : 'line-through',
+                }}
+              >
+                {c.name}
+              </Text>
+            </Chip>
+          );
+        })}
+      </View>
+      <Button
+        onPress={filters.length > 0 ? handleRemoveFilters : handleResetFilters}
+      >
+        {filters.length > 0 ? 'Usuń filtry' : 'Zaznacz wszystkie'}
+      </Button>
+
       {chartDisplay === 'pie' ? (
         <PieChartBar
           data={pieData}
@@ -408,52 +455,6 @@ const Summary = () => {
           />
         ) : null}
       </View>
-
-      <View
-        style={{
-          marginTop: 48,
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-        }}
-      >
-        {currentGroupOrCategory.map(c => {
-          const isSelected = !!filters.find(f => f.name === c.name);
-          return (
-            <Chip
-              key={c.id}
-              selectedColor={
-                filters.find(f => f.name === c.name)?.color ||
-                t.colors.mutedForeground
-              }
-              // rippleColor={c.color}
-              mode="outlined"
-              showSelectedCheck={false}
-              icon={undefined}
-              style={{margin: 2, maxWidth: '50%'}}
-              selected={isSelected}
-              onPress={handleFilters(c.id)}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: isSelected ? 600 : 400,
-                  color:
-                    filters.find(f => f.name === c.name)?.color ||
-                    t.colors.mutedForeground,
-                  textDecorationLine: isSelected ? undefined : 'line-through',
-                }}
-              >
-                {c.name}
-              </Text>
-            </Chip>
-          );
-        })}
-      </View>
-      <Button
-        onPress={filters.length > 0 ? handleRemoveFilters : handleResetFilters}
-      >
-        {filters.length > 0 ? 'Usuń filtry' : 'Zaznacz wszystkie'}
-      </Button>
 
       <ChartDetailsTestingViews
         selected={selected}
