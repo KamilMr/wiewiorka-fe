@@ -23,7 +23,7 @@ export const addNewExpense = createAsyncThunk<
   any,
   Expense & {frontendId?: string | number},
   {state: RootState}
->('expense/save', async (expense, thunkAPI) => {
+>('expense/add', async (expense, thunkAPI) => {
   const {dispatch, getState} = thunkAPI;
 
   const auth = getState().auth;
@@ -59,7 +59,7 @@ export const addNewExpense = createAsyncThunk<
 });
 
 export const updateExpense = createAsyncThunk<any, Expense, {state: RootState}>(
-  'expense/save',
+  'expense/update',
   async (expense, thunkAPI) => {
     const {dispatch} = thunkAPI;
 
