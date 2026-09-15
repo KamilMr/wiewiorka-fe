@@ -1,8 +1,7 @@
-import {router, useNavigation} from 'expo-router';
+import {router} from 'expo-router';
 
 import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {IconButtonWithStatus as IconButton} from '@/components';
-import {Text} from '..';
+import {IconButtonWithStatus as IconButton, Text} from '@/components';
 import {
   ItemsProps,
   AddEmptyModal,
@@ -10,8 +9,6 @@ import {
   GroupedItemsProps,
 } from './types';
 import {CircleIcon} from '../Icons';
-import {useAppDispatch} from '@/hooks';
-import {addSubcategoryLocal} from '@/redux/main/thunks';
 import {useState} from 'react';
 import {warmColors} from '@/constants/warmTheme';
 
@@ -24,7 +21,7 @@ const GroupedItem = ({
   emptyModal,
   handleDelete,
 }: ItemsProps & AddEmptyModal & HandleDelete) => {
-  const isNotSynced = typeof item.id === 'string' && item.id.startsWith('f');
+  const isNotSynced = String(item.id).startsWith('f');
 
   return (
     <View style={styles.itemContainer}>
@@ -79,20 +76,8 @@ const GroupedItemsList = ({
   groupId,
 }: GroupedItemsProps & AddEmptyModal & HandleDelete) => {
   const [expanded, setExpanded] = useState(false);
-  const [newCategory, setNewCategory] = useState('');
-  const dispatch = useAppDispatch();
   const isGroupNotSynced =
     typeof groupId === 'string' && groupId.startsWith('f_g_');
-
-  const handleSave = () => {
-    dispatch(
-      addSubcategoryLocal({
-        name: newCategory,
-        groupId: +groupId,
-        color: '#FFFFFF',
-      }),
-    );
-  };
 
   return (
     <View>

@@ -104,7 +104,7 @@ export interface MainSlice {
   budgets: Array<MonthlyBudget>;
   incomes: Array<Income>;
   debts: Array<Debt>;
-  categories: {[key: number]: Category};
+  categories: {[key: string]: Category};
   _aggregated: AggregatedData;
   sources: {[key: string]: string[]};
   exchangeRates: Array<import('./types/nbpTypes').StoredExchangeRate>;
@@ -132,11 +132,30 @@ export interface ShopListItem {
   boughtAt: string | null;
 }
 
+export type MainSliceSyncCallbackName =
+  | 'deleteBudget'
+  | 'addBudgets'
+  | 'updateBudget'
+  | 'addExpense'
+  | 'updateExpense'
+  | 'addIncome'
+  | 'updateIncome'
+  | 'replaceBudget'
+  | 'replaceExpense'
+  | 'replaceIncome'
+  | 'replaceSubcategoryAction'
+  | 'replaceGroupCategoryAction';
+
+export type SyncCallbackName =
+  | MainSliceSyncCallbackName
+  | 'fetchIni'
+  | `fetchIni:${string}`;
+
 export interface SyncOperation {
   id: string;
   path: string[];
   method: 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  cb?: string;
+  cb?: SyncCallbackName;
   data?: any;
   timestamp: number;
   retryCount: number;

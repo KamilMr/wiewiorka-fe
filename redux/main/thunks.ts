@@ -1,21 +1,11 @@
 export {fetchIni, genericSync} from './syncThunks';
 export {
-  handleCategory,
-  handleDeleteCategory,
-  addSubcategorySync,
   addSubcategoryLocal,
-  updateSubcategorySync,
   updateSubcategoryLocal,
-  deleteSubcategorySync,
   deleteSubcategoryLocal,
-  addGroupCategorySync,
   addGroupCategoryLocal,
-  updateGroupCategorySync,
   updateGroupCategoryLocal,
-  deleteGroupCategorySync,
   deleteGroupCategoryLocal,
-  handleDeleteGroupCategory,
-  handleGroupCategory,
 } from './categoryThunks';
 export {
   deleteBudget,

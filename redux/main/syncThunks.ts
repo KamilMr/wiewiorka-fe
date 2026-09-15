@@ -1,6 +1,7 @@
 import {createAsyncThunk} from '@reduxjs/toolkit';
 
 import type {RootState} from '../store';
+import type {MainSliceSyncCallbackName, SyncCallbackName} from '@/types';
 import {
   addSyncLog,
   removeFromQueue,
@@ -21,13 +22,18 @@ import {
   replaceBudget as replaceBudgetAction,
   replaceExpense as replaceExpenseAction,
   replaceIncome as replaceIncomeAction,
+  replaceSubcategoryAction,
+  replaceGroupCategoryAction,
   setSnackbar,
 } from './mainSlice';
 import {authenticatedFetch} from './api';
 
 const DIFFERED = 0;
 
-const mainSliceReducers: {[key: string]: (payload: any) => any} = {
+const mainSliceReducers: Record<
+  MainSliceSyncCallbackName,
+  (payload: any) => any
+> = {
   deleteBudget: deleteBudgetAction,
   addBudgets: addBudgetsAction,
   updateBudget: updateBudgetAction,
@@ -38,6 +44,8 @@ const mainSliceReducers: {[key: string]: (payload: any) => any} = {
   replaceBudget: replaceBudgetAction,
   replaceExpense: replaceExpenseAction,
   replaceIncome: replaceIncomeAction,
+  replaceSubcategoryAction,
+  replaceGroupCategoryAction,
 };
 
 export const fetchIni = createAsyncThunk<any, void, {state: RootState}>(
@@ -114,7 +122,7 @@ export const genericSync = createAsyncThunk<
     path: string[];
     method: 'POST' | 'PUT' | 'DELETE' | 'PATCH';
     data?: any;
-    cb?: string;
+    cb?: SyncCallbackName;
     operationId: string;
     frontendId?: string;
   },
@@ -163,6 +171,24 @@ export const genericSync = createAsyncThunk<
         );
       }
 
+      if (cb) {
+        const [callbackName] = cb.split(':');
+        if (callbackName === 'fetchIni') {
+          setTimeout(() => dispatch(fetchIni()), DIFFERED);
+        } else {
+          const callback = mainSliceReducers[cb as MainSliceSyncCallbackName];
+          if (!callback) {
+            throw new Error(`Sync callback is not registered: ${cb}`);
+          }
+          dispatch(
+            callback({
+              frontendId,
+              resp: result.d,
+            }),
+          );
+        }
+      }
+
       dispatch(
         addSyncLog({
           level: 'success',
@@ -174,22 +200,6 @@ export const genericSync = createAsyncThunk<
           frontendId,
         }),
       );
-
-      if (cb) {
-        const [callbackName] = cb.split(':');
-        if (callbackName === 'fetchIni')
-          setTimeout(() => dispatch(fetchIni()), DIFFERED);
-
-        if (mainSliceReducers[cb]) {
-          dispatch(
-            mainSliceReducers[cb]({
-              frontendId,
-              resp: result.d,
-            }),
-          );
-        }
-      }
-
       dispatch(removeFromQueue(operationId));
 
       return result.d;

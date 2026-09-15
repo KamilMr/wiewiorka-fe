@@ -7,27 +7,19 @@ import _, {isNaN} from 'lodash';
 
 import {ColorPicker, Select, TextInput} from '@/components';
 import {useAppDispatch, useAppSelector} from '@/hooks';
-import {
-  selectCategory,
-  selectMainCategories,
-  selectStatus,
-} from '@/redux/main/selectors';
-import {Subcategory} from '@/redux/main/mainSlice';
+import {selectCategory, selectMainCategories} from '@/redux/main/selectors';
+import type {Subcategory} from '@/types';
 import {sizes, useAppTheme} from '@/constants/theme';
-import {
-  handleCategory,
-  addSubcategorySync,
-  updateSubcategorySync,
-} from '@/redux/main/thunks';
+import {addSubcategoryLocal, updateSubcategoryLocal} from '@/redux/main/thunks';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import {TwoButtons} from '@/components/categories/TwoButtons';
 
 interface State {
-  id?: number;
+  id?: number | string;
   color?: string;
   name?: string;
   groupName?: string;
-  groupId?: number;
+  groupId?: number | string;
 }
 
 const emptyState = ({id, color, name, groupName, groupId}: State): State => ({
@@ -41,6 +33,9 @@ const emptyState = ({id, color, name, groupName, groupId}: State): State => ({
 export default function OneCategory() {
   const dispatch = useAppDispatch();
   const {id, groupId: incomingGrId} = useLocalSearchParams();
+  const incomingGroupId = Array.isArray(incomingGrId)
+    ? incomingGrId[0]
+    : incomingGrId;
 
   const category: Subcategory | undefined = useAppSelector(
     selectCategory(isNaN(+id) ? null : +id),
@@ -59,8 +54,10 @@ export default function OneCategory() {
     id: catId,
     name,
     groupName:
-      groupName || categories.find(k => +k[1] === +incomingGrId)?.[0] || '',
-    groupId: groupId || +incomingGrId,
+      groupName || categories.find(k => +k[1] === +incomingGroupId)?.[0] || '',
+    groupId:
+      groupId ||
+      (incomingGroupId?.startsWith('f_') ? incomingGroupId : +incomingGroupId),
     color,
   });
   const [state, setState] = useState<State>(initialState);
@@ -114,9 +111,9 @@ export default function OneCategory() {
     }
 
     try {
-      if (isEdit) {
+      if (isEdit && state.id !== undefined) {
         await dispatch(
-          updateSubcategorySync({
+          updateSubcategoryLocal({
             id: state.id,
             name: state.name,
             color: state.color,
@@ -125,7 +122,7 @@ export default function OneCategory() {
         ).unwrap();
       } else {
         await dispatch(
-          addSubcategorySync({
+          addSubcategoryLocal({
             name: state.name,
             color: state.color || '#FFFFFF',
             groupId: state.groupId,
@@ -152,7 +149,11 @@ export default function OneCategory() {
   const handleTogglePicker = () => setOpenPicker(!openPicker);
 
   const handleCatChange = (cat: any) => {
-    setState({...state, groupName: cat.label, groupId: cat.value});
+    setState({
+      ...state,
+      groupName: cat.label,
+      groupId: isNaN(+cat.value) ? cat.value : +cat.value,
+    });
   };
 
   const handleSubCatChange = (name: string) => {

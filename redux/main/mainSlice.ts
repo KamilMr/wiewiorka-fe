@@ -233,19 +233,18 @@ const mainSlice = createSlice({
     },
     updateSubcategoryAction: (state, action) => {
       const updatedSubcategory = action.payload;
-      const newGroupId = updatedSubcategory.groupId;
+      const newGroupId = updatedSubcategory.groupId.toString();
 
       // Find subcategory in any group
-      let currentGroupId = null;
+      let currentGroupId: string | null = null;
       let subIndex = -1;
 
       Object.keys(state.categories).forEach(groupId => {
-        const groupIdNum = parseInt(groupId);
-        const index = state.categories[groupIdNum].subcategories.findIndex(
+        const index = state.categories[groupId].subcategories.findIndex(
           sub => sub.id === updatedSubcategory.id,
         );
         if (index !== -1) {
-          currentGroupId = groupIdNum;
+          currentGroupId = groupId;
           subIndex = index;
         }
       });
@@ -278,14 +277,11 @@ const mainSlice = createSlice({
       const subcategoryId = action.payload;
       // Search through all categories to find and remove the subcategory
       Object.keys(state.categories).forEach(groupId => {
-        const groupIdNum = parseInt(groupId);
-        if (state.categories[groupIdNum]) {
-          state.categories[groupIdNum].subcategories = state.categories[
-            groupIdNum
-          ].subcategories.filter(
-            sub => sub.id.toString() !== subcategoryId.toString(),
-          );
-        }
+        state.categories[groupId].subcategories = state.categories[
+          groupId
+        ].subcategories.filter(
+          sub => sub.id.toString() !== subcategoryId.toString(),
+        );
       });
     },
     addGroupCategoryAction: (state, action) => {

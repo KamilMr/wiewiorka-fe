@@ -11,6 +11,7 @@ import {
 import {authenticatedFetch} from './api';
 import {fetchIni} from './syncThunks';
 import {makeNewIdArr} from '@/common';
+import type {SyncCallbackName} from '@/types';
 
 const DIFFERED = 0;
 
@@ -127,7 +128,7 @@ export const createUpdateBudget = createAsyncThunk<
         method: 'POST' | 'PATCH';
         handler: string;
         data: any;
-        cb: string;
+        cb: SyncCallbackName;
         frontendId: string;
       } = {
         path: ['main', 'budget'],

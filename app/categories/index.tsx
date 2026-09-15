@@ -17,9 +17,9 @@ import {useAppTheme, sizes} from '@/constants/theme';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectCategories, selectMainCategories} from '@/redux/main/selectors';
 import {
-  deleteSubcategorySync,
-  deleteGroupCategorySync,
-  addGroupCategorySync,
+  deleteSubcategoryLocal,
+  deleteGroupCategoryLocal,
+  addGroupCategoryLocal,
 } from '@/redux/main/thunks';
 import {setSnackbar} from '@/redux/main/mainSlice';
 import GroupedItemsList from '@/components/categories/GroupedItemsList';
@@ -86,10 +86,10 @@ export default function MainView() {
   const handleDelete = async ({id, kind}: DeleteCategory) => {
     try {
       if (kind === 'category') {
-        await dispatch(deleteSubcategorySync(id)).unwrap();
+        await dispatch(deleteSubcategoryLocal(id)).unwrap();
       }
       if (kind === 'group') {
-        await dispatch(deleteGroupCategorySync(id)).unwrap();
+        await dispatch(deleteGroupCategoryLocal(id)).unwrap();
       }
       emptyModal();
     } catch (error) {
@@ -123,7 +123,7 @@ export default function MainView() {
 
     try {
       await dispatch(
-        addGroupCategorySync({name: newGroup.name, color: '#FFFFFF'}),
+        addGroupCategoryLocal({name: newGroup.name, color: '#FFFFFF'}),
       ).unwrap();
       setNewGroup({name: ''});
       setAddDialogVisible(false);

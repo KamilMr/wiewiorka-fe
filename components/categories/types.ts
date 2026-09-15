@@ -19,7 +19,7 @@ interface AddEmptyModal {
 }
 
 interface DeleteCategory {
-  id: number;
+  id: number | string;
   kind: 'group' | 'category';
 }
 
