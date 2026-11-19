@@ -65,7 +65,7 @@ export interface Expense {
   description: string | null;
   date: string;
   price: number;
-  categoryId: number;
+  categoryId?: number | null;
   category: string;
   image: string;
   houseId: string;

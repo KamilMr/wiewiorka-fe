@@ -61,6 +61,7 @@ export const TransactionCategoryField = ({
                 showDivider={type === 'expense'}
                 keyboardShouldPersistTaps="handled"
                 dropdownPosition="top"
+                {...(type === 'expense' ? {placeholder: 'Bez kategorii'} : {})}
                 onChange={onSelectCategory}
                 value={dropdownValue}
               />
