@@ -17,6 +17,12 @@ const getEnvironment = (): Environment => {
 
 export const env = getEnvironment();
 
+export const getSocketEndpoint = () => {
+  const url = new URL(env.apiUrl);
+  const basePath = url.pathname.replace(/\/$/, '');
+  return {origin: url.origin, path: `${basePath}/socket.io/`};
+};
+
 export const isDevelopment = env.variant === 'development';
 export const isStaging = env.variant === 'staging';
 export const isProduction = env.variant === 'production';

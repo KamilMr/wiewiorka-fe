@@ -32,7 +32,7 @@ export const normalizeChatPrompt = (value: string) =>
 export const getLocalChatReply = (
   prompt: string,
   monthlySpend: string,
-): LocalChatReply => {
+): LocalChatReply | null => {
   switch (normalizeChatPrompt(prompt)) {
     case 'ile wydalem w tym miesiacu':
       return {text: `W tym miesiącu wydałeś ${monthlySpend}.`};
@@ -53,8 +53,6 @@ export const getLocalChatReply = (
         action: 'show-budgets',
       };
     default:
-      return {
-        text: 'To lokalny, ograniczony czat. Obsługuję: „Ile wydałem w tym miesiącu?”, „Dodaj wydatek”, „Pokaż wykres” i „Moje budżety”.',
-      };
+      return null;
   }
 };

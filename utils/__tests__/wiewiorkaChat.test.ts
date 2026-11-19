@@ -21,16 +21,23 @@ describe('Wiewiórka local chat', () => {
   });
 
   it('only returns navigation actions for supported exact prompts', () => {
-    expect(getLocalChatReply('Dodaj wydatek', '120 zł').action).toBe(
+    expect(getLocalChatReply('Dodaj wydatek', '120 zł')?.action).toBe(
       'add-expense',
     );
-    expect(getLocalChatReply('pokaż wykres', '120 zł').action).toBe(
+    expect(getLocalChatReply('pokaż wykres', '120 zł')?.action).toBe(
       'show-chart',
     );
-    expect(getLocalChatReply('Moje budżety', '120 zł').action).toBe(
+    expect(getLocalChatReply('Moje budżety', '120 zł')?.action).toBe(
       'show-budgets',
     );
-    expect(getLocalChatReply('Ile na jedzenie?', '120 zł').action).toBeFalsy();
+  });
+
+  it('leaves free text, transaction details, and commands for the agent', () => {
+    expect(getLocalChatReply('Ile na jedzenie?', '120 zł')).toBeNull();
+    expect(
+      getLocalChatReply('Dodaj wydatek 12,50 zł za obiad', '120 zł'),
+    ).toBeNull();
+    expect(getLocalChatReply('/clear', '120 zł')).toBeNull();
   });
 
   it('uses the supplied real monthly total in the supported recap', () => {
