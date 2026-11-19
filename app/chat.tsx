@@ -4,8 +4,6 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import {Redirect, router, useLocalSearchParams} from 'expo-router';
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +11,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  KeyboardEvents,
+} from 'react-native-keyboard-controller';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {formatPrice} from '@/common';
@@ -93,6 +95,7 @@ function ChatConversation({
   const outcome = summary.find(item => item.date === month)?.outcome ?? 0;
   const monthlySpend = formatPrice(outcome);
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const nextMessageId = useRef(0);
   const [input, setInput] = useState(initialDraft);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -135,6 +138,15 @@ function ChatConversation({
       chat.disconnect();
     };
   }, [token]);
+
+  useEffect(() => {
+    const subscription = KeyboardEvents.addListener('keyboardDidShow', () => {
+      if (inputRef.current?.isFocused()) {
+        scrollRef.current?.scrollToEnd({animated: true});
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   const scrollToLatest = () => {
     if (messages.length) scrollRef.current?.scrollToEnd({animated: true});
@@ -265,10 +277,7 @@ function ChatConversation({
       style={styles.safeArea}
       edges={['top', 'right', 'bottom', 'left']}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.select({ios: 'padding', android: undefined})}
-        style={styles.keyboard}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.keyboard}>
         <View style={styles.header}>
           <Pressable
             accessibilityRole="button"
@@ -364,6 +373,7 @@ function ChatConversation({
           </ScrollView>
           <View style={styles.composer}>
             <TextInput
+              ref={inputRef}
               accessibilityLabel="Wiadomość do Wiewiórki"
               value={input}
               onChangeText={setInput}
