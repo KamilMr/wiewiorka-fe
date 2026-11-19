@@ -1,5 +1,12 @@
 import {createSelector} from '@reduxjs/toolkit';
-import {format, formatDate, isAfter, isBefore, isSameDay} from 'date-fns';
+import {
+  format,
+  formatDate,
+  isAfter,
+  isBefore,
+  isSameDay,
+  parseISO,
+} from 'date-fns';
 import _ from 'lodash';
 
 import {EXCLUDED_CAT, dh, makeNewIdArr, normalize} from '@/common';
@@ -278,7 +285,7 @@ export const selectByTimeRange = (
       const filterByDates = (date: string) =>
         !dates?.length ||
         dates.length !== 2 ||
-        dh.isBetweenDates(new Date(date), dates[0], dates[1]);
+        dh.isBetweenDates(parseISO(date), dates[0], dates[1]);
 
       if (filters.holidayTag) {
         const filteredExpenses = expenses.filter(
