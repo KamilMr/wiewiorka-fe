@@ -1,11 +1,9 @@
-import {useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {format} from 'date-fns';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import {Redirect, router, useLocalSearchParams} from 'expo-router';
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,13 +11,23 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  KeyboardEvents,
+} from 'react-native-keyboard-controller';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {formatPrice} from '@/common';
 import {warmColors, warmRadius} from '@/constants/warmTheme';
-import {useAppSelector} from '@/hooks';
+import {useAppDispatch, useAppSelector} from '@/hooks';
 import {selectToken} from '@/redux/auth/authSlice';
 import {selectComparison} from '@/redux/main/selectors';
+import {fetchIni} from '@/redux/main/thunks';
+import {
+  type ChatSocket,
+  createChatSocket,
+  sendChatMessage,
+} from '@/utils/chatSocket';
 import {
   ChatAction,
   getChatDraft,
@@ -30,6 +38,22 @@ import {
 const avatar = require('../assets/mascot/chat.png');
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_MESSAGES = 50;
+const lostReply =
+  'Nie udało się potwierdzić wyniku. Sprawdź dane przed ponownym wysłaniem wiadomości.';
+const chatErrors: Record<string, string> = {
+  not_auth: 'Zaloguj się ponownie, aby porozmawiać z asystentem.',
+  session_not_active: 'Sesja wygasła. Zaloguj się ponownie.',
+  E_400_chat_message: 'Wpisz wiadomość (maksymalnie 500 znaków).',
+  E_409_chat_scope_changed:
+    'Zmieniono gospodarstwo domowe. Kontekst rozmowy został wyczyszczony. Sprawdź dane przed ponownym wysłaniem.',
+  E_429_chat_busy: 'Asystent jest zajęty. Spróbuj za chwilę.',
+  E_503_chat_unavailable: 'Asystent online jest niedostępny.',
+};
+const agentPrompts = [
+  {label: 'Zapisz wydatek', draft: 'Zapisz wydatek: '},
+  {label: 'Zapisz przychód', draft: 'Zapisz przychód: '},
+  {label: 'Lista zakupów', draft: 'Co jest na liście zakupów?'},
+];
 const actionLabels: Record<ChatAction, string> = {
   'add-expense': 'Otwórz formularz wydatku',
   'show-chart': 'Otwórz wykres wydatków',
@@ -47,10 +71,23 @@ export default function Chat() {
   const token = useAppSelector(selectToken);
   const {prompt} = useLocalSearchParams<{prompt?: string}>();
   if (!token) return <Redirect href="/sign-in" />;
-  return <ChatConversation key={token} initialDraft={getChatDraft(prompt)} />;
+  return (
+    <ChatConversation
+      key={token}
+      token={token}
+      initialDraft={getChatDraft(prompt)}
+    />
+  );
 }
 
-function ChatConversation({initialDraft}: {initialDraft: string}) {
+function ChatConversation({
+  initialDraft,
+  token,
+}: {
+  initialDraft: string;
+  token: string;
+}) {
+  const dispatch = useAppDispatch();
   const now = new Date();
   const month = format(now, 'MM/yyyy');
   const monthStart = format(now, 'yyyy-MM-01');
@@ -58,10 +95,58 @@ function ChatConversation({initialDraft}: {initialDraft: string}) {
   const outcome = summary.find(item => item.date === month)?.outcome ?? 0;
   const monthlySpend = formatPrice(outcome);
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const nextMessageId = useRef(0);
   const [input, setInput] = useState(initialDraft);
   const [messages, setMessages] = useState<Message[]>([]);
-  const canSend = Boolean(input.trim());
+  const chatRef = useRef<ChatSocket | null>(null);
+  const sendingRef = useRef(false);
+  const [sending, setSending] = useState(false);
+  const [connection, setConnection] = useState('connecting');
+  const canSend =
+    Boolean(input.trim()) &&
+    !sending &&
+    (connection === 'ready' || Boolean(getLocalChatReply(input, monthlySpend)));
+
+  useEffect(() => {
+    const chat = createChatSocket(token);
+    let hasConnected = false;
+    chatRef.current = chat;
+    setConnection('connecting');
+    chat.on('connect', () => {
+      setConnection('ready');
+      if (hasConnected) {
+        const id = nextMessageId.current++;
+        setMessages(current => [
+          ...current.slice(1 - MAX_MESSAGES),
+          {
+            id,
+            role: 'assistant',
+            text: 'Połączono ponownie. Asystent nie pamięta wcześniejszych wiadomości.',
+          },
+        ]);
+      }
+      hasConnected = true;
+    });
+    chat.on('disconnect', () => setConnection('offline'));
+    chat.on('connect_error', error => setConnection(error.message));
+    chat.connect();
+
+    return () => {
+      chatRef.current = null;
+      chat.removeAllListeners();
+      chat.disconnect();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    const subscription = KeyboardEvents.addListener('keyboardDidShow', () => {
+      if (inputRef.current?.isFocused()) {
+        scrollRef.current?.scrollToEnd({animated: true});
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   const scrollToLatest = () => {
     if (messages.length) scrollRef.current?.scrollToEnd({animated: true});
@@ -89,19 +174,60 @@ function ChatConversation({initialDraft}: {initialDraft: string}) {
     }
   };
 
-  const send = (value = input) => {
-    const text = value.trim().replace(/\s+/g, ' ');
-    if (!text) return;
-
-    const reply = getLocalChatReply(text, monthlySpend);
-    const userId = nextMessageId.current++;
-    const replyId = nextMessageId.current++;
+  const append = (
+    role: Message['role'],
+    message: Pick<Message, 'text' | 'action'>,
+  ) => {
+    const id = nextMessageId.current++;
     setMessages(current => [
-      ...current.slice(-(MAX_MESSAGES - 2)),
-      {id: userId, role: 'user', text},
-      {id: replyId, role: 'assistant', ...reply},
+      ...current.slice(1 - MAX_MESSAGES),
+      {id, role, ...message},
     ]);
+  };
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || text.length > MAX_MESSAGE_LENGTH || sendingRef.current) return;
+
+    const local = getLocalChatReply(text, monthlySpend);
+    const chat = chatRef.current;
+    if (!local && !chat?.connected) return;
+
+    append('user', {text});
     setInput('');
+    if (local) {
+      append('assistant', local);
+      return;
+    }
+    if (!chat) return;
+
+    sendingRef.current = true;
+    setSending(true);
+    try {
+      const result = await sendChatMessage(chat, text);
+      if (chatRef.current !== chat) return;
+      if (result.financeChanged) void dispatch(fetchIni());
+      if (result.d?.cleared) setMessages([]);
+      append('assistant', {
+        text: result.err
+          ? (chatErrors[result.err] ?? lostReply)
+          : (result.d?.text ?? lostReply),
+      });
+      if (result.err === 'session_not_active' || result.err === 'not_auth') {
+        chat.disconnect();
+        setConnection(result.err);
+      }
+    } catch {
+      if (chatRef.current === chat) {
+        append('assistant', {text: lostReply});
+        if (chat.connected) void dispatch(fetchIni());
+      }
+    } finally {
+      if (chatRef.current === chat) {
+        sendingRef.current = false;
+        setSending(false);
+      }
+    }
   };
 
   const renderAction = (action: ChatAction) => (
@@ -151,10 +277,7 @@ function ChatConversation({initialDraft}: {initialDraft: string}) {
       style={styles.safeArea}
       edges={['top', 'right', 'bottom', 'left']}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.select({ios: 'padding', android: undefined})}
-        style={styles.keyboard}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.keyboard}>
         <View style={styles.header}>
           <Pressable
             accessibilityRole="button"
@@ -171,7 +294,7 @@ function ChatConversation({initialDraft}: {initialDraft: string}) {
           <Image source={avatar} style={styles.avatar} accessible={false} />
           <View style={styles.headerCopy}>
             <Text style={styles.title}>Wiewiórka</Text>
-            <Text style={styles.subtitle}>Lokalny asystent finansowy</Text>
+            <Text style={styles.subtitle}>Asystent finansowy i domowy</Text>
           </View>
           <View style={styles.monthTotal}>
             <Text style={styles.monthLabel}>TEN MIESIĄC</Text>
@@ -203,8 +326,10 @@ function ChatConversation({initialDraft}: {initialDraft: string}) {
             />
             <View style={[styles.bubble, styles.assistantBubble]}>
               <Text selectable style={styles.assistantMessage}>
-                Cześć! Tutaj możesz sprawdzić wydatki i przejść do narzędzi.
-                Wiadomości nie są zapisywane ani wysyłane poza aplikację.
+                Cześć! Mogę zapisywać wydatki i przychody oraz pomagać z
+                zapasami i listą zakupów. Wiadomości do asystenta i wyniki jego
+                operacji są wysyłane do Anthropic. Skróty do wykresu, budżetu i
+                formularza działają lokalnie.
               </Text>
             </View>
           </View>
@@ -213,28 +338,42 @@ function ChatConversation({initialDraft}: {initialDraft: string}) {
             <Text style={styles.spendValue}>{monthlySpend}</Text>
           </View>
           {messageRows}
+          {sending && <Text style={styles.subtitle}>Wiewiórka odpowiada…</Text>}
         </ScrollView>
 
         <View style={styles.composerArea}>
+          {connection !== 'ready' && (
+            <Text accessibilityLiveRegion="polite" style={styles.connection}>
+              {connection === 'connecting'
+                ? 'Łączenie z asystentem…'
+                : (chatErrors[connection] ??
+                  'Brak połączenia z asystentem. Skróty lokalne są dostępne.')}
+            </Text>
+          )}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.quickPrompts}
             keyboardShouldPersistTaps="handled"
           >
-            {QUICK_CHAT_PROMPTS.map(item => (
+            {[
+              ...QUICK_CHAT_PROMPTS.map(item => ({label: item, draft: item})),
+              ...agentPrompts,
+              {label: 'Wyczyść rozmowę', draft: '/clear'},
+            ].map(item => (
               <Pressable
-                key={item}
+                key={item.label}
                 accessibilityRole="button"
-                onPress={() => setInput(item)}
+                onPress={() => setInput(item.draft)}
                 style={styles.quickPrompt}
               >
-                <Text style={styles.quickText}>{item}</Text>
+                <Text style={styles.quickText}>{item.label}</Text>
               </Pressable>
             ))}
           </ScrollView>
           <View style={styles.composer}>
             <TextInput
+              ref={inputRef}
               accessibilityLabel="Wiadomość do Wiewiórki"
               value={input}
               onChangeText={setInput}
@@ -383,6 +522,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingBottom: 8,
     paddingTop: 8,
+  },
+  connection: {
+    color: warmColors.mutedForeground,
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   quickPrompts: {gap: 8, paddingHorizontal: 16, paddingBottom: 8},
   quickPrompt: {
