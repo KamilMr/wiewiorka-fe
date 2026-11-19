@@ -19,8 +19,13 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {formatPrice} from '@/common';
 import {warmColors, warmRadius} from '@/constants/warmTheme';
-import {useAppDispatch, useAppSelector} from '@/hooks';
+import {useAppDispatch, useAppSelector, useAppStore} from '@/hooks';
 import {selectToken} from '@/redux/auth/authSlice';
+import {
+  appendChatMessage,
+  clearChatHistory,
+  selectChatMessages,
+} from '@/redux/chat/chatSlice';
 import {selectComparison} from '@/redux/main/selectors';
 import {fetchIni} from '@/redux/main/thunks';
 import {
@@ -37,7 +42,8 @@ import {
 
 const avatar = require('../assets/mascot/chat.png');
 const MAX_MESSAGE_LENGTH = 500;
-const MAX_MESSAGES = 50;
+const isClearCommand = (value: string) =>
+  value.trim().toLowerCase() === '/clear';
 const lostReply =
   'Nie udało się potwierdzić wyniku. Sprawdź dane przed ponownym wysłaniem wiadomości.';
 const chatErrors: Record<string, string> = {
@@ -58,13 +64,6 @@ const actionLabels: Record<ChatAction, string> = {
   'add-expense': 'Otwórz formularz wydatku',
   'show-chart': 'Otwórz wykres wydatków',
   'show-budgets': 'Otwórz budżety',
-};
-
-type Message = {
-  id: number;
-  role: 'assistant' | 'user';
-  text: string;
-  action?: ChatAction;
 };
 
 export default function Chat() {
@@ -88,6 +87,8 @@ function ChatConversation({
   token: string;
 }) {
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
+  const messages = useAppSelector(selectChatMessages);
   const now = new Date();
   const month = format(now, 'MM/yyyy');
   const monthStart = format(now, 'yyyy-MM-01');
@@ -96,9 +97,8 @@ function ChatConversation({
   const monthlySpend = formatPrice(outcome);
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
-  const nextMessageId = useRef(0);
   const [input, setInput] = useState(initialDraft);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [notice, setNotice] = useState('');
   const chatRef = useRef<ChatSocket | null>(null);
   const sendingRef = useRef(false);
   const [sending, setSending] = useState(false);
@@ -106,28 +106,15 @@ function ChatConversation({
   const canSend =
     Boolean(input.trim()) &&
     !sending &&
-    (connection === 'ready' || Boolean(getLocalChatReply(input, monthlySpend)));
+    (connection === 'ready' ||
+      isClearCommand(input) ||
+      Boolean(getLocalChatReply(input, monthlySpend)));
 
   useEffect(() => {
     const chat = createChatSocket(token);
-    let hasConnected = false;
     chatRef.current = chat;
     setConnection('connecting');
-    chat.on('connect', () => {
-      setConnection('ready');
-      if (hasConnected) {
-        const id = nextMessageId.current++;
-        setMessages(current => [
-          ...current.slice(1 - MAX_MESSAGES),
-          {
-            id,
-            role: 'assistant',
-            text: 'Połączono ponownie. Asystent nie pamięta wcześniejszych wiadomości.',
-          },
-        ]);
-      }
-      hasConnected = true;
-    });
+    chat.on('connect', () => setConnection('ready'));
     chat.on('disconnect', () => setConnection('offline'));
     chat.on('connect_error', error => setConnection(error.message));
     chat.connect();
@@ -174,56 +161,71 @@ function ChatConversation({
     }
   };
 
-  const append = (
-    role: Message['role'],
-    message: Pick<Message, 'text' | 'action'>,
-  ) => {
-    const id = nextMessageId.current++;
-    setMessages(current => [
-      ...current.slice(1 - MAX_MESSAGES),
-      {id, role, ...message},
-    ]);
-  };
+  const isCurrentSession = () => selectToken(appStore.getState()) === token;
+  const isCurrentChat = (chat: ChatSocket) =>
+    chatRef.current === chat && isCurrentSession();
 
   const send = async () => {
     const text = input.trim();
-    if (!text || text.length > MAX_MESSAGE_LENGTH || sendingRef.current) return;
-
-    const local = getLocalChatReply(text, monthlySpend);
-    const chat = chatRef.current;
-    if (!local && !chat?.connected) return;
-
-    append('user', {text});
-    setInput('');
-    if (local) {
-      append('assistant', local);
+    if (
+      !text ||
+      text.length > MAX_MESSAGE_LENGTH ||
+      sendingRef.current ||
+      !isCurrentSession()
+    )
       return;
+
+    const chat = chatRef.current;
+    const clearing = isClearCommand(text);
+    const local = getLocalChatReply(text, monthlySpend);
+    if (!clearing && !local && !chat?.connected) return;
+
+    setInput('');
+    setNotice(clearing ? 'Rozmowa została wyczyszczona.' : '');
+    if (clearing) {
+      dispatch(clearChatHistory());
+    } else {
+      dispatch(appendChatMessage({role: 'user', text}));
+      if (local) {
+        dispatch(appendChatMessage({role: 'assistant', ...local}));
+        return;
+      }
     }
-    if (!chat) return;
+    if (!chat?.connected) return;
 
     sendingRef.current = true;
     setSending(true);
     try {
-      const result = await sendChatMessage(chat, text);
-      if (chatRef.current !== chat) return;
-      if (result.financeChanged) void dispatch(fetchIni());
-      if (result.d?.cleared) setMessages([]);
-      append('assistant', {
-        text: result.err
-          ? (chatErrors[result.err] ?? lostReply)
-          : (result.d?.text ?? lostReply),
-      });
+      const result = await sendChatMessage(chat, clearing ? '/clear' : text);
+      if (!isCurrentChat(chat)) return;
       if (result.err === 'session_not_active' || result.err === 'not_auth') {
         chat.disconnect();
         setConnection(result.err);
+      } else if (clearing && !result.d?.cleared) {
+        // Ending this connection also drops the server's conversation context.
+        chat.disconnect().connect();
       }
+      if (clearing) return;
+
+      if (result.financeChanged) void dispatch(fetchIni());
+      dispatch(
+        appendChatMessage({
+          role: 'assistant',
+          text: result.err
+            ? (chatErrors[result.err] ?? lostReply)
+            : (result.d?.text ?? lostReply),
+        }),
+      );
     } catch {
-      if (chatRef.current === chat) {
-        append('assistant', {text: lostReply});
+      if (!isCurrentChat(chat)) return;
+      if (clearing) {
+        chat.disconnect().connect();
+      } else {
+        dispatch(appendChatMessage({role: 'assistant', text: lostReply}));
         if (chat.connected) void dispatch(fetchIni());
       }
     } finally {
-      if (chatRef.current === chat) {
+      if (isCurrentChat(chat)) {
         sendingRef.current = false;
         setSending(false);
       }
@@ -317,7 +319,7 @@ function ChatConversation({
           onContentSizeChange={scrollToLatest}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.day}>Dzisiaj</Text>
+          <Text style={styles.day}>Rozmowa</Text>
           <View style={[styles.messageRow, styles.assistantRow]}>
             <Image
               source={avatar}
@@ -329,7 +331,8 @@ function ChatConversation({
                 Cześć! Mogę zapisywać wydatki i przychody oraz pomagać z
                 zapasami i listą zakupów. Wiadomości do asystenta i wyniki jego
                 operacji są wysyłane do Anthropic. Skróty do wykresu, budżetu i
-                formularza działają lokalnie.
+                formularza działają lokalnie. Historia jest zapisana na tym
+                urządzeniu. Asystent nie pamięta jej po ponownym połączeniu.
               </Text>
             </View>
           </View>
@@ -338,7 +341,13 @@ function ChatConversation({
             <Text style={styles.spendValue}>{monthlySpend}</Text>
           </View>
           {messageRows}
-          {sending && <Text style={styles.subtitle}>Wiewiórka odpowiada…</Text>}
+          {notice ? (
+            <Text accessibilityLiveRegion="polite" style={styles.subtitle}>
+              {notice}
+            </Text>
+          ) : sending ? (
+            <Text style={styles.subtitle}>Wiewiórka odpowiada…</Text>
+          ) : null}
         </ScrollView>
 
         <View style={styles.composerArea}>

@@ -11,13 +11,23 @@ import mainReducer, {
 } from './main/mainSlice';
 import syncReducer, {syncEmptyState, dropSync} from './sync/syncSlice';
 import storageReducer, {resetStorage} from './storage/storageSlice';
+import chatReducer from './chat/chatSlice';
 
-const rootReducer = combineReducers({
+const combinedReducer = combineReducers({
   auth: authReducer,
   main: mainReducer,
   sync: syncReducer,
   storage: storageReducer,
+  chat: chatReducer,
 });
+
+const rootReducer: typeof combinedReducer = (state, action) => {
+  const next = combinedReducer(state, action);
+  if (state?.auth && state.auth.token !== next.auth.token) {
+    return {...next, chat: []};
+  }
+  return next;
+};
 
 const authMiddleware =
   (store: MiddlewareAPI) => (next: any) => async (action: any) => {
@@ -93,7 +103,7 @@ const persistConfig = {
   key: 'squirrel',
   version: 8,
   storage: AsyncStorage,
-  whitelist: ['auth', 'main', 'sync'],
+  whitelist: ['auth', 'main', 'sync', 'chat'],
   migrate: createMigrate(migrations, {debug: false}),
 };
 
