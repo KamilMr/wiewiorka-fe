@@ -1,5 +1,7 @@
 import {formatDate} from 'date-fns';
 
+import type {ExpensePayload, IncomePayload} from '@/types';
+
 export type AddNewForm = {
   description: string;
   date: Date;
@@ -81,14 +83,18 @@ export const createExpensePayload = ({
   form: AddNewForm;
   hasVacationTag: boolean;
   id: string;
-}) => {
+}): ExpensePayload => {
   const categoryId = categoryIdFor(categories, form.category);
   return {
     ...(id ? {id: +id} : {}),
     ...(form.description ? {description: form.description} : {}),
     date: formatDate(form.date, 'yyyy-MM-dd'),
     price: +form.price[0],
-    ...(categoryId === undefined ? {} : {categoryId}),
+    ...(categoryId === undefined
+      ? id
+        ? {categoryId: null}
+        : {}
+      : {categoryId}),
     tags: hasVacationTag ? ['urlop'] : [],
   };
 };
@@ -99,21 +105,13 @@ export const createIncomePayload = ({
 }: {
   form: AddNewForm;
   id: string;
-}) => {
-  const dataToSave = {
-    id: id ? +id : '',
-    date: formatDate(form.date, 'yyyy-MM-dd'),
-    price: +form.price[0],
-    source: form.category,
-    vat: 0,
-  };
-
-  return Object.fromEntries(
-    Object.entries(dataToSave).filter(
-      ([, value]) => !(typeof value === 'string' && !value),
-    ),
-  );
-};
+}): IncomePayload => ({
+  ...(id ? {id: +id} : {}),
+  date: formatDate(form.date, 'yyyy-MM-dd'),
+  price: +form.price[0],
+  source: form.category ?? '',
+  vat: 0,
+});
 
 export const createSplitExpensePayloads = ({
   categories,
