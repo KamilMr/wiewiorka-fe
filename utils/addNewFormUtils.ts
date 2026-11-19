@@ -22,7 +22,7 @@ export const initFormState = (date = new Date(), categories: any[] = []) => ({
   description: '',
   date,
   price: ['', ''],
-  category: categories[0]?.name,
+  category: categories[0]?.name ?? '',
 });
 
 export const initSplitItem = (): SplitItem => ({
@@ -65,15 +65,11 @@ export const validateAddNewForm = ({
     return hasValidItems && remainingAmount === 0;
   }
 
-  if (!form.price[0] || !form.category) {
-    return false;
-  }
-
-  return true;
+  return Boolean(form.price[0] && (type === 'expense' || form.category));
 };
 
 const categoryIdFor = (categories: ExpenseCategory[], category?: string) =>
-  categories.find(item => item.name === category)?.id || 0;
+  category ? categories.find(item => item.name === category)?.id : undefined;
 
 export const createExpensePayload = ({
   categories,
@@ -86,20 +82,15 @@ export const createExpensePayload = ({
   hasVacationTag: boolean;
   id: string;
 }) => {
-  const dataToSave = {
-    id: id ? +id : '',
-    description: form.description,
+  const categoryId = categoryIdFor(categories, form.category);
+  return {
+    ...(id ? {id: +id} : {}),
+    ...(form.description ? {description: form.description} : {}),
     date: formatDate(form.date, 'yyyy-MM-dd'),
     price: +form.price[0],
-    categoryId: categoryIdFor(categories, form.category),
+    ...(categoryId === undefined ? {} : {categoryId}),
     tags: hasVacationTag ? ['urlop'] : [],
   };
-
-  return Object.fromEntries(
-    Object.entries(dataToSave).filter(
-      ([, value]) => !(typeof value === 'string' && !value),
-    ),
-  );
 };
 
 export const createIncomePayload = ({
@@ -140,16 +131,17 @@ export const createSplitExpensePayloads = ({
       id: string;
       date: string;
       price: number;
-      categoryId: number;
+      categoryId?: number;
       description?: string;
       tags: string[];
     } = {
       id: '',
       date: formatDate(date, 'yyyy-MM-dd'),
       price: +item.price,
-      categoryId: categoryIdFor(categories, item.category),
       tags: hasVacationTag ? ['urlop'] : [],
     };
+    const categoryId = categoryIdFor(categories, item.category);
+    if (categoryId !== undefined) dataToSave.categoryId = categoryId;
     if (item.description) dataToSave.description = item.description;
     return dataToSave;
   });

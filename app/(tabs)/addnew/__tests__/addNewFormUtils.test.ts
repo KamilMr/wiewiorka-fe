@@ -35,7 +35,7 @@ describe('add new form utilities', () => {
     ]);
   });
 
-  it('validates ordinary forms only when converted price and category are truthy', () => {
+  it('requires a price and requires a category only for income', () => {
     expect(
       validateAddNewForm({
         form: form(),
@@ -58,6 +58,14 @@ describe('add new form utilities', () => {
         isSplit: false,
         splitItems: [],
         type: 'expense',
+      }),
+    ).toBe(true);
+    expect(
+      validateAddNewForm({
+        form: form({category: ''}),
+        isSplit: false,
+        splitItems: [],
+        type: 'income',
       }),
     ).toBe(false);
   });
@@ -114,6 +122,26 @@ describe('add new form utilities', () => {
       tags: ['urlop'],
     });
   });
+
+  it.each(['', 'Deleted category'])(
+    'omits unresolved expense category %j from the request',
+    category => {
+      expect(
+        createExpensePayload({
+          categories,
+          form: form({category, description: 'Lunch'}),
+          hasVacationTag: false,
+          id: '42',
+        }),
+      ).toEqual({
+        id: 42,
+        description: 'Lunch',
+        date: '2024-05-06',
+        price: 12,
+        tags: [],
+      });
+    },
+  );
 
   it('preserves an edited expense ID and description', () => {
     expect(

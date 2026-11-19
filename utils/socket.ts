@@ -1,5 +1,5 @@
 import {io, Socket} from 'socket.io-client';
-import {env} from '@/config/environment';
+import {getSocketEndpoint} from '@/config/environment';
 import {
   addStorageItem,
   updateStorageItem,
@@ -19,10 +19,9 @@ const connectSocket = (token: string): Socket => {
     socket.disconnect();
   }
 
-  const url = new URL(env.apiUrl);
-  const basePath = url.pathname.replace(/\/$/, '');
-  socket = io(url.origin, {
-    path: `${basePath}/socket.io/`,
+  const {origin, path} = getSocketEndpoint();
+  socket = io(origin, {
+    path,
     autoConnect: false,
     auth: {token},
   });

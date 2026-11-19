@@ -2,7 +2,7 @@ import {IconButton, ProgressBar} from 'react-native-paper';
 import {Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {useState} from 'react';
 import {router} from 'expo-router';
-import {format, startOfMonth, endOfMonth} from 'date-fns';
+import {format, parseISO, startOfMonth, endOfMonth} from 'date-fns';
 
 import Text from '../CustomText';
 import Menu from '../Menu';
@@ -43,7 +43,7 @@ export default function BudgetCard({items = [], date}: BudgetCardProps) {
 
   const handleBudgetItemPress = (categoryName: string) => {
     // Calculate date range for the month
-    const dateObj = new Date(date);
+    const dateObj = parseISO(date);
     const startDate = startOfMonth(dateObj);
     const endDate = endOfMonth(dateObj);
 

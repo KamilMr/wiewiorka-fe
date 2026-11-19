@@ -32,7 +32,10 @@ export default function TabLayout() {
         headerTitleContainerStyle: {paddingLeft: sizes.md},
       }}
     >
-      <Tabs.Screen name="index" options={{title: 'Strona główna'}} />
+      <Tabs.Screen
+        name="index"
+        options={{title: 'Strona główna', headerShown: false}}
+      />
       <Tabs.Screen
         name="records"
         options={{title: 'Wydatki/Wpływy', headerShown: true}}

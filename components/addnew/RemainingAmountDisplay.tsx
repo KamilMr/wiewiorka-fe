@@ -2,9 +2,10 @@ import {View} from 'react-native';
 
 import {Text} from '@/components';
 import {formatPrice} from '@/common';
+import type {AddNewForm} from '@/utils/addNewFormUtils';
 
 interface RemainingAmountDisplayProps {
-  totalPrice: string;
+  totalPrice: AddNewForm['price'];
   splitItems: Array<{price: string}>;
 }
 

@@ -13,7 +13,7 @@ import {router, useLocalSearchParams} from 'expo-router';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import _ from 'lodash';
-import {format} from 'date-fns';
+import {format, isValid, parseISO} from 'date-fns';
 
 import DynamicRecordList from '@/components/DynamicList';
 import {NoData, Text} from '@/components';
@@ -64,19 +64,18 @@ const Records = () => {
     [categoriesByUsage],
   );
 
+  const {category, dateStart, dateEnd} = params;
   useEffect(() => {
-    if (params.category)
-      setFilters(prev => ({
-        ...prev,
-        categories: [params.category!].filter(Boolean) as string[],
-      }));
-    if (params.dateStart && params.dateEnd)
-      setFilters(prev => ({
-        ...prev,
-        dateFrom: new Date(params.dateStart!),
-        dateTo: new Date(params.dateEnd!),
-      }));
-  }, [params.category, params.dateStart, params.dateEnd]);
+    if (typeof category === 'string' && category)
+      setFilters(prev => ({...prev, categories: [category]}));
+    if (typeof dateStart === 'string' && typeof dateEnd === 'string') {
+      const dateFrom = parseISO(dateStart);
+      const dateTo = parseISO(dateEnd);
+      if (isValid(dateFrom) && isValid(dateTo)) {
+        setFilters(prev => ({...prev, dateFrom, dateTo}));
+      }
+    }
+  }, [category, dateStart, dateEnd]);
 
   const dateRange: [string, string] | undefined = useMemo(
     () =>

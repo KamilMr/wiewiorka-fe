@@ -1,5 +1,12 @@
 import {createSelector} from '@reduxjs/toolkit';
-import {format, formatDate, isAfter, isBefore, isSameDay} from 'date-fns';
+import {
+  format,
+  formatDate,
+  isAfter,
+  isBefore,
+  isSameDay,
+  parseISO,
+} from 'date-fns';
 import _ from 'lodash';
 
 import {EXCLUDED_CAT, dh, makeNewIdArr, normalize} from '@/common';
@@ -140,8 +147,8 @@ export const selectExpense = (id: number) =>
     const categoryObj = cat.find(obj => obj.id === expense.categoryId);
     return {
       ...expense,
-      category: categoryObj.name,
-      catColor: categoryObj.color,
+      category: categoryObj?.name ?? '',
+      catColor: categoryObj?.color ?? '',
       date: format(new Date(expense.date), 'dd/MM/yyyy'),
     };
   });
@@ -164,7 +171,8 @@ export const selectCategoriesByUsage = createSelector(
     // Count usage frequency by categoryId
     const usageCount = expenses.reduce(
       (acc: Record<number, number>, expense) => {
-        acc[expense.categoryId] = (acc[expense.categoryId] || 0) + 1;
+        const {categoryId} = expense;
+        if (categoryId != null) acc[categoryId] = (acc[categoryId] || 0) + 1;
         return acc;
       },
       {},
@@ -250,7 +258,9 @@ export const selectComparison = createSelector(
     if (!tR[fd].month) tR[fd] = {...tR[fd], ...mmYY(fd)}
       tR[fd].outcome += price;
       tR[fd].costs[owner] ??= 0;
-      tR[fd].costs[owner] += EXCLUDED_CAT.includes(categoryId) ? price : 0;
+      if (categoryId != null && EXCLUDED_CAT.includes(categoryId)) {
+        tR[fd].costs[owner] += price;
+      }
     });
 
     const arr = Object.values(tR);
@@ -278,7 +288,7 @@ export const selectByTimeRange = (
       const filterByDates = (date: string) =>
         !dates?.length ||
         dates.length !== 2 ||
-        dh.isBetweenDates(new Date(date), dates[0], dates[1]);
+        dh.isBetweenDates(parseISO(date), dates[0], dates[1]);
 
       if (filters.holidayTag) {
         const filteredExpenses = expenses.filter(
@@ -342,9 +352,10 @@ export const selectBudgets = (
                     (cat: Subcategory) => cat.id === currExp.categoryId,
                   );
 
-                  if (cat.groupId === groupId) prevExp += currExp.price;
-                } else if (currExp.categoryId === categoryId)
+                  if (cat?.groupId === groupId) prevExp += currExp.price;
+                } else if (categoryId != null && currExp.categoryId === categoryId) {
                   prevExp += currExp.price;
+                }
 
                 return prevExp;
               },

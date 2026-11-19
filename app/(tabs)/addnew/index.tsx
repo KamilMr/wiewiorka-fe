@@ -7,19 +7,15 @@ import {
   useLocalSearchParams,
   useNavigation,
 } from 'expo-router';
-import {View, StyleSheet, Alert, TouchableOpacity} from 'react-native';
-import {Button, IconButton, Switch, Text} from 'react-native-paper';
+import {View, StyleSheet, Alert} from 'react-native';
+import {IconButton} from 'react-native-paper';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
-import {
-  ButtonWithStatus,
-  DatePicker,
-  PriceAndCategory,
-  TextInput,
-} from '@/components';
+import {ButtonWithStatus, DatePicker, TextInput} from '@/components';
 import {CurrencyPriceInput} from '@/components';
-import {SelectRadioButtons} from '@/components/addnew/SelectRadioButtons';
-import {RemainingAmountDisplay} from '@/components/addnew/RemainingAmountDisplay';
+import {SplitExpenseEditor} from '@/components/addnew/SplitExpenseEditor';
+import {TransactionCategoryField} from '@/components/addnew/TransactionCategoryField';
+import {TransactionTypeControls} from '@/components/addnew/TransactionTypeControls';
 import {sizes} from '@/constants/theme';
 import {warmColors} from '@/constants/warmTheme';
 import {
@@ -42,7 +38,6 @@ import {
   selectLatestBidAskExchangeRate,
 } from '@/redux/main/selectors';
 import {RateType} from '@/types/nbpTypes';
-import ElementDropdown from '@/components/Dropdown';
 import {
   createExpensePayload,
   createIncomePayload,
@@ -271,6 +266,20 @@ export default function AddNew() {
           .map((item: string) => ({label: item, value: item}))
           .sort((a, b) => a.label.localeCompare(b.label));
 
+  const dropdownValue =
+    type === 'income'
+      ? form.category
+      : expenseCategories.find(cat => cat.name === form.category)?.name;
+
+  const handleIncomeModeChange = (value: string) => {
+    if (value === 'new') {
+      setNewCustomIncome('');
+    } else {
+      setNewCustomIncome(null);
+    }
+    setForm({...form, category: ''});
+  };
+
   const handleSelectCategory = (category: {label: string; value: string}) => {
     if (category.value === 'Dodaj nową kategorię') {
     } else {
@@ -458,39 +467,16 @@ export default function AddNew() {
             />
           </View>
 
-          <View style={styles.switchContainer}>
-            <Text variant="bodyLarge">Wydatek</Text>
-            <Switch
-              value={type === 'income'}
-              onValueChange={value =>
-                handleSelectType(value ? 'income' : 'expense')
-              }
-              disabled={isPasRecord}
-            />
-            <Text variant="bodyLarge">Przychód</Text>
-            <IconButton
-              icon={isSplit ? 'call-merge' : 'call-split'}
-              onPress={handleSplitToggle}
-              disabled={(!form.price[0] && !isSplit) || type !== 'expense'}
-              size={20}
-              style={styles.splitToggleButton}
-            />
-            {type === 'expense' && !isSplit && (
-              <TouchableOpacity
-                onPress={() => setHasVacationTag(!hasVacationTag)}
-                style={styles.vacationToggleButton}
-              >
-                <Text
-                  style={[
-                    styles.vacationEmoji,
-                    {opacity: hasVacationTag ? 1 : 0.3},
-                  ]}
-                >
-                  🏖️
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <TransactionTypeControls
+            type={type}
+            isPasRecord={isPasRecord}
+            isSplit={isSplit}
+            isSplitDisabled={(!form.price[0] && !isSplit) || type !== 'expense'}
+            hasVacationTag={hasVacationTag}
+            onSelectType={handleSelectType}
+            onSplitToggle={handleSplitToggle}
+            onVacationTagToggle={() => setHasVacationTag(!hasVacationTag)}
+          />
 
           {(type === 'expense' || type === 'income') && (
             <View style={styles.priceInputRow}>
@@ -515,85 +501,27 @@ export default function AddNew() {
             </View>
           )}
 
-          {/* Add new category  selection */}
-          {type === 'income' && (
-            <SelectRadioButtons
-              items={[
-                {label: 'Dodaj nową kategorię', value: 'new'},
-                {label: 'Wybierz z listy', value: 'list'},
-              ]}
-              onSelect={value => {
-                if (value === 'new') {
-                  setNewCustomIncome('');
-                } else {
-                  setNewCustomIncome(null);
-                }
-                setForm({...form, category: ''});
-              }}
-              selected={newCustomIncome !== null ? 'new' : 'list'}
-            />
-          )}
-
-          {/* Add new category  input */}
-          {newCustomIncome !== null && (
-            <TextInput
-              style={styles.input}
-              label="Nowy rodzaj wpływu"
-              onChangeText={text => setForm({...form, category: text})}
-              value={form.category}
-            />
-          )}
-
-          {!isSplit && (
-            <View style={styles.splitIconRow}>
-              {(type === 'expense' ||
-                (type === 'income' && newCustomIncome === null)) && (
-                <View style={styles.dropdownContainer}>
-                  <ElementDropdown
-                    items={itemsToSelect}
-                    showDivider={type === 'expense'}
-                    keyboardShouldPersistTaps="handled"
-                    dropdownPosition="top"
-                    onChange={handleSelectCategory}
-                    value={
-                      type === 'income'
-                        ? form.category
-                        : expenseCategories.find(
-                            cat => cat.name === form.category,
-                          )?.name
-                    }
-                  />
-                </View>
-              )}
-            </View>
-          )}
+          <TransactionCategoryField
+            type={type}
+            isSplit={isSplit}
+            newCustomIncome={newCustomIncome}
+            categoryValue={form.category}
+            dropdownValue={dropdownValue}
+            itemsToSelect={itemsToSelect}
+            onIncomeModeChange={handleIncomeModeChange}
+            onCustomIncomeChange={text => setForm({...form, category: text})}
+            onSelectCategory={handleSelectCategory}
+          />
 
           {isSplit && type === 'expense' && (
-            <View style={styles.splitContainer}>
-              <RemainingAmountDisplay
-                totalPrice={form.price}
-                splitItems={splitItems}
-              />
-              {splitItems.map((item, index) => (
-                <PriceAndCategory
-                  key={index}
-                  item={item}
-                  index={index}
-                  expenseCategories={expenseCategories}
-                  onUpdateItem={updateSplitItem}
-                  onRemoveItem={removeSplitItem}
-                  canRemove={splitItems.length > 2}
-                />
-              ))}
-              <Button
-                mode="text"
-                onPress={addSplitItem}
-                style={styles.addSplitButton}
-                icon="plus"
-              >
-                Dodaj pozycję
-              </Button>
-            </View>
+            <SplitExpenseEditor
+              totalPrice={form.price}
+              splitItems={splitItems}
+              expenseCategories={expenseCategories}
+              onUpdateItem={updateSplitItem}
+              onAddItem={addSplitItem}
+              onRemoveItem={removeSplitItem}
+            />
           )}
         </View>
         <View style={styles.actionControls}>
@@ -643,13 +571,6 @@ const styles = StyleSheet.create({
     marginVertical: sizes.lg,
     minHeight: 80,
   },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: sizes.md,
-    marginVertical: sizes.lg,
-  },
   priceInputRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -657,43 +578,8 @@ const styles = StyleSheet.create({
   currencyInputContainer: {
     width: '100%',
   },
-  splitToggleButton: {
-    margin: 0,
-    marginLeft: sizes.xl,
-    padding: sizes.xs,
-    width: 50,
-  },
-  dropdownContainer: {
-    flex: 1,
-  },
-  addSplitButton: {
-    marginTop: sizes.sm,
-  },
   input: {
     marginVertical: sizes.xxxl,
     padding: sizes.lg,
-  },
-  splitContainer: {
-    marginVertical: sizes.lg,
-    padding: sizes.md,
-    borderRadius: sizes.lg,
-  },
-  splitIconRow: {
-    marginVertical: sizes.lg,
-  },
-  splitCancelSection: {
-    marginVertical: sizes.lg,
-    alignItems: 'center',
-  },
-  vacationToggleButton: {
-    margin: 0,
-    marginLeft: sizes.sm,
-    padding: sizes.xs,
-    width: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  vacationEmoji: {
-    fontSize: 24,
   },
 });

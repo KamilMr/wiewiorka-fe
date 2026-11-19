@@ -13,7 +13,10 @@ import {
   addDays,
   differenceInCalendarDays,
   format,
+  isValid,
   lastDayOfMonth,
+  parseISO,
+  startOfMonth,
 } from 'date-fns';
 
 import {Axis, PickFilter, decId, groupBy} from '@/utils/aggregateData';
@@ -162,7 +165,7 @@ const buildCategoryTotals = (
 
 const shouldUseMonthlyCategoryShare = (dayTotals: DayTotal[]) => {
   const monthsCount = new Set(
-    dayTotals.map(day => format(new Date(day.date), 'yyyy-MM')),
+    dayTotals.map(day => format(parseISO(day.date), 'yyyy-MM')),
   ).size;
 
   return monthsCount >= 2 && dayTotals.length >= 56;
@@ -175,7 +178,7 @@ const buildCategoryShareBuckets = (
   if (mode === 'day') {
     return dayTotals.map(day => ({
       key: day.date,
-      label: format(new Date(day.date), 'dd.MM'),
+      label: format(parseISO(day.date), 'dd.MM'),
       value: day.value,
       categories: day.categories,
     }));
@@ -183,10 +186,10 @@ const buildCategoryShareBuckets = (
 
   const monthBuckets = dayTotals.reduce<Record<string, CategoryShareBucket>>(
     (acc, day) => {
-      const key = format(new Date(day.date), 'yyyy-MM');
+      const key = format(parseISO(day.date), 'yyyy-MM');
       acc[key] ??= {
         key,
-        label: format(new Date(`${key}-01`), 'MM.yyyy'),
+        label: format(parseISO(`${key}-01`), 'MM.yyyy'),
         value: 0,
         categories: {},
       };
@@ -206,11 +209,20 @@ const buildCategoryShareBuckets = (
 };
 
 const Summary = () => {
-  const {date}: {date: string} = useLocalSearchParams();
-  const [filterDates, setFilterDates] = useState<[Date, Date]>([
-    new Date(date),
-    lastDayOfMonth(date.split('-').length > 2 ? new Date(date) : new Date()),
-  ]);
+  const {date} = useLocalSearchParams<{date?: string}>();
+  const [filterDates, setFilterDates] = useState<[Date, Date]>(() => {
+    const now = new Date();
+    if (typeof date === 'string') {
+      const selected = parseISO(date);
+      if (isValid(selected)) {
+        return [
+          selected,
+          lastDayOfMonth(date.split('-').length > 2 ? selected : now),
+        ];
+      }
+    }
+    return [startOfMonth(now), lastDayOfMonth(now)];
+  });
   const [axis, setAxis] = useState<[Axis, PickFilter]>(['1-0', '0-0']);
   const [chartDisplay, setChartDisplay] = useState<'pie' | 'bar' | 'share'>(
     'pie',
