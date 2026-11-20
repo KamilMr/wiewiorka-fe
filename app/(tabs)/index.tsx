@@ -21,13 +21,6 @@ import {formatPrice} from '@/common';
 import {warmColors, warmRadius, warmShadow} from '@/constants/warmTheme';
 import {useAppSelector, usePullToRefresh} from '@/hooks';
 import {selectBudgets, selectComparison} from '@/redux/main/selectors';
-import {MONTHLY_SPEND_PROMPT, QUICK_CHAT_PROMPTS} from '@/utils/wiewiorkaChat';
-
-const DASHBOARD_PROMPTS = [
-  {label: QUICK_CHAT_PROMPTS[0], icon: 'plus'},
-  {label: MONTHLY_SPEND_PROMPT, icon: 'chart-pie'},
-  {label: QUICK_CHAT_PROMPTS[2], icon: 'piggy-bank'},
-] as const;
 
 const Home = () => {
   const now = new Date();
@@ -91,28 +84,6 @@ const Home = () => {
             </Text>
           </View>
         </WarmCard>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chips}
-        >
-          {DASHBOARD_PROMPTS.map(({label, icon}) => (
-            <Pressable
-              key={label}
-              accessibilityRole="button"
-              accessibilityLabel={`Wpisz w czacie: ${label}`}
-              onPress={() => openChat(label)}
-              style={({pressed}) => [
-                styles.chip,
-                pressed && styles.chipPressed,
-              ]}
-            >
-              <FontAwesome6 name={icon} size={12} color={warmColors.primary} />
-              <Text style={styles.chipText}>{label}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Budżety</Text>
@@ -280,21 +251,7 @@ const styles = StyleSheet.create({
     ...warmShadow.sm,
   },
   chatButtonPressed: {opacity: 0.82, transform: [{scale: 0.96}]},
-  chips: {gap: 8, paddingRight: 20},
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 44,
-    gap: 6,
-    backgroundColor: warmColors.card,
-    borderColor: warmColors.border,
-    borderRadius: warmRadius.pill,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
   chipPressed: {opacity: 0.7},
-  chipText: {color: warmColors.foreground, fontSize: 12, fontWeight: '600'},
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
