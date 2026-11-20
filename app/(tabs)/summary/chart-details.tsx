@@ -219,13 +219,13 @@ const Summary = () => {
       headerLeft: () => (
         <IconButton
           icon="arrow-left"
-          onPress={() => router.navigate('/summary')}
+          onPress={() => router.replace('/summary')}
         />
       ),
     });
 
     return () => {
-      parentNavigation?.setOptions({headerLeft: undefined});
+      parentNavigation?.setOptions({headerLeft: () => null});
     };
   }, [navigation]);
   const [filterDates, setFilterDates] = useState<[Date, Date]>(() => {
