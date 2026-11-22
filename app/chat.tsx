@@ -328,11 +328,9 @@ function ChatConversation({
             />
             <View style={[styles.bubble, styles.assistantBubble]}>
               <Text selectable style={styles.assistantMessage}>
-                Cześć! Mogę zapisywać wydatki i przychody oraz pomagać z
-                zapasami i listą zakupów. Wiadomości do asystenta i wyniki jego
-                operacji są wysyłane do Anthropic. Skróty do wykresu, budżetu i
-                formularza działają lokalnie. Historia jest zapisana na tym
-                urządzeniu. Asystent nie pamięta jej po ponownym połączeniu.
+                Cześć! Mogę:{'\n'}• zapisywać wydatki i przychody,{`\n`}•
+                sprawdzać zapasy,{`\n`}• zarządzać listą zakupów,{`\n`}•
+                otwierać wykresy i budżety.
               </Text>
             </View>
           </View>
@@ -386,12 +384,12 @@ function ChatConversation({
               accessibilityLabel="Wiadomość do Wiewiórki"
               value={input}
               onChangeText={setInput}
-              onSubmitEditing={() => send()}
               onFocus={scrollToLatest}
               maxLength={MAX_MESSAGE_LENGTH}
+              multiline
               placeholder="Napisz do Wiewiórki..."
               placeholderTextColor={warmColors.mutedForeground}
-              returnKeyType="send"
+              submitBehavior="newline"
               style={styles.input}
             />
             <Pressable
