@@ -396,26 +396,26 @@ export default function AddNew() {
       } catch (error) {}
     } else {
       // Handle single expense or income
-      let dataToSave;
       if (type === 'expense') {
-        dataToSave = createExpensePayload({
+        const dataToSave = createExpensePayload({
           categories: expenseCategories,
           form,
           hasVacationTag,
           id: id as string,
         });
+        if (isPasRecord && dataToSave.id != null) {
+          dispatch(updateExpense({...dataToSave, id: dataToSave.id}));
+        } else {
+          dispatch(addNewExpense(dataToSave));
+        }
       } else {
-        dataToSave = createIncomePayload({form, id: id as string});
+        const dataToSave = createIncomePayload({form, id: id as string});
+        if (isPasRecord && dataToSave.id != null) {
+          dispatch(updateIncome({...dataToSave, id: dataToSave.id}));
+        } else {
+          dispatch(addNewIncome(dataToSave));
+        }
       }
-      dispatch(
-        type === 'expense'
-          ? isPasRecord
-            ? updateExpense(dataToSave)
-            : addNewExpense(dataToSave)
-          : isPasRecord
-            ? updateIncome(dataToSave)
-            : addNewIncome(dataToSave),
-      );
       setForm(initFormState(new Date(), expenseCategories));
       router.navigate('/(tabs)/records');
     }

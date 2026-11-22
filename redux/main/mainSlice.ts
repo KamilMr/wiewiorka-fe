@@ -71,6 +71,7 @@ const mainSlice = createSlice({
       const expIdx = state.expenses.findIndex(ex => ex.id === expense.id);
       if (expIdx !== -1) {
         state.expenses[expIdx] = {
+          ...state.expenses[expIdx],
           ...expense,
           date: format(expense.date, 'yyyy-MM-dd'),
         };

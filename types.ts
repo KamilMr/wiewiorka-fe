@@ -74,6 +74,12 @@ export interface Expense {
   tags?: string[];
 }
 
+export type ExpensePayload = Pick<Expense, 'date' | 'price'> &
+  Partial<Pick<Expense, 'id' | 'description' | 'categoryId' | 'tags'>>;
+
+export type IncomePayload = Pick<Income, 'date' | 'price' | 'source' | 'vat'> &
+  Partial<Pick<Income, 'id' | 'description'>>;
+
 export interface ExpenseMore {
   categoryName: string;
   isExp: boolean;

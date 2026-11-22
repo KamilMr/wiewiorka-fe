@@ -1,7 +1,7 @@
 import {createAsyncThunk} from '@reduxjs/toolkit';
 import {omit} from 'lodash';
 
-import type {Expense, Income} from '@/types';
+import type {ExpensePayload, IncomePayload} from '@/types';
 import type {RootState} from '../store';
 import {addToQueue} from '../sync/syncSlice';
 import {log, setAttribute} from '@/utils/crashlytics';
@@ -21,7 +21,7 @@ const DIFFERED = 0;
 
 export const addNewExpense = createAsyncThunk<
   any,
-  Expense & {frontendId?: string | number},
+  ExpensePayload & {frontendId?: string | number},
   {state: RootState}
 >('expense/add', async (expense, thunkAPI) => {
   const {dispatch, getState} = thunkAPI;
@@ -43,7 +43,7 @@ export const addNewExpense = createAsyncThunk<
 
   // Log breadcrumb for sync tracking
   log(`Expense queued for sync: ${frontendId}`);
-  setAttribute('lastExpenseCategory', expense.category || '');
+  setAttribute('lastExpenseCategory', String(expense.categoryId ?? ''));
   setAttribute('lastExpenseAmount', String(expense.price || 0));
 
   dispatch(
@@ -58,13 +58,22 @@ export const addNewExpense = createAsyncThunk<
   );
 });
 
-export const updateExpense = createAsyncThunk<any, Expense, {state: RootState}>(
+export const updateExpense = createAsyncThunk<
+  any,
+  ExpensePayload & {id: number | string},
+  {state: RootState}
+>(
   'expense/update',
   async (expense, thunkAPI) => {
     const {dispatch} = thunkAPI;
 
     // Editing existing expense
-    dispatch(updateExpenseAction(expense));
+    dispatch(
+      updateExpenseAction({
+        ...expense,
+        ...(expense.categoryId === null ? {category: ''} : {}),
+      }),
+    );
 
     // Log breadcrumb for sync tracking
     log(`Expense update queued for sync: ${expense.id}`);
@@ -84,7 +93,7 @@ export const updateExpense = createAsyncThunk<any, Expense, {state: RootState}>(
 
 export const addNewIncome = createAsyncThunk<
   any,
-  Income & {frontendId?: string | number},
+  IncomePayload & {frontendId?: string | number},
   {state: RootState}
 >('income/save', async (income, thunkAPI) => {
   const {dispatch, getState} = thunkAPI;
@@ -118,7 +127,11 @@ export const addNewIncome = createAsyncThunk<
   );
 });
 
-export const updateIncome = createAsyncThunk<any, Income, {state: RootState}>(
+export const updateIncome = createAsyncThunk<
+  any,
+  IncomePayload & {id: number | string},
+  {state: RootState}
+>(
   'income/update',
   async (income, thunkAPI) => {
     const {dispatch} = thunkAPI;

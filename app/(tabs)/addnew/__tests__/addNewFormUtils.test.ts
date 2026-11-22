@@ -138,6 +138,7 @@ describe('add new form utilities', () => {
         description: 'Lunch',
         date: '2024-05-06',
         price: 12,
+        categoryId: null,
         tags: [],
       });
     },

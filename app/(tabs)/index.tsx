@@ -21,13 +21,6 @@ import {formatPrice} from '@/common';
 import {warmColors, warmRadius, warmShadow} from '@/constants/warmTheme';
 import {useAppSelector, usePullToRefresh} from '@/hooks';
 import {selectBudgets, selectComparison} from '@/redux/main/selectors';
-import {MONTHLY_SPEND_PROMPT, QUICK_CHAT_PROMPTS} from '@/utils/wiewiorkaChat';
-
-const DASHBOARD_PROMPTS = [
-  {label: QUICK_CHAT_PROMPTS[0], icon: 'plus'},
-  {label: MONTHLY_SPEND_PROMPT, icon: 'chart-pie'},
-  {label: QUICK_CHAT_PROMPTS[2], icon: 'piggy-bank'},
-] as const;
 
 const Home = () => {
   const now = new Date();
@@ -91,54 +84,6 @@ const Home = () => {
             </Text>
           </View>
         </WarmCard>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Porozmawiaj z Wiewiórką"
-          onPress={() => openChat()}
-          style={({pressed}) => [styles.chatCta, pressed && styles.pressed]}
-        >
-          <View style={styles.chatIcon}>
-            <FontAwesome6
-              name="comment-dots"
-              size={20}
-              color={warmColors.primaryForeground}
-            />
-          </View>
-          <View style={styles.chatCopy}>
-            <Text style={styles.chatTitle}>Porozmawiaj z Wiewiórką</Text>
-            <Text style={styles.chatSubtitle}>
-              Sprawdź wydatki, budżety lub otwórz formularz.
-            </Text>
-          </View>
-          <FontAwesome6
-            name="chevron-right"
-            size={14}
-            color={warmColors.primaryForeground}
-          />
-        </Pressable>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chips}
-        >
-          {DASHBOARD_PROMPTS.map(({label, icon}) => (
-            <Pressable
-              key={label}
-              accessibilityRole="button"
-              accessibilityLabel={`Wpisz w czacie: ${label}`}
-              onPress={() => openChat(label)}
-              style={({pressed}) => [
-                styles.chip,
-                pressed && styles.chipPressed,
-              ]}
-            >
-              <FontAwesome6 name={icon} size={12} color={warmColors.primary} />
-              <Text style={styles.chipText}>{label}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Budżety</Text>
@@ -224,13 +169,29 @@ const Home = () => {
           </Pressable>
         </View>
       </ScrollView>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Porozmawiaj z Wiewiórką"
+        onPress={() => openChat()}
+        hitSlop={8}
+        style={({pressed}) => [
+          styles.chatButton,
+          pressed && styles.chatButtonPressed,
+        ]}
+      >
+        <FontAwesome6
+          name="comment-dots"
+          size={17}
+          color={warmColors.primaryForeground}
+        />
+      </Pressable>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {flex: 1, backgroundColor: warmColors.background},
-  content: {gap: 16, padding: 20, paddingBottom: 28},
+  content: {gap: 16, padding: 20, paddingBottom: 80},
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -276,51 +237,21 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     marginTop: 5,
   },
-  chatCta: {
+  chatButton: {
     alignItems: 'center',
     backgroundColor: warmColors.primary,
-    borderRadius: warmRadius.xxl,
-    flexDirection: 'row',
-    gap: 13,
-    padding: 18,
-    ...warmShadow.md,
-  },
-  pressed: {opacity: 0.88, transform: [{scale: 0.99}]},
-  chatIcon: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderRadius: warmRadius.lg,
-    height: 50,
-    justifyContent: 'center',
-    width: 50,
-  },
-  chatCopy: {flex: 1, minWidth: 0},
-  chatTitle: {
-    color: warmColors.primaryForeground,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  chatSubtitle: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 2,
-  },
-  chips: {gap: 8, paddingRight: 20},
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 44,
-    gap: 6,
-    backgroundColor: warmColors.card,
-    borderColor: warmColors.border,
     borderRadius: warmRadius.pill,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    bottom: 20,
+    elevation: 4,
+    height: 40,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 20,
+    width: 40,
+    ...warmShadow.sm,
   },
+  chatButtonPressed: {opacity: 0.82, transform: [{scale: 0.96}]},
   chipPressed: {opacity: 0.7},
-  chipText: {color: warmColors.foreground, fontSize: 12, fontWeight: '600'},
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',

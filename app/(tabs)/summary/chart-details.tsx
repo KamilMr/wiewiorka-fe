@@ -1,5 +1,5 @@
-import {useEffect, useMemo, useState} from 'react';
-import {router, useLocalSearchParams} from 'expo-router';
+import {useEffect, useLayoutEffect, useMemo, useState} from 'react';
+import {router, useLocalSearchParams, useNavigation} from 'expo-router';
 
 import _ from 'lodash';
 import {
@@ -20,7 +20,7 @@ import {
 } from 'date-fns';
 
 import {Axis, PickFilter, decId, groupBy} from '@/utils/aggregateData';
-import {BarChart, PieChartBar, Text} from '@/components';
+import {BarChart, IconButton, PieChartBar, Text} from '@/components';
 import {type Subcategory} from '@/types';
 import {buildBarChart, buildPieChart} from '@/utils/chartBuilder';
 import {selectByTimeRange, selectCategories} from '@/redux/main/selectors';
@@ -209,7 +209,25 @@ const buildCategoryShareBuckets = (
 };
 
 const Summary = () => {
+  const navigation = useNavigation();
   const {date} = useLocalSearchParams<{date?: string}>();
+
+  useLayoutEffect(() => {
+    const parentNavigation = navigation.getParent();
+
+    parentNavigation?.setOptions({
+      headerLeft: () => (
+        <IconButton
+          icon="arrow-left"
+          onPress={() => router.replace('/summary')}
+        />
+      ),
+    });
+
+    return () => {
+      parentNavigation?.setOptions({headerLeft: () => null});
+    };
+  }, [navigation]);
   const [filterDates, setFilterDates] = useState<[Date, Date]>(() => {
     const now = new Date();
     if (typeof date === 'string') {
